@@ -1,12 +1,123 @@
 * files
 (find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/public/index.html")
 (find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/public/css/style.css")
-/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/package.json
+(find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/package.json")
 
 * TODO 
 ** поправить перетягивание при зум
+при зуме или удалении ломаестя точность перетягивания.
+перетягивание не учитывает изменившийся зум и теряется согласование места клика и скорости движения мыши и перетягиваемого обекта.
+нужно поправить чтоб перетягивание было постоным не зависимо от степение приближения или удаления.
 
+поправь мой
+lets fix drag when zooming.
+When zooming or unzooming dragging precision is lost. 
+dragging does not take into account the changed zoom and the coordination of the click location and the speed of movement of the mouse and the dragged object. 
+it needs to be corrected so that the drag is constant regardless of the degree of approach or distance.
+
+довай исправим перетаскивание при масштабировании. 
+При масштабировании или уменьшении масштаба точность перетаскивания теряется. 
+при перетаскивании не учитывается измененный масштаб и согласование места клика и скорости движения мыши и перетаскиваемого объекта. 
+Это необходимо скорректировать, чтобы перетаскивание было постоянным, независимо от степени приближения или уменьшении масштаба.
+
+
+Let's fix dragging when scaling. 
+ As you zoom in or out, dragging accuracy is lost. 
+ When dragging, the changed scale and coordination of the click location and the speed of movement of the mouse and the dragged object are not taken into account. 
+ This needs to be adjusted so that the drag is consistent no matter how much user zoom in or out.
+** сворачивать маин меню
+*** гамбургер меню
+*** при наведении мыши или клике разворачивается
+*** клик на поле сварачивает
+** маин меню разделы
+*** перенести сейв лоад в меню
+** выделять обекты левой кнопко
+*** при протягивании
+*** при клаце с шифтом левой кнопкой
+** копировать обекты и удолять
+*** выделеные обекты
+*** перетягиваемы обект
+*** пунки меню у всех обектов
+*** пунки меню стола
+вставить
+** в кусдом дек добавит поле количество карт
+*** поправить белый шрифт
+*** задовать цвет перевёрнутой карты
+*** цвет масти
+** перевёрнутые карты
+*** убрать прозрачность
+*** задать цвет перевёрнутой карты
+** токенты картинка
+** рука прячится без наведения
+** таил картинка
+** возможност сохранять куздм карты
+** токенты куздом
+*** меню
+*** выбор цвета
+** сылка колоды карты
+*** возможна одна карта
+*** задаём количество карт
+*** карт в ряду
+*** сылка на обект
+** сылка колоды костей
+** возможност сохранять куздм карты
+** кости разной формы
+** выбор цвета костей
+** обеденять карты в колоды
+** карта добовляется в колоду
+** контейнеры
+*** тарелка с щарами и кубами
+форма обекта зависи от типа
+цвет от свойства обекта
+изначально все обекты белые
+** добавить тайлы изображений
+** перетягимаемое меню поверх
+** кнопки управления
+*** развернуть
+*** рол шафл
+*** залочить
+*** групировать
+*** уменшить увеличить
+*** открыть свойства
+** расширить зум
+** меню управления обектом
+*** размер обекта
+*** текстура
+*** поворот
+*** смещение свойст текстуры
+*** залочить
+** увеличение карты в руке при наведении
+** сохронять контейнер
+** доблять внешний кантейнер жсон
+** выбор обектов из сейвов и контейнеров
+*** сейв это контейнер
+** ТТС как внешний формат контейнеров
+*** достать сылку на колы карт
+*** формат колод
+*** текстура обект
+*** токены
+*** 3д обекты как плоские текстуры
+тоесть
 * backlog
+** ленейка
+*** обект
+*** остаётся на столе
+*** при двойно м клце берётся в руку
+*** при перетягивании
+** перемешение обекта как ход
+тоесть тянем линию.
+** лог событий
+** вынести настрой во внешний фаил
+избежать хард кодинга
+** добавить колоду карт меджик
+** управление из имакса
+** текст обект
+** обект линий
+** обект геометрических линий
+** 3д обекты
+возможност их отображать
+и поворачивать
+приэтом всё 3д не будет
 * run
 ** run сервер и таилвинг
 #+begin_src elisp :results output silent
@@ -35,6 +146,20 @@ add to package script
 npx shadow-cljs compile test && node out/test.js
 
 ** git
+git remote add origin https://github.com/Buyn/cljs-tabletop-sim.git
+git branch -M main
+git push -u origin main
+
+echo "# cljs-tabletop-sim" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/Buyn/cljs-tabletop-sim.git
+git push -u origin main
+
+https://github.com/Buyn/cljs-tabletop-sim.git
+
 
 * спекс
 ** спекс

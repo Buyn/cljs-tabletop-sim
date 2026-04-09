@@ -4,6 +4,8 @@
   "description": "Browser-based 2D tabletop simulator",
   "scripts": {
       "dev": "shadow-cljs watch app",
+      "watch": "shadow-cljs watch app;",
+      "build-gh": "rm -rf docs && npx shadow-cljs release app && mkdir -p docs && cp -r public/* docs && touch docs/.nojekyll",
       "build": "shadow-cljs release app",
       "css": "tailwindcss -i ./src/css/main.css -o ./public/css/style.css --watch",
       "test": "shadow-cljs compile test && node out/test.js"
