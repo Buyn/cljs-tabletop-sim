@@ -1,6 +1,6 @@
 (ns tabletop.components.card
   (:require [reagent.core :as r]
-            [tabletop.state :refer [move-component! toggle-card-face! remove-component!]]
+            [tabletop.state :refer [app-state move-component! toggle-card-face! remove-component!]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn card
@@ -15,7 +15,8 @@
         offset-y  (r/atom 0)]
     (fn [{:keys [card on-drag-end]}]
       (let [{:keys [id suit rank color face-up? x y]} card
-            face-up? (boolean face-up?)]
+            face-up? (boolean face-up?)
+            zoom     (get-in @app-state [:table :zoom] 1.0)]
         [:div
          {:class         (str "absolute select-none rounded-lg border shadow-md cursor-grab "
                               "w-[70px] h-[100px] flex items-center justify-center "
@@ -28,18 +29,19 @@
           (fn [e]
             (.stopPropagation e)
             (let [rect (.getBoundingClientRect (.-currentTarget e))]
-              (reset! offset-x (- (.-clientX e) (.-left rect)))
-              (reset! offset-y (- (.-clientY e) (.-top rect)))
+              (reset! offset-x (/ (- (.-clientX e) (.-left rect)) zoom))
+              (reset! offset-y (/ (- (.-clientY e) (.-top rect)) zoom))
               (reset! dragging? true)
               (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-pointer-move
           (fn [e]
             (when @dragging?
-              (let [parent-rect (.getBoundingClientRect
+              (let [z        (get-in @app-state [:table :zoom] 1.0)
+                    parent-rect (.getBoundingClientRect
                                  (.-offsetParent (.-currentTarget e)))
-                    new-x (- (.-clientX e) (.-left parent-rect) @offset-x)
-                    new-y (- (.-clientY e) (.-top parent-rect) @offset-y)]
+                    new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
+                    new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
                 (move-component! id new-x new-y))))
 
           :on-pointer-up
@@ -47,10 +49,11 @@
             (when @dragging?
               (reset! dragging? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
-              (let [parent-rect (.getBoundingClientRect
+              (let [z        (get-in @app-state [:table :zoom] 1.0)
+                    parent-rect (.getBoundingClientRect
                                  (.-offsetParent (.-currentTarget e)))
-                    final-x (- (.-clientX e) (.-left parent-rect) @offset-x)
-                    final-y (- (.-clientY e) (.-top parent-rect) @offset-y)]
+                    final-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
+                    final-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
                 (when on-drag-end
                   (on-drag-end [final-x final-y])))))
 

@@ -1,6 +1,6 @@
 (ns tabletop.components.deck
   (:require [reagent.core :as r]
-            [tabletop.state :refer [move-component! draw-top-card! draw-card-to-table! shuffle-deck! flip-deck!]]
+            [tabletop.state :refer [app-state move-component! draw-top-card! draw-card-to-table! shuffle-deck! flip-deck!]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn deck
@@ -24,18 +24,20 @@
           :on-pointer-down
           (fn [e]
             (.stopPropagation e)
-            (let [rect (.getBoundingClientRect (.-currentTarget e))]
-              (reset! offset-x (- (.-clientX e) (.-left rect)))
-              (reset! offset-y (- (.-clientY e) (.-top rect)))
+            (let [rect (.getBoundingClientRect (.-currentTarget e))
+                  z    (get-in @app-state [:table :zoom] 1.0)]
+              (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
+              (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z))
               (reset! dragging? true)
               (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-pointer-move
           (fn [e]
             (when @dragging?
-              (let [parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
-                    new-x (- (.-clientX e) (.-left parent-rect) @offset-x)
-                    new-y (- (.-clientY e) (.-top parent-rect) @offset-y)]
+              (let [z           (get-in @app-state [:table :zoom] 1.0)
+                    parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
+                    new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
+                    new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
                 (move-component! id new-x new-y))))
 
           :on-pointer-up

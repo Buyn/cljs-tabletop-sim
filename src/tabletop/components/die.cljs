@@ -54,9 +54,10 @@
             (reset! dragging? true)
             (reset! start-x (.-clientX e))
             (reset! start-y (.-clientY e))
-            (let [rect (.getBoundingClientRect (.-currentTarget e))]
-              (reset! offset-x (- (.-clientX e) (.-left rect)))
-              (reset! offset-y (- (.-clientY e) (.-top rect))))
+            (let [rect (.getBoundingClientRect (.-currentTarget e))
+                  z    (get-in @app-state [:table :zoom] 1.0)]
+              (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
+              (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
             (.setPointerCapture (.-currentTarget e) (.-pointerId e)))
 
           :on-pointer-move
@@ -66,10 +67,11 @@
                     dy (- (.-clientY e) @start-y)]
                 (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 5)
                   (reset! moved? true)
-                  (let [parent-rect (.getBoundingClientRect
+                  (let [z           (get-in @app-state [:table :zoom] 1.0)
+                        parent-rect (.getBoundingClientRect
                                      (.-offsetParent (.-currentTarget e)))
-                        new-x (- (.-clientX e) (.-left parent-rect) @offset-x)
-                        new-y (- (.-clientY e) (.-top parent-rect) @offset-y)]
+                        new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
+                        new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
                     (move-component! id new-x new-y))))))
 
           :on-pointer-up
