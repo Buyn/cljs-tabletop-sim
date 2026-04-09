@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# shadow-cljs build output
+public/js/
+out/
+.shadow-cljs/
+
+# Clojure
+.clj-kondo/
+.cpcache/
+
+# Editor
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

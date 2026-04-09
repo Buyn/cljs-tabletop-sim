@@ -1,0 +1,104 @@
+* files
+(find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/public/index.html")
+(find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/public/css/style.css")
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/package.json
+
+* TODO 
+** поправить перетягивание при зум
+
+* backlog
+* run
+** run сервер и таилвинг
+#+begin_src elisp :results output silent
+(buyn-shell-start "konsole -e bash -c \"npm run watch\"")
+(buyn-shell-start "konsole -e bash -c \"npm run css\"")
+(evil-previous-line)
+(org-cycle)
+(delete-other-windows)
+#+end_src
+** Kiro CLI
+cd ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro;kiro-cli
+** dir
+cd ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro
+** run запуск проекта
+npm install
+npx shadow-cljs watch app
+
+** run css file is missing
+web page only text and battons
+add to package script
+
+      "css": "tailwindcss -i ./src/css/main.css -o ./public/css/style.css --watch"
+
+** run test
+npx shadow-cljs compile test && node out/test.js
+
+** git
+
+* спекс
+** спекс
+*** раскажи мне о состоянии проекта
+ tell me about the status of the project
+
+Here's a summary of the project status:
+
+Project: Clojure Tabletop Simulator
+A browser-based 2D tabletop simulator built with ClojureScript, shadow-cljs, Reagent, 
+and Tailwind CSS.
+
+What's done (all core features implemented):
+
+- Project scaffold, state atom, and core entry point
+- Pure logic: Fisher-Yates shuffle, deck factories (standard + custom), dice roll logic
+- Deck config validation
+- All state transition helpers (move, flip, draw, shuffle, pan, zoom, etc.)
+- Serialization / deserialization + save-file validation
+- All UI components: start screen, table canvas (pan/zoom), context menu, card, deck, 
+die, hand area, component panel, deck customizer, save button
+- Everything wired together in app.cljs
+
+What's pending (all optional):
+
+The only remaining tasks are property-based tests (marked with * as optional in the spec
+):
+- Property tests for shuffle, deck factories, dice, deck config validation, state 
+transitions, and serialization round-trip
+
+These are skippable for MVP — the spec explicitly notes them as optional for a faster 
+delivery.
+
+Bottom line: The app is functionally complete. All 16 main tasks are checked off. The 
+only open items are optional property tests that weren't part of the MVP scope.
+
+*** какой командой мне запустить тесты в проекте?
+
+What command should I run all tests in the project?
+Reading file: /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/shadow-cljs.edn, all lines (using tool: read)
+ ✓ Successfully read 396 bytes from /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/shadow-cljs.edn
+ - Completed in 0.0s
+
+> npx shadow-cljs compile test && node out/test.js
+
+
+Or if you want watch mode during development:
+npx shadow-cljs watch test
+
+
+The config uses a :node-test target, so it compiles to out/test.js and runs with Node.
+
+ ▸ Credits: 0.11 • Time: 6s
+
+
+*** 
+
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+
+
+* 2026-04-10
+** clojure-tabletop-sim-kiro.org
+(find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/clojure-tabletop-sim-kiro.org")
+** Necroteuch.org:
+#+begin_src emacs-lisp :tangle no
+(find-file-other-frame "~/Dropbox/orgs/capture/Necroteuch.org")
+#+end_src
