@@ -25,7 +25,7 @@ Let's fix dragging when scaling.
  As you zoom in or out, dragging accuracy is lost. 
  When dragging, the changed scale and coordination of the click location and the speed of movement of the mouse and the dragged object are not taken into account. 
  This needs to be adjusted so that the drag is consistent no matter how much user zoom in or out.
-** сворачивать маин меню
+** DONE сворачивать маин меню
 *** кнопка гамбургер меню
 в верхнем левом углу
 *** при наведении мыши или клике разворачивается
@@ -57,12 +57,6 @@ let's do it
 - press it again to collapse it.
 - the initial state is all collapsed.
 - When you click on one, the expanded one is collapsed and the selected one is expanded.
-** поле цвета при выборе дая
-** куздом дай
-*** указать форму
-*** количество сторон
-в форме значени с по
-*** цвет кости
 ** выделять обекты левой кнопко
 *** при протягивании
 *** при клаце с шифтом левой кнопкой
@@ -72,17 +66,45 @@ let's do it
 *** пунки меню у всех обектов
 *** пунки меню стола
 вставить
-** в кусдом дек добавит поле количество карт
-*** DONE поправить белый шрифт
-*** задовать цвет перевёрнутой карты
-** цвет масти
-*** в кусдом деке
-*** и основного дека
 ** перевёрнутые карты
 *** убрать прозрачность
 *** задать цвет перевёрнутой карты
+** рука прячится без наведения на неё курсора мыши.
+тоеть опускается вниз оставляя 10 процентов своего размера.
+а карты оставляя половину своего высоты.
+при наведении мыши на рук или на любую карту.
+возврашает в начальное состояние.
+карты в руке увеличиваютс и подымают при наведении мыши в 3 от начального размера и размера карт без наведения.
+не выбраные карты рздвигают в стороны освобождая место для выбраной\наведёной карты.
+при перетаскивании, когда низ карты покидает поле руки, карта сатоновится размером карт на поле, таки каким она бы была если бы лежала на поле.
+карта или любой обект который перетаскивают при наведени при перетаскивани на поле руки. помешаются в руку.
+
+let's do it.
+# the hand hides if mouse cursor not over it.
+- The hand body sinks down leaving 10 percent of its size.
+- and the cards leaving half their height. 
+# when mouse hover over hand or any card.
+- returns to the initial state. 
+# when hovering the mouse
+- cards in hand are enlarged and raised, at 3 times the initial size, and the size of cards without hover. 
+- non-selected cards are moved to the sides to free up space for the selected/pointed card. 
+# when dragging,
+- when the bottom of the dragged card leaves the hand field, the card is adjusted to the size of the cards on the field, the same as what it would be if it were lying on the field. 
+# a card or any object that is dragged
+- on hover when dragged onto the hand field. get in hand.
 ** токенты картинка
-** рука прячится без наведения
+** цвет масти
+*** в кусдом деке
+*** и основного дека
+** в кусдом дек добавит поле количество карт
+*** DONE поправить белый шрифт
+*** задовать цвет перевёрнутой карты
+** куздом дай
+*** указать форму
+*** количество сторон
+в форме значени с по
+*** цвет кости
+** поле цвета при выборе дая
 ** таил картинка
 ** возможност сохранять куздм карты
 ** токенты куздом

@@ -24,33 +24,28 @@
 ;; ---------------------------------------------------------------------------
 
 (defn serialize-state
-  "Extracts :table, :components, and :hand from state and returns a JSON string
-   with version 1 wrapping those keys.
-
-   Output format:
-     {\"version\" 1
-      \"table\"      {...}
-      \"components\" [...]
-      \"hand\"       [...]}"
+  "Extracts :table, :components, :hand, :menu-open, and :menu-section from state
+   and returns a JSON string with version 1 wrapping those keys."
   [state]
-  (let [payload {"version"    1
-                 "table"      (:table state)
-                 "components" (:components state)
-                 "hand"       (:hand state)}]
+  (let [payload {"version"      1
+                 "table"        (:table state)
+                 "components"   (:components state)
+                 "hand"         (:hand state)
+                 "menu-open"    (:menu-open state)
+                 "menu-section" (when-let [s (:menu-section state)] (name s))}]
     (js/JSON.stringify (clj->js payload))))
 
 (defn deserialize-state
   "Parses a JSON string produced by serialize-state and returns a map with
-   keys :table, :components, and :hand ready to be merged into app state.
-
-   - All map keys are keywordized.
-   - :type fields on components (and cards within decks) are converted back
-     to keywords (e.g. \"deck\" -> :deck).
-   - :face-up? booleans and :result nil/number values are preserved as-is."
+   keys :table, :components, :hand, :menu-open, and :menu-section ready to
+   be merged into app state."
   [json-str]
   (let [parsed     (js->clj (js/JSON.parse json-str) :keywordize-keys true)
         components (mapv keywordize-component (:components parsed))
-        hand       (mapv keywordize-type (:hand parsed))]
-    {:table      (:table parsed)
-     :components components
-     :hand       hand}))
+        hand       (mapv keywordize-type (:hand parsed))
+        section    (when-let [s (:menu-section parsed)] (keyword s))]
+    {:table        (:table parsed)
+     :components   components
+     :hand         hand
+     :menu-open    (get parsed :menu-open true)
+     :menu-section section}))

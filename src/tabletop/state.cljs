@@ -8,7 +8,9 @@
    :components   []
    :hand         []
    :context-menu nil
-   :error        nil})
+   :error        nil
+   :menu-open    true
+   :menu-section nil})
 
 (defonce app-state (r/atom initial-state))
 
