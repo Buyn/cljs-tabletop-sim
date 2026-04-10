@@ -1,18 +1,14 @@
 (ns tabletop.components.card
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! toggle-card-face! remove-component!]]
+            [tabletop.state :refer [app-state move-component! toggle-card-face! remove-component! move-card-to-hand!]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn card
-  "Renders a draggable playing card component.
-
-   Props:
-   - card        : map with keys :id :suit :rank :color :face-up? :x :y
-   - on-drag-end : optional callback called with [x y] when drag ends"
   [{:keys [card on-drag-end]}]
-  (let [dragging? (r/atom false)
-        offset-x  (r/atom 0)
-        offset-y  (r/atom 0)]
+  (let [dragging?    (r/atom false)
+        over-hand?   (r/atom false)
+        offset-x     (r/atom 0)
+        offset-y     (r/atom 0)]
     (fn [{:keys [card on-drag-end]}]
       (let [{:keys [id suit rank color face-up? x y]} card
             face-up? (boolean face-up?)
@@ -24,7 +20,10 @@
                               (if face-up?
                                 (str "border-gray-300 " color)
                                 "border-gray-600 bg-[#1e3a5f]"))
-          :style         {:left (str x "px") :top (str y "px")}
+          :style         {:left      (str x "px")
+                          :top       (str y "px")
+                          :transform (when @over-hand? "scale(0.33)")
+                          :transform-origin "top left"}
           :on-pointer-down
           (fn [e]
             (.stopPropagation e)
@@ -37,23 +36,30 @@
           :on-pointer-move
           (fn [e]
             (when @dragging?
-              (let [z        (get-in @app-state [:table :zoom] 1.0)
-                    parent-rect (.getBoundingClientRect
-                                 (.-offsetParent (.-currentTarget e)))
-                    new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
-                    new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
-                (move-component! id new-x new-y))))
+              (let [z           (get-in @app-state [:table :zoom] 1.0)
+                    parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
+                    new-x       (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
+                    new-y       (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)
+                    ;; bottom edge of card in client coords
+                    card-bottom (+ (.-clientY e) (* (- 100 (* @offset-y z)) z))
+                    in-hand?    (tabletop.components.hand/hand-drop-zone?
+                                  [(.-clientX e) card-bottom])]
+                (reset! over-hand? in-hand?)
+                (when in-hand?
+                  (move-card-to-hand! id))
+                (when-not in-hand?
+                  (move-component! id new-x new-y)))))
 
           :on-pointer-up
           (fn [e]
             (when @dragging?
               (reset! dragging? false)
+              (reset! over-hand? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
-              (let [z        (get-in @app-state [:table :zoom] 1.0)
-                    parent-rect (.getBoundingClientRect
-                                 (.-offsetParent (.-currentTarget e)))
-                    final-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
-                    final-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
+              (let [z           (get-in @app-state [:table :zoom] 1.0)
+                    parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
+                    final-x     (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
+                    final-y     (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
                 (when on-drag-end
                   (on-drag-end [final-x final-y])))))
 
@@ -73,11 +79,9 @@
                :action #(remove-component! id)}]))}
 
          (if face-up?
-           ;; Face-up: show rank and suit
            [:div {:class "flex flex-col items-center justify-center w-full h-full"}
             [:span {:class "text-lg leading-none"} rank]
             [:span {:class "text-xl leading-none"} suit]]
-           ;; Face-down: back pattern
            [:div {:class "w-full h-full flex items-center justify-center"}
             [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40
                            bg-[repeating-linear-gradient(45deg,#2563eb,#2563eb_2px,transparent_2px,transparent_8px)]"}]])]))))

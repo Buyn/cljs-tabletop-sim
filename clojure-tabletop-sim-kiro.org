@@ -4,98 +4,99 @@
 (find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/package.json")
 
 * TODO 
-** DONE поправить перетягивание при зум
-при зуме или удалении ломаестя точность перетягивания.
-перетягивание не учитывает изменившийся зум и теряется согласование места клика и скорости движения мыши и перетягиваемого обекта.
-нужно поправить чтоб перетягивание было постоным не зависимо от степение приближения или удаления.
-
-поправь мой
-lets fix drag when zooming.
-When zooming or unzooming dragging precision is lost. 
-dragging does not take into account the changed zoom and the coordination of the click location and the speed of movement of the mouse and the dragged object. 
-it needs to be corrected so that the drag is constant regardless of the degree of approach or distance.
-
-довай исправим перетаскивание при масштабировании. 
-При масштабировании или уменьшении масштаба точность перетаскивания теряется. 
-при перетаскивании не учитывается измененный масштаб и согласование места клика и скорости движения мыши и перетаскиваемого объекта. 
-Это необходимо скорректировать, чтобы перетаскивание было постоянным, независимо от степени приближения или уменьшении масштаба.
-
-
-Let's fix dragging when scaling. 
- As you zoom in or out, dragging accuracy is lost. 
- When dragging, the changed scale and coordination of the click location and the speed of movement of the mouse and the dragged object are not taken into account. 
- This needs to be adjusted so that the drag is consistent no matter how much user zoom in or out.
-** DONE сворачивать маин меню
-*** кнопка гамбургер меню
-в верхнем левом углу
-*** при наведении мыши или клике разворачивается
-*** клик на поле сварачивает
-*** начальное состояни развёрнуто
-состояние запоминается в сейв файле
-*** перенести сейв в меин меню
-*** сделать маин меню разделы сворачиваемыми
-тоесть раздел дека, костей, и сейва\загрузки.
-нужно клацнуть что разверну, повторное нажате сворачивает.
-начальное состоние все свёрнуты.
-клик на одномсворчивает развёрнутые и разворачивает выбраный.
-
-let's do it
-# collapse main menu
-- hamburger menu button in the upper left corner.
-- expands when hovered or clicked
-- click on the field collapses
-- initial state expanded
-- the state is saved in the save file
-# move save - to main menu
-# make the main menu sections collapsible 
-## that is
-- the deck,
-- dice,
-- and save/load sections. 
-
-## You need to click to expand it,
-- press it again to collapse it.
-- the initial state is all collapsed.
-- When you click on one, the expanded one is collapsed and the selected one is expanded.
-** выделять обекты левой кнопко
-*** при протягивании
-*** при клаце с шифтом левой кнопкой
-** копировать обекты и удолять
+** выделять обектов левой кнопкой мыши
+*** при нажати левой кнопкой на столе и протягивании
+растягивается квадрат выделения.
+все обекты попавшие в выделени оказыаются ведлеными
+*** при нажатии с шифтом левой кнопкой
+на обект он добовляетя в выделение
 *** выделеные обекты
-*** перетягиваемы обект
-*** пунки меню у всех обектов
-*** пунки меню стола
-вставить
+- перетягиваются вместе
+- будут добавлены в руку в месте
+  
+- правая кнопка меню 
+  копировать обекты
+ 
+*** копировать обекты и удолять
+**** перетягиваемы обект
+тоесть обект который перетягивается в данный момент
+при нажатии
+контро+с
+происходит копирование перетаскиваемого обекта. в список копируемого
+контро+x
+происходит копирование и удаление перетаскиваемого обекта. в список копируемого. так что он как будто был отпуще но удалён. оказавшись в списке копировано.
+**** выделеные обекты
+контро+с
+происходит копирование перетаскиваемого обекта. в список копируемого
+контро+x
+происходит копирование и удаление перетаскиваемого обекта. в список копируемого. так что он как будто был отпуще но удалён. оказавшись в списке копировано.
+**** список копированоного
+не где визуально не отображается.
+но при нажатии контрол+v вставляется в месте стола где находится позиция курсора курсор.
+если позиция курсора на панели руки, то вставляется в руку.
+**** пункиты меню у всех обектов
+есть копировать
+**** пунки меню стола
+при нажатии правой кнопкой в пустом месте столоа
+"вставить"
+по которому происходит вставка ранее скопированного обекта.
+*** 
+# select objects with the left mouse button 
+
+## when you left-click on the table and drag
+- The selection square is stretched.
+- all objects included in the selection are included
+- when pressed shift with the left  button on the object it is added to the selection 
+
+## selected objects 
+- pulled together.
+- will be added to the hand together if puled in heand.
+- right button menu have command - copy objects .
+
+# "coping list" description of the term
+## "coping list" 
+- This is an analogue of the internal clipboard for copying and pasting objects.
+- list of copied items not visually displayed anywhere.  
+- all objects have right button menu command - copy object. 
+- on command - copy object. object is copied in the "coping list".
+
+## table have right button menu command.
+- When user right-click in an empty area of the table openenig right button menu command.
+- it have "past" command
+- on "past" command - on the cursor position is inserted all object from "coping list", on the table where the cursor position is.
+
+## When user press control+v,
+- on the cursor position is inserted all object from "coping list", on the table where the cursor position is.
+- if the cursor position is on the hand panel, then it is inserted into the hand.
+
+# copy objects and delete 
+## dragged object that is, the object that is currently being dragged
+when pressed:
+- control+с
+  The dragged object is copied in the "coping list" 
+- control+x 
+  The dragged object is deleted and copied to the "coping list".
+
 ** перевёрнутые карты
 *** убрать прозрачность
+открытые карты не должны быть прозрачными, уних должен быть цвет.
+по дефалту карта светлая шрфт тёмный.
 *** задать цвет перевёрнутой карты
-** рука прячится без наведения на неё курсора мыши.
-тоеть опускается вниз оставляя 10 процентов своего размера.
-а карты оставляя половину своего высоты.
-при наведении мыши на рук или на любую карту.
-возврашает в начальное состояние.
-карты в руке увеличиваютс и подымают при наведении мыши в 3 от начального размера и размера карт без наведения.
-не выбраные карты рздвигают в стороны освобождая место для выбраной\наведёной карты.
-при перетаскивании, когда низ карты покидает поле руки, карта сатоновится размером карт на поле, таки каким она бы была если бы лежала на поле.
-карта или любой обект который перетаскивают при наведени при перетаскивани на поле руки. помешаются в руку.
-
-let's do it.
-# the hand hides if mouse cursor not over it.
-- The hand body sinks down leaving 10 percent of its size.
-- and the cards leaving half their height. 
-# when mouse hover over hand or any card.
-- returns to the initial state. 
-# when hovering the mouse
-- cards in hand are enlarged and raised, at 3 times the initial size, and the size of cards without hover. 
-- non-selected cards are moved to the sides to free up space for the selected/pointed card. 
-# when dragging,
-- when the bottom of the dragged card leaves the hand field, the card is adjusted to the size of the cards on the field, the same as what it would be if it were lying on the field. 
-# a card or any object that is dragged
-- on hover when dragged onto the hand field. get in hand.
+** поле цвета при выборе дая
+** обеденять карты в колоды
+** карта добовляется в колоду
+** таил картинка
 ** токенты картинка
 ** цвет масти
 *** в кусдом деке
 *** и основного дека
+** кнопки управления
+*** развернуть
+*** рол шафл
+*** залочить
+*** групировать
+*** уменшить увеличить
+*** открыть свойства
 ** в кусдом дек добавит поле количество карт
 *** DONE поправить белый шрифт
 *** задовать цвет перевёрнутой карты
@@ -104,12 +105,22 @@ let's do it.
 *** количество сторон
 в форме значени с по
 *** цвет кости
-** поле цвета при выборе дая
-** таил картинка
+** исправить поведение карт в руке
+*** при наведении
+проще карты счентровать на середину. Тогда у картбудет больше пространства для манёвра.
+увеличевшаяся карта не должна закрыват другие карты.
+может свяшатся в приделах курсора, так чтоб не закрывать другие карты. Но не должна покидать курсор, перемешаясь так чтоб курсор был поверх карты.
+мальнекие карты осовождая место могу закрывать друг друга до половины.
+*** Перетягивание карт в руке
 ** возможност сохранять куздм карты
 ** токенты куздом
 *** меню
 *** выбор цвета
+** контейнеры
+*** тарелка с щарами и кубами
+форма обекта зависи от типа
+цвет от свойства обекта
+изначально все обекты белые
 ** сылка колоды карты
 *** возможна одна карта
 *** задаём количество карт
@@ -119,22 +130,8 @@ let's do it.
 ** возможност сохранять куздм карты
 ** кости разной формы
 ** выбор цвета костей
-** обеденять карты в колоды
-** карта добовляется в колоду
-** контейнеры
-*** тарелка с щарами и кубами
-форма обекта зависи от типа
-цвет от свойства обекта
-изначально все обекты белые
 ** добавить тайлы изображений
 ** перетягимаемое меню поверх
-** кнопки управления
-*** развернуть
-*** рол шафл
-*** залочить
-*** групировать
-*** уменшить увеличить
-*** открыть свойства
 ** расширить зум
 ** меню управления обектом
 *** размер обекта
@@ -216,7 +213,6 @@ git push -u origin main
 
 https://github.com/Buyn/cljs-tabletop-sim.git
 
-
 * спекс
 ** спекс
 *** раскажи мне о состоянии проекта
@@ -275,6 +271,9 @@ The config uses a :node-test target, so it compiles to out/test.js and runs with
 
     <link href="css/style.css" rel="stylesheet" type="text/css">
 
+* tools
+** desktop
+(desktop-save "~/.emacs.d/emaks-sesions/clojure-tabletop-sim-kiro/")
 
 * 2026-04-10
 ** clojure-tabletop-sim-kiro.org

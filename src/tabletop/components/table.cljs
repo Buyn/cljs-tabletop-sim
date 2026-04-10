@@ -1,6 +1,6 @@
 (ns tabletop.components.table
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state pan-table! zoom-table! move-card-to-hand!]]
+            [tabletop.state :refer [app-state pan-table! zoom-table!]]
             [tabletop.components.card :as card]
             [tabletop.components.deck :as deck]
             [tabletop.components.die :as die]
@@ -44,10 +44,7 @@
           (for [component components]
             (case (:type component)
               :deck ^{:key (:id component)} [deck/deck {:deck component}]
-              :card ^{:key (:id component)} [card/card {:card component
-                               :on-drag-end (fn [[cx cy]]
-                                              (when (hand/hand-drop-zone? [cx cy])
-                                                (move-card-to-hand! (:id component))))}]
+              :card ^{:key (:id component)} [card/card {:card component}]
               :die  ^{:key (:id component)} [die/die  {:die  component}]
               ^{:key (:id component)} [:div {:class "absolute bg-red-500 text-white text-xs p-1 rounded"
                      :style {:left (str (:x component 0) "px")

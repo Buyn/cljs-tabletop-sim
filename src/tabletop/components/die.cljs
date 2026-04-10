@@ -1,6 +1,6 @@
 (ns tabletop.components.die
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! remove-component!]]
+            [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!]]
             [tabletop.logic.dice :refer [roll-die]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
@@ -72,7 +72,9 @@
                                      (.-offsetParent (.-currentTarget e)))
                         new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
                         new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
-                    (move-component! id new-x new-y))))))
+                    (if (tabletop.components.hand/hand-drop-zone? [(.-clientX e) (.-clientY e)])
+                      (move-card-to-hand! id)
+                      (move-component! id new-x new-y)))))))
 
           :on-pointer-up
           (fn [e]

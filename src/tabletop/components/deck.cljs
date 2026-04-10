@@ -1,6 +1,6 @@
 (ns tabletop.components.deck
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! draw-top-card! draw-card-to-table! shuffle-deck! flip-deck!]]
+            [tabletop.state :refer [app-state move-component! draw-top-card! draw-card-to-table! shuffle-deck! flip-deck! move-card-to-hand!]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn deck
@@ -38,7 +38,9 @@
                     parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
                     new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
                     new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
-                (move-component! id new-x new-y))))
+                (if (tabletop.components.hand/hand-drop-zone? [(.-clientX e) (.-clientY e)])
+                  (move-card-to-hand! id)
+                  (move-component! id new-x new-y)))))
 
           :on-pointer-up
           (fn [e]
