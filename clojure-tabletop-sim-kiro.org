@@ -4,7 +4,7 @@
 (find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/package.json")
 
 * TODO 
-** поправить перетягивание при зум
+** DONE поправить перетягивание при зум
 при зуме или удалении ломаестя точность перетягивания.
 перетягивание не учитывает изменившийся зум и теряется согласование места клика и скорости движения мыши и перетягиваемого обекта.
 нужно поправить чтоб перетягивание было постоным не зависимо от степение приближения или удаления.
@@ -26,11 +26,43 @@ Let's fix dragging when scaling.
  When dragging, the changed scale and coordination of the click location and the speed of movement of the mouse and the dragged object are not taken into account. 
  This needs to be adjusted so that the drag is consistent no matter how much user zoom in or out.
 ** сворачивать маин меню
-*** гамбургер меню
+*** кнопка гамбургер меню
+в верхнем левом углу
 *** при наведении мыши или клике разворачивается
 *** клик на поле сварачивает
-** маин меню разделы
-*** перенести сейв лоад в меню
+*** начальное состояни развёрнуто
+состояние запоминается в сейв файле
+*** перенести сейв в меин меню
+*** сделать маин меню разделы сворачиваемыми
+тоесть раздел дека, костей, и сейва\загрузки.
+нужно клацнуть что разверну, повторное нажате сворачивает.
+начальное состоние все свёрнуты.
+клик на одномсворчивает развёрнутые и разворачивает выбраный.
+
+let's do it
+# collapse main menu
+- hamburger menu button in the upper left corner.
+- expands when hovered or clicked
+- click on the field collapses
+- initial state expanded
+- the state is saved in the save file
+# move save - to main menu
+# make the main menu sections collapsible 
+## that is
+- the deck,
+- dice,
+- and save/load sections. 
+
+## You need to click to expand it,
+- press it again to collapse it.
+- the initial state is all collapsed.
+- When you click on one, the expanded one is collapsed and the selected one is expanded.
+** поле цвета при выборе дая
+** куздом дай
+*** указать форму
+*** количество сторон
+в форме значени с по
+*** цвет кости
 ** выделять обекты левой кнопко
 *** при протягивании
 *** при клаце с шифтом левой кнопкой
@@ -41,9 +73,11 @@ Let's fix dragging when scaling.
 *** пунки меню стола
 вставить
 ** в кусдом дек добавит поле количество карт
-*** поправить белый шрифт
+*** DONE поправить белый шрифт
 *** задовать цвет перевёрнутой карты
-*** цвет масти
+** цвет масти
+*** в кусдом деке
+*** и основного дека
 ** перевёрнутые карты
 *** убрать прозрачность
 *** задать цвет перевёрнутой карты

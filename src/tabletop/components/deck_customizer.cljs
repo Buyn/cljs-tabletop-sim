@@ -38,7 +38,7 @@
              (fn [i suit]
                [:div.flex.items-center.gap-2.mb-2 {:key i}
                 [:label.text-sm.w-16.text-gray-600 (str "Suit " (inc i))]
-                [:input.border.rounded.px-2.py-1.text-sm.flex-1
+                [:input.border.rounded.px-2.py-1.text-sm.flex-1.text-gray-600
                  {:type      "text"
                   :max-length 20
                   :value     suit
@@ -54,7 +54,7 @@
              (fn [i rank]
                [:div.flex.items-center.gap-2.mb-2 {:key i}
                 [:label.text-sm.w-16.text-gray-600 (str "Rank " (inc i))]
-                [:input.border.rounded.px-2.py-1.text-sm.flex-1
+                [:input.border.rounded.px-2.py-1.text-sm.flex-1.flex-1.text-gray-600
                  {:type      "text"
                   :max-length 10
                   :value     rank
