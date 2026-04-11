@@ -32,7 +32,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 1. "Save Game" serializes the current Game State to JSON and downloads it as `tabletop-save.json`.
 2. The serialization includes all component positions, face states, roll results, deck compositions, and hand contents.
 3. Saving does not mutate state or interrupt the session.
-
+4. Serializing then deserializing any valid Game State produces a deeply equal Game State.
+5. All component positions, face states, roll results, deck compositions, and hand contents are preserved.
 ### 3. Add Components
 
 1. "Add Standard Deck" places a new shuffled 52-card deck on the table.
@@ -87,7 +88,30 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 8. Ctrl+X while dragging copies and removes the dragged component.
 9. Ctrl+V pastes the copy list: into the hand if the cursor is over the hand, otherwise onto the table at the cursor position.
 
-### 9. Persistence Round-Trip
+### 10. Hand Behavior
 
-1. Serializing then deserializing any valid Game State produces a deeply equal Game State.
-2. All component positions, face states, roll results, deck compositions, and hand contents are preserved.
+1. The hand strip is fixed at the bottom of the viewport.
+   - When neither the strip nor any card in it is hovered, the hand body slides down by ~90%, leaving only a thin edge visible.
+   - Cards remain visible above the hand and are not clipped; approximately half of each card’s height remains visible.
+   - When the hand or any card is hovered, the hand returns to its full visible position.
+2. Cards in the hand are centered horizontally and arranged as compactly as possible:
+   - Cards avoid overlapping if there is sufficient horizontal space.
+   - If space is limited, cards overlap uniformly.
+   - No unnecessary gaps are left between cards.
+   - Layout density only changes when interaction (e.g., hover) requires cards to move.
+3. When a card is hovered it scales up 3× in place (transform-origin: bottom center) without moving.
+4. The scaled card must not visually cover its neighbors:
+   - Neighboring cards shift outward just enough to accommodate the enlarged card.
+   - The expanded edge of the hovered card meets but does not overlap adjacent cards.
+   - Cards only move as much as necessary; the layout remains as compact as possible.
+5. Card visibility is prioritized based on proximity to the hovered card:
+   - Cards closest to the hovered card must remain clearly visible with minimal overlap.
+   - Cards farther from the hovered card may be increasingly overlapped to preserve space.
+   - Overlap is redistributed dynamically so that nearer cards are revealed at the expense of farther ones.
+   - No empty gaps are introduced; the layout remains visually continuous and compact.
+6. Z-order is determined by proximity to the hovered card: the closest neighbor renders on top of farther ones; the hovered card is always topmost.
+7. Cards in the hand can be dragged horizontally to reorder them; releasing within the hand strip inserts the card at the nearest slot.
+8. While dragging a card:
+   - If the bottom of the dragged card leaves the hand area, the card visually transitions to table scale.
+   - If any draggable component is hovered over the hand area during drag, it becomes eligible to enter the hand on drop.
+9. Releasing a dragged hand card outside the hand strip moves it onto the table at the drop position with table scale applied.
