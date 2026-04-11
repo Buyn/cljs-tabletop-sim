@@ -79,7 +79,7 @@ when pressed:
   The dragged object is copied in the "coping list" 
 - control+x 
   The dragged object is deleted and copied to the "coping list".
-** структурно изменить корневой обект
+** DONE структурно изменить корневой обект
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -1255,7 +1255,7 @@ The general task is to obtain certain properties that all objects will have. som
 but the specific interpretation is up to you.
 
 if you need to change this in any other objects, you are free to make changes to all objects
-** fix
+** DONE fix
 *** overall good
 if you need to change this in any other objects, you are free to make changes to all objects
 *** needs fixing
@@ -1276,10 +1276,18 @@ Pressing the commands buttons\"item menu" or other commands affects the entire s
 **** reduce the size of the dice by 3 times.
 **** default dice value 
 cannot be empty it is always set to the random value possible for a given die.
-** колоды
-*** карта добовляется в колоду
-*** обеденять карты в колоды
-
+** decks
+*** card is added to the deck when dragging a card onto the deck.
+*** combine cards into decks.
+The general command for all selected objects is grouping.
+when selecting several cards during grouping, they form a new deck.
+If there is a deck among those being grouped, then the cards instead of creating a new deck will be added to the existing one.
+When grouping, the rest of the objects (not cards or decks, objects that do not have grouping rules) simply try to be as close as possible, but so as not to intersect.
+grouping is a command in the menu that appears only for selected objects.
+** DONE Let's fill out the specification file 
+current state of the project.
+and rewrite it to the best possible standards.
+and for reflecting good functional code.
 ** перевёрнутые карты
 *** убрать прозрачность
 открытые карты не должны быть прозрачными, уних должен быть цвет.
@@ -1288,6 +1296,16 @@ cannot be empty it is always set to the random value possible for a given die.
 ** кости разной формы
 ** карты можно перетягивать в руке
 меняя их сортировку
+** кнопки управления
+*** развернуть
+*** рол шафл
+*** залочить
+*** групировать
+*** уменшить увеличить
+*** открыть свойства
+*** клавиши копирования
+**** должны действовать на все выделеные обекты
+**** вынести все управляюшие клавиши в отделный фаил настроек
 ** выбор цвета костей
 ** все меню добовления обектов
 и свойст обекстов
@@ -1308,13 +1326,6 @@ cannot be empty it is always set to the random value possible for a given die.
 ** в кусдом дек добавит поле количество карт
 *** DONE поправить белый шрифт
 *** задовать цвет перевёрнутой карты
-** кнопки управления
-*** развернуть
-*** рол шафл
-*** залочить
-*** групировать
-*** уменшить увеличить
-*** открыть свойства
 ** куздом дай
 *** указать форму
 *** количество сторон
