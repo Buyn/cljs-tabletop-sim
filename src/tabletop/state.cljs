@@ -10,7 +10,9 @@
    :context-menu nil
    :error        nil
    :menu-open    true
-   :menu-section nil})
+   :menu-section nil
+   :selection    #{}
+   :copy-list    []})
 
 (defonce app-state (r/atom initial-state))
 
@@ -180,3 +182,56 @@
 
 (defn zoom-table! [delta]
   (swap! app-state zoom-table delta))
+
+;; ---------------------------------------------------------------------------
+;; Selection
+;; ---------------------------------------------------------------------------
+
+(defn set-selection! [ids]
+  (swap! app-state assoc :selection (set ids)))
+
+(defn clear-selection! []
+  (swap! app-state assoc :selection #{}))
+
+(defn toggle-selection! [id]
+  (swap! app-state update :selection
+         (fn [s] (if (contains? s id) (disj s id) (conj s id)))))
+
+(defn add-to-selection! [id]
+  (swap! app-state update :selection conj id))
+
+;; ---------------------------------------------------------------------------
+;; Copy list
+;; ---------------------------------------------------------------------------
+
+(defn copy-objects-to-list! [ids]
+  (let [comps (:components @app-state)
+        selected (filter #(contains? (set ids) (:id %)) comps)]
+    (swap! app-state assoc :copy-list (vec selected))))
+
+(defn copy-single-to-list! [id]
+  (let [comp (first (filter #(= (:id %) id) (:components @app-state)))]
+    (when comp
+      (swap! app-state assoc :copy-list [comp]))))
+
+(defn paste-from-list!
+  "Paste copy-list onto the table at [cx cy] (table coords), offset from first item."
+  [cx cy]
+  (let [items (:copy-list @app-state)]
+    (when (seq items)
+      (let [base-x (:x (first items) 0)
+            base-y (:y (first items) 0)]
+        (doseq [item items]
+          (let [new-id (str (random-uuid))
+                dx     (- (:x item 0) base-x)
+                dy     (- (:y item 0) base-y)]
+            (add-component! (assoc item :id new-id :x (+ cx dx) :y (+ cy dy)))))))))
+
+(defn paste-to-hand!
+  "Paste copy-list into the hand."
+  []
+  (let [items (:copy-list @app-state)]
+    (when (seq items)
+      (doseq [item items]
+        (let [new-id (str (random-uuid))]
+          (swap! app-state update :hand conj (assoc item :id new-id)))))))
