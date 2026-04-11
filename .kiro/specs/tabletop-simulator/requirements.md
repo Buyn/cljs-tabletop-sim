@@ -43,40 +43,73 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ### 4. Deck Customization
 
-1. The Deck Customizer accepts exactly 4 suit labels (max 20 chars each) and 13 rank labels (max 10 chars each).
-2. The player chooses a face color from a palette of at least 8 colors.
-3. Confirming places a shuffled 52-card custom deck on the table.
-4. Any empty or whitespace-only label prevents confirmation and shows a validation error.
+1. The Deck Customizer opens as a modal overlay.
+2. It presents 4 suit fields (max 20 chars each) and 13 rank fields (max 10 chars each), pre-filled with standard values (♠ ♥ ♦ ♣ / A 2 … K).
+3. The player chooses:
+   - a face-up card background color,
+   - a face-down card background color,
+   - a card text color,
+   from a fixed palette of 9 swatches.
+4. Confirming validates all fields:
+   - any empty or whitespace-only label shows an inline per-field error,
+   - all suit labels must be unique,
+   - all rank labels must be unique,
+   and blocks submission on failure.
+5. On valid confirmation, a shuffled 52-card custom deck is placed at a fixed position on the table.
+6. The deck stores its suits, ranks, and color so it can be identified as custom.
+7. "Cancel" closes the modal without creating a deck.
+8. The player specifies the total number of cards in the deck.
+9. If rank values are not fully specified, remaining cards are auto-filled with incremental numeric values.
+10. Each suit has an associated color selector displayed next to its symbol input.
+11. The chosen suit color is used when rendering that suit on cards.
 
 ### 5. Card Manipulation
 
 1. Dragging a Card moves it in real time.
 2. Double-clicking a Card toggles face-up / face-down.
-3. Dragging a Card into the Hand area moves it from the table to the hand.
-4. Dragging a Card from the Hand to the table moves it back onto the table.
-5. Right-clicking a Deck shows a context menu: "Draw to Table", "Draw to Hand", "Shuffle", "Flip Deck", "Copy", "Remove".
-6. "Draw to Table" moves the top card from the deck onto the table face-up.
-7. "Draw to Hand" moves the top card from the deck into the hand.
-8. "Shuffle" randomizes the order of all cards in the deck.
-9. "Flip Deck" toggles face-up/face-down on every card in the deck.
-10. "Draw to Table" and "Draw to Hand" are disabled when the deck is empty.
-11. Right-clicking a Card shows: "Flip", "Copy", "Remove".
+3. Dragging a Card into the Hand area moves it from the table to the hand; while dragging over the hand the card visually shrinks to hand scale (scale 0.33 from top-left).
+4. Dragging a Card from the Hand to the table moves it back onto the table at the drop position.
+5. Dropping a Card onto a Deck merges it into that deck.
+6. Right-clicking a Deck shows a context menu: "Draw to Table", "Draw to Hand", "Shuffle", "Flip Deck", "Copy", "Remove".
+7. "Draw to Table" moves the top card from the deck onto the table face-up, placed to the right of the deck.
+8. "Draw to Hand" moves the top card from the deck into the hand.
+9. "Shuffle" randomizes the order of all cards in the deck.
+10. "Flip Deck" toggles face-up/face-down on every card in the deck.
+11. "Draw to Table" and "Draw to Hand" are disabled (hidden) when the deck is empty.
+12. Right-clicking a Card shows: "Flip", "Copy", "Remove".
+13. Ctrl+C while dragging a card copies it to the copy list.
+14. Ctrl+X while dragging a card copies it and removes it from the table.
+15. Selecting multiple components and right-clicking shows a "Group" action that merges selected cards into a deck (or into an existing selected deck).
 
-### 6. Dice
+### 6. Card Appearance
+
+1. A face-up card shows its rank and suit centered on a colored background.
+2. A face-down card shows a blue hatched pattern on a dark background.
+3. A selected card is highlighted with a cyan ring.
+4. A Deck renders as a stacked visual (three offset layers) with the deck color and a card-count badge.
+5. An empty Deck renders as a dashed outline placeholder labeled "Empty".
+8. A face-up card must not be transparent; it must have a solid background color.
+9. By default, a face-up card uses a light background with dark text.
+10. The face-down card background color must be explicitly defined (not transparent).
+11. In a standard deck:
+    - Spades (♠) and Clubs (♣) render in black,
+    - Hearts (♥) and Diamonds (♦) render in red.
+
+### 7. Dice
 
 1. Clicking a Die rolls it: generates a uniform random integer in [1, N] and displays it immediately.
 2. A newly placed die always shows a random initial roll result — never empty.
 3. Dragging a Die moves it without triggering a roll.
 4. Right-clicking a Die shows: "Roll", "Copy", "Remove".
 
-### 7. Table Interaction
+### 8. Table Interaction
 
 1. Left-click drag on empty table draws a rubber-band selection rectangle; releasing selects all intersecting components.
 2. Middle-click drag pans the viewport.
 3. Scroll zooms the viewport, clamped to [0.5, 2.0], centered on the cursor.
 4. Right-clicking empty table shows a context menu with "Paste".
 
-### 8. Selection and Clipboard
+### 9. Selection and Clipboard
 
 1. Shift-clicking a component adds it to the selection; plain click clears the selection.
 2. Selected components are highlighted with a cyan ring.
