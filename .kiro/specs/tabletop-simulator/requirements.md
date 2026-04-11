@@ -8,7 +8,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 - **Table** — the main 2D play area where components are placed and manipulated.
 - **Component** — any object on the table: a Deck, a Card, or a Die.
-- **Deck** — an ordered collection of Cards. Standard: 52 cards (4 suits × 13 ranks). Custom: user-defined suits, ranks, and face color.
+- **Deck** — an ordered stack (LIFO) of Cards where the top card is the last inserted and the first drawn.
 - **Card** — a single playing card. Has a face-up and face-down state.
 - **Die** — a single die with a fixed face count (d4, d6, d8, d10, d12, d20, d100).
 - **Hand** — a private strip at the bottom of the viewport holding Cards face-up.
@@ -32,8 +32,6 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 1. "Save Game" serializes the current Game State to JSON and downloads it as `tabletop-save.json`.
 2. The serialization includes all component positions, face states, roll results, deck compositions, and hand contents.
 3. Saving does not mutate state or interrupt the session.
-4. Serializing then deserializing any valid Game State produces a deeply equal Game State.
-5. All component positions, face states, roll results, deck compositions, and hand contents are preserved.
 ### 3. Add Components
 
 1. "Add Standard Deck" places a new shuffled 52-card deck on the table.
@@ -69,9 +67,10 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 2. Double-clicking a Card toggles face-up / face-down.
 3. Dragging a Card into the Hand area moves it from the table to the hand; while dragging over the hand the card visually shrinks to hand scale (scale 0.33 from top-left).
 4. Dragging a Card from the Hand to the table moves it back onto the table at the drop position.
-5. Dropping a Card onto a Deck merges it into that deck.
+5. Dropping a Card onto any overlapping region of a Deck merges it into that deck, placing it on top.
 6. Right-clicking a Deck shows a context menu: "Draw to Table", "Draw to Hand", "Shuffle", "Flip Deck", "Copy", "Remove".
 7. "Draw to Table" moves the top card from the deck onto the table face-up, placed to the right of the deck.
+7.1 The drawn card is always taken from the top of the deck.
 8. "Draw to Hand" moves the top card from the deck into the hand.
 9. "Shuffle" randomizes the order of all cards in the deck.
 10. "Flip Deck" toggles face-up/face-down on every card in the deck.
@@ -79,7 +78,35 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 12. Right-clicking a Card shows: "Flip", "Copy", "Remove".
 13. Ctrl+C while dragging a card copies it to the copy list.
 14. Ctrl+X while dragging a card copies it and removes it from the table.
-15. Selecting multiple components and right-clicking shows a "Group" action that merges selected cards into a deck (or into an existing selected deck).
+15. Selecting multiple components and right-clicking shows a "Group" action that merges multiple Cards and/or Decks into a deck (or into an existing selected single deck).
+
+### 5A. Deck Interaction (Advanced Behavior)
+
+1. Dragging a Card over any part of a Deck and releasing it places the card on top of that deck.
+2. Any overlap between a Card and a Deck during drop is sufficient to trigger insertion into the deck.
+3. Cards added to a deck are always placed on top unless explicitly specified otherwise.
+4. The top card of a deck is always the first one drawn.
+
+5. Dragging one Deck over another merges them:
+   - The dragged deck is placed on top of the target deck.
+   - Any overlap between decks triggers merging.
+
+6. Grouping multiple Cards and/or Decks always produces a single Deck:
+   - All cards are merged into one stack.
+   - Deck order is preserved based on grouping order (last = top).
+
+7. A Deck with:
+   - 1 card automatically converts into a Card.
+   - 0 cards is removed from the table.
+
+8. Right-clicking a Deck includes additional actions:
+   - "Split Deck (2)" — splits the deck into two equal halves, creating a new deck next to it.
+   - "Split Deck (3)" — splits the deck into three equal parts, creating two new decks next to it.
+   - "Draw Bottom Card" — removes and returns the bottom card instead of the top one.
+
+9. Splitting rules:
+   - Cards are divided as evenly as possible.
+   - New decks appear adjacent to the original deck.
 
 ### 6. Card Appearance
 
@@ -108,6 +135,20 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 2. Middle-click drag pans the viewport.
 3. Scroll zooms the viewport, clamped to [0.5, 2.0], centered on the cursor.
 4. Right-clicking empty table shows a context menu with "Paste".
+5. New components (Decks, Dice) are placed at:
+   - the last middle-click position, if available,
+   - otherwise at the center of the viewport.
+
+### 8A. Deck Drag Behavior
+
+1. Short click-and-drag on a Deck (less than 1 second):
+   - Does not move the deck.
+   - Instead draws the top card for dragging.
+
+2. Long press (≥ 1 second) on a Deck:
+   - Enables dragging of the entire deck.
+
+3. This behavior prevents accidental deck movement and prioritizes card interaction.
 
 ### 9. Selection and Clipboard
 
@@ -148,3 +189,12 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - If the bottom of the dragged card leaves the hand area, the card visually transitions to table scale.
    - If any draggable component is hovered over the hand area during drag, it becomes eligible to enter the hand on drop.
 9. Releasing a dragged hand card outside the hand strip moves it onto the table at the drop position with table scale applied.
+
+## Design Principles
+
+1. All deck operations follow intuitive physical card behavior.
+2. "Top of deck" is always the most recently added card.
+3. Any visual overlap implies interaction (merge, drop, combine).
+4. Actions prioritize fluid gameplay over strict precision.
+5. All component positions, face states, roll results, deck compositions, and hand contents are preserved.
+6. Serializing then deserializing any valid Game State produces a deeply equal Game State.
