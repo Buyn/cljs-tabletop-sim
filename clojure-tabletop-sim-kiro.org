@@ -1276,7 +1276,37 @@ Pressing the commands buttons\"item menu" or other commands affects the entire s
 **** reduce the size of the dice by 3 times.
 **** default dice value 
 cannot be empty it is always set to the random value possible for a given die.
+** hand
+*** place the cards in your hand not pressed to the left, but centered.
+It’s easier to center the cards in the middle of the card hand. Then the cards will have more room to maneuver when pointing.
+*** fix the behavior of cards in hand
+**** on hover
+- the enlarged card should not cover other cards.
+- the cards under the cursor may move within the cursor, so as not to cover other maps. But it should not leave the cursor, shifting so that the cursor is on top of the selected card.
+- small cards cards freeing up space can cover each other. they should not completely cover each other and there should be no empty space between them. The degree to which cards are covered by each other is determined by proximity to the highlighted card. the closer they are, the less they should overlap each other.
+- the position of which card is on top of which card is determined by its proximity to the selected one (on which the cursor is located). The closest card is always on top of the farthest one.
+*** Drawing and drop\position cards in hand
+cards can be dragged in your hand, changing their sorting.
 ** decks
+*** fix
+перетяшивание карты на любую часть дека, помешает карту в этот дек.
+тоесть любое перкрвание карты с деком приводи к помешению карты на верх дека.
+*** сплит дек
+*** карта тянется последняя в колоде первой
+это считается врехом колоды
+*** при добовление каты в дек
+карта помешается на верх колоды. Тоесть
+при добовлении
+*** сплит дек он 3
+*** пустой дек должен просто исчезать
+когда в деке остаются одна карта
+дек преврашается в последнюю карту
+*** вытенуть карту снизу
+*** короткое удержание
+*** долгое удержание удержание
+*** груперровка деков и крат
+*** перетягивание одно дека на другой
+** DONE decks
 *** card is added to the deck when dragging a card onto the deck.
 *** combine cards into decks.
 The general command for all selected objects is grouping.
@@ -1294,9 +1324,13 @@ and for reflecting good functional code.
 по дефалту карта светлая шрфт тёмный.
 *** задать цвет перевёрнутой карты
 ** кости разной формы
-** карты можно перетягивать в руке
-меняя их сортировку
 ** кнопки управления
+*** кнопки действуют на обект под курсором
+как если бы он был перетягиваемый.
+*** w и r
+поворот для всех кроме дайсов
+для дайсов уменшить
+*** 
 *** развернуть
 *** рол шафл
 *** залочить
@@ -1331,13 +1365,6 @@ and for reflecting good functional code.
 *** количество сторон
 в форме значени с по
 *** цвет кости
-** исправить поведение карт в руке
-*** при наведении
-проще карты счентровать на середину. Тогда у картбудет больше пространства для манёвра.
-увеличевшаяся карта не должна закрыват другие карты.
-может свяшатся в приделах курсора, так чтоб не закрывать другие карты. Но не должна покидать курсор, перемешаясь так чтоб курсор был поверх карты.
-мальнекие карты осовождая место могу закрывать друг друга до половины.
-*** Перетягивание карт в руке
 ** возможност сохранять куздм карты
 ** токенты куздом
 *** меню
@@ -1371,7 +1398,7 @@ and for reflecting good functional code.
 *** поворот
 *** смещение свойст текстуры
 *** залочить
-** увеличение карты в руке при наведении
+** DONE увеличение карты в руке при наведении
 ** сохронять контейнер
 ** доблять внешний кантейнер жсон
 ** выбор обектов из сейвов и контейнеров

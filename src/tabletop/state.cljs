@@ -173,17 +173,110 @@
   (defmethod perform-action [t :remove] [state id _]
     (remove-component state id)))
 
+;; Add a single card (map with :suit :rank :color :face-up?) to a deck
+(defmethod perform-action [:deck :add-card] [state deck-id _ card]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) deck-id)
+                            (update % :cards conj (dissoc card :id :type :x :y))
+                            %) cs))))
+
+;; Drop a loose card onto a deck by id
+(defmethod perform-action [:card :drop-on-deck] [state card-id _ deck-id]
+  (let [card (some #(when (= (:id %) card-id) %) (:components state))]
+    (if card
+      (-> state
+          (remove-component card-id)
+          (update :components
+                  (fn [cs] (mapv #(if (= (:id %) deck-id)
+                                    (update % :cards conj (dissoc card :id :type :x :y))
+                                    %) cs))))
+      state)))
+
 ;; ---------------------------------------------------------------------------
-;; Component capabilities (data-driven context menus)
+;; Grouping
 ;; ---------------------------------------------------------------------------
+
+(defn- non-overlapping-pos
+  "Nudge position [x y] until it doesn't overlap any rect in `occupied`.
+   Each occupied entry is [ox oy ow oh]."
+  [x y w h occupied]
+  (loop [x x y y attempts 0]
+    (if (or (> attempts 50)
+            (not (some (fn [[ox oy ow oh]]
+                         (and (< x (+ ox ow)) (> (+ x w) ox)
+                              (< y (+ oy oh)) (> (+ y h) oy)))
+                       occupied)))
+      [x y]
+      (recur (+ x w 8) y (inc attempts)))))
+
+(defn group-selection!
+  "Group all selected components:
+   - Cards + any existing deck → cards added to deck (or new deck created).
+   - Other types → nudged to cluster without overlapping."
+  []
+  (let [state      @app-state
+        sel        (:selection state)
+        selected   (filter #(contains? sel (:id %)) (:components state))
+        cards      (filter #(= :card (:type %)) selected)
+        decks      (filter #(= :deck (:type %)) selected)
+        others     (filter #(not (#{:card :deck} (:type %))) selected)]
+    (when (> (count selected) 1)
+      (cond
+        ;; At least one deck: add all selected cards into the first deck
+        (seq decks)
+        (let [target-deck (first decks)
+              tid         (:id target-deck)]
+          (swap! app-state
+                 (fn [s]
+                   (reduce (fn [s card]
+                             (-> s
+                                 (remove-component (:id card))
+                                 (update :components
+                                         (fn [cs] (mapv #(if (= (:id %) tid)
+                                                           (update % :cards conj (dissoc card :id :type :x :y))
+                                                           %) cs)))))
+                           s cards))))
+
+        ;; Only cards: form a new deck at the position of the first card
+        (seq cards)
+        (let [anchor (first cards)
+              new-deck {:id       (str (random-uuid))
+                        :type     :deck
+                        :x        (:x anchor 0)
+                        :y        (:y anchor 0)
+                        :color    (or (:color anchor) "#1e40af")
+                        :cards    (mapv #(dissoc % :id :type :x :y) cards)}]
+          (swap! app-state
+                 (fn [s]
+                   (-> (reduce #(remove-component %1 (:id %2)) s cards)
+                       (add-component new-deck))))))
+
+      ;; Nudge non-card/deck objects to cluster near the group without overlapping
+      (when (seq others)
+        (let [anchor-x (or (:x (first (concat decks cards))) 0)
+              anchor-y (or (:y (first (concat decks cards))) 0)]
+          (swap! app-state
+                 (fn [s]
+                   (let [occupied (atom [])]
+                     (reduce (fn [s obj]
+                               (let [[nx ny] (non-overlapping-pos
+                                              (+ anchor-x 80) anchor-y 70 70 @occupied)]
+                                 (swap! occupied conj [nx ny 70 70])
+                                 (move-component s (:id obj) nx ny)))
+                             s others)))))))))
+
+
 
 (defmulti component-actions :type)
 
 (defn- common-actions [id]
-  [{:label "Copy"   :action #(copy-objects-to-list!
-                               (let [sel (:selection @app-state)]
-                                 (if (contains? sel id) (vec sel) [id])))}
-   {:label "Remove" :action #(dispatch-selection! id :remove)}])
+  (let [sel-count (count (:selection @app-state))
+        group-item {:label "Group" :action group-selection!}]
+    (cond-> [{:label "Copy"   :action #(copy-objects-to-list!
+                                         (let [sel (:selection @app-state)]
+                                           (if (contains? sel id) (vec sel) [id])))}
+             {:label "Remove" :action #(dispatch-selection! id :remove)}]
+      (> sel-count 1) (into [group-item]))))
 
 (defmethod component-actions :deck [{:keys [id x y cards]}]
   (let [empty? (empty? cards)]

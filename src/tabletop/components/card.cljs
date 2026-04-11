@@ -5,6 +5,17 @@
                                     copy-single-to-list! dispatch! dispatch-selection! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
+(defn- find-deck-at
+  "Return the first deck whose bounding box contains table point [tx ty]."
+  [tx ty exclude-id]
+  (some (fn [c]
+          (when (and (= :deck (:type c))
+                     (not= (:id c) exclude-id)
+                     (< (:x c 0) tx (+ (:x c 0) 70))
+                     (< (:y c 0) ty (+ (:y c 0) 100)))
+            c))
+        (:components @app-state)))
+
 (defn card
   [{:keys [card on-drag-end]}]
   (let [dragging?   (r/atom false)
@@ -93,15 +104,25 @@
               (reset! dragging? false)
               (reset! over-hand? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
-              (when-not @drag-moved?
-                (if (.-shiftKey e)
-                  (add-to-selection! id)
-                  (clear-selection!)))
               (let [z           (get-in @app-state [:table :zoom] 1.0)
                     parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
                     final-x     (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
                     final-y     (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
-                (when on-drag-end (on-drag-end [final-x final-y])))))
+                (if (and @drag-moved? (find-deck-at final-x final-y id))
+                  ;; Dropped onto a deck — add card to it
+                  (let [target-deck (find-deck-at final-x final-y id)
+                        sel         (:selection @app-state)
+                        card-ids    (if (contains? sel id) sel #{id})]
+                    (doseq [cid card-ids]
+                      (when (= :card (:type (some #(when (= (:id %) cid) %) (:components @app-state))))
+                        (dispatch! cid :drop-on-deck (:id target-deck)))))
+                  ;; Normal drop
+                  (do
+                    (when-not @drag-moved?
+                      (if (.-shiftKey e)
+                        (add-to-selection! id)
+                        (clear-selection!)))
+                    (when on-drag-end (on-drag-end [final-x final-y])))))))
 
           :on-double-click
           (fn [e]
