@@ -1276,7 +1276,7 @@ Pressing the commands buttons\"item menu" or other commands affects the entire s
 **** reduce the size of the dice by 3 times.
 **** default dice value 
 cannot be empty it is always set to the random value possible for a given die.
-** hand
+** DONE hand
 *** place the cards in your hand not pressed to the left, but centered.
 It’s easier to center the cards in the middle of the card hand. Then the cards will have more room to maneuver when pointing.
 *** fix the behavior of cards in hand
@@ -1287,6 +1287,11 @@ It’s easier to center the cards in the middle of the card hand. Then the cards
 - the position of which card is on top of which card is determined by its proximity to the selected one (on which the cursor is located). The closest card is always on top of the farthest one.
 *** Drawing and drop\position cards in hand
 cards can be dragged in your hand, changing their sorting.
+** make a change in the behavior of an individual card in hand
+*** in spec file
+based on the previous assignment.
+*** cards in hand when hovering should increase by 3 times and not rise.
+
 ** decks
 *** fix
 перетяшивание карты на любую часть дека, помешает карту в этот дек.
@@ -1540,6 +1545,96 @@ The config uses a :node-test target, so it compiles to out/test.js and runs with
 
     <link href="css/style.css" rel="stylesheet" type="text/css">
 ** CONVERSATION SUMMARY
+*** 2026-04-11 05:42:34
+════════════════════════════════════════════════════════════════════════════════
+                       CONVERSATION SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+## OBJECTIVE
+Fix issues in a ClojureScript tabletop simulator: right-click context menus on card/die/deck objects, preserve selection highlight on right-click, context menu actions affect entire selected group, reduce die size 3x, dice always have a default random value.
+
+## USER GUIDANCE
+- Absolute minimal code — no verbose implementations
+- Right-click context menu must have: roll (flip for card), copy, flip, remove — plus all common actions
+- Highlight (ring) must not disappear on right-click
+- Context menu actions and keyboard commands affect the entire selected group
+- Dice size reduced 3x (from ~72px to ~24px)
+- Dice default value cannot be empty — always set to a random value on creation
+- Free to make changes to all objects as needed
+
+## COMPLETED
+
+1. **`logic/dice.cljs`** — `make-die` sets `:result` to a random value on creation (was `nil`). ✅
+2. **`card.cljs`** — Full rewrite: right-click guarded with `(= (.-button e) 0)`, context menu calls `add-to-selection!` if not already selected, uses `dispatch-selection!` for Ctrl+X. ✅
+3. **`die.cljs`** — Full rewrite: size `w-[24px] h-[24px]`, `text-[8px]`, same right-click/selection fixes, uses `dispatch-selection!`. ✅
+4. **`deck.cljs`** — ns require updated, `on-pointer-down` guarded, `on-context-menu` uses `component-actions`. ✅
+5. **`state.cljs`** — Partially fixed: `dispatch-selection!` added, `:remove` action added, `common-actions` added, `component-actions` methods updated. **BROKEN**: `common-actions` references `copy-objects-to-list!` but appears before it in the file, causing a compile warning about undeclared var.
+
+## TECHNICAL CONTEXT
+
+### Broken State of `state.cljs`
+`common-actions` was placed before `copy-objects-to-list!` in the file. The compile warning:
+```
+WARNING: Use of undeclared Var tabletop.state/copy-objects-to-list!
+```
+
+### Required Ordering in `state.cljs`
+1. `ns` + `initial-state` + pure state helpers (`add-component`, `remove-component`, `move-component`, etc.)
+2. `perform-action` multimethod + all methods (including `:remove`)
+3. `dispatch!` + `dispatch-selection!`
+4. Effectful wrappers (`add-component!`, `remove-component!`, etc.)
+5. Selection helpers (`set-selection!`, `clear-selection!`, `add-to-selection!`)
+6. Copy/paste helpers (`copy-objects-to-list!`, `copy-single-to-list!`, `paste-from-list!`, `paste-to-hand!`)
+7. `defmulti component-actions` + `common-actions` + all `defmethod component-actions` implementations
+
+### Key Symbols
+- `dispatch!` — `(dispatch! id :action & args)` — applies to single component
+- `dispatch-selection!` — `(dispatch-selection! id :action & args)` — applies to all selected (or just id if not in selection)
+- `component-actions` — multimethod on `:type`, returns `[{:label :action}]`
+- `common-actions` — private fn returning Copy + Remove items for any component id
+- `open-context-menu!` — `(open-context-menu! client-x client-y items)`
+- `add-to-selection!` — adds id to `:selection` set without clearing others
+
+### Die Size
+Now: `w-[24px] h-[24px]`, `text-[8px]`, `font-black` for result.
+
+### Context Menu Right-Click Pattern (all objects)
+```clojure
+:on-context-menu
+(fn [e]
+  (.preventDefault e)
+  (.stopPropagation e)
+  (when-not (contains? (:selection @app-state) id)
+    (add-to-selection! id))
+  (open-context-menu! (.-clientX e) (.-clientY e) (component-actions component)))
+```
+
+### Pointer-Down Guard (prevents right-click from triggering drag)
+```clojure
+:on-pointer-down
+(fn [e]
+  (when (= (.-button e) 0)  ; left button only
+    ...))
+```
+
+## TOOLS EXECUTED
+- `str_replace` on `logic/dice.cljs` — set random initial result ✅
+- Multiple `str_replace` on `state.cljs` — added `dispatch-selection!`, `:remove` action, `common-actions`, updated `component-actions` methods — left file in broken ordering ⚠
+- `create` on `card.cljs` — full rewrite ✅
+- `create` on `die.cljs` — full rewrite ✅
+- `str_replace` on `deck.cljs` — ns require, on-pointer-down, on-context-menu ✅
+- Compile: `npx shadow-cljs compile app` → WARNING about undeclared `copy-objects-to-list!`
+
+## NEXT STEPS
+1. Read `state.cljs` in full to understand current actual ordering
+2. Rewrite `state.cljs` with correct top-to-bottom ordering (pure helpers → perform-action → dispatch → effectful wrappers → selection → copy/paste → component-actions multimethod + common-actions + methods)
+3. Compile to verify 0 errors/warnings
+4. Verify `deck.cljs` full content is consistent (no leftover references to deleted fns)
+
+## TODO LIST
+ID if loaded: none
+
+
 *** 2026-04-11 04:30:04
 ════════════════════════════════════════════════════════════════════════════════
                        CONVERSATION SUMMARY
@@ -1645,8 +1740,6 @@ Was: `w-[72px] h-[72px]` (or similar large size). Now: `w-[24px] h-[24px]`, `tex
 
 ## TODO LIST
 ID if loaded: none
-
-
 *** 2026-04-11 02:56:53
 ════════════════════════════════════════════════════════════════════════════════
                        CONVERSATION SUMMARY
