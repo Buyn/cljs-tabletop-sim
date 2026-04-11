@@ -16,6 +16,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 - **Copy List** — a clipboard holding a snapshot of copied components.
 - **Game State** — the complete serializable snapshot of the table (components, hand, viewport).
 - **Save File** — a JSON file downloaded to the local filesystem containing a serialized Game State.
+- **Tile Image** — an image split into a grid of tiles that can be placed on the table as individual components.
+- **Tile Piece** — a single rectangular fragment of a Tile Image.
 
 ## Requirements
 
@@ -30,14 +32,51 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 ### 2. Save Game
 
 1. "Save Game" serializes the current Game State to JSON and downloads it as `tabletop-save.json`.
-2. The serialization includes all component positions, face states, roll results, deck compositions, and hand contents.
+2. The serialization includes all component positions, face states, roll results, deck compositions, hand contents, and tile image metadata (source, grid configuration, and tile index).
 3. Saving does not mutate state or interrupt the session.
+
 ### 3. Add Components
 
 1. "Add Standard Deck" places a new shuffled 52-card deck on the table.
 2. "Add Custom Deck" opens the Deck Customizer.
 3. Selecting a die type places a new die of that type on the table with a random initial roll result.
 4. Multiple decks and dice of the same type may be added in one session.
+
+### 3A. Tile Images
+
+1. The main menu includes a new section "Tile" and in it: "Add Tile Image".
+2. Selecting it opens a non-modal draggable panel:
+   - The panel can be dragged by its title bar.
+   - It does not block interaction with the table.
+
+3. The panel allows configuring a Tile Image:
+   - Source:
+     - A URL to an online image, or
+     - A local file.
+   - Grid size:
+     - Number of tiles horizontally.
+     - Number of tiles vertically.
+
+4. The image is split into equal rectangular Tile Pieces based on the grid.
+
+5. The player may optionally specify a list of tile indices:
+   - If empty, all tiles are added.
+   - If specified, only selected tiles are added.
+   - Format:
+     - Comma-separated values (e.g., `1,2,5`)
+     - Ranges using `-` (e.g., `1-4`)
+     - Mixed (e.g., `1,3-5,7`)
+   - Duplicates are allowed and result in multiple copies of the same tile.
+
+6. Tile indexing:
+   - Tiles are indexed sequentially (row-major order, left to right, top to bottom), starting from 1.
+
+7. On confirmation:
+   - Selected Tile Pieces are added to the table.
+   - They are placed adjacent to each other preserving their relative positions.
+
+8. It is valid to configure a 1×1 grid:
+   - In this case, the full image is added as a single Tile Piece.
 
 ### 4. Deck Customization
 
@@ -122,6 +161,16 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
     - Spades (♠) and Clubs (♣) render in black,
     - Hearts (♥) and Diamonds (♦) render in red.
 
+### 6A. Tile Piece Appearance
+
+1. A Tile Piece renders as a rectangular fragment of its source image.
+2. Each Tile Piece knows:
+   - The source image (URL or local reference),
+   - Grid dimensions,
+   - Its tile index within the grid.
+3. Tile Pieces do not have face-up / face-down states.
+4. Tile Pieces can be selected, dragged, copied, and grouped like Cards.
+
 ### 7. Dice
 
 1. Clicking a Die rolls it: generates a uniform random integer in [1, N] and displays it immediately.
@@ -198,3 +247,5 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 4. Actions prioritize fluid gameplay over strict precision.
 5. All component positions, face states, roll results, deck compositions, and hand contents are preserved.
 6. Serializing then deserializing any valid Game State produces a deeply equal Game State.
+7. Tile Pieces preserve their visual continuity when placed adjacent.
+8. Tile Image configuration must be fully reconstructible from saved state.
