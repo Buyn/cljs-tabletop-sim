@@ -2,8 +2,7 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    copy-objects-to-list! copy-single-to-list!
-                                    component-actions]]
+                                    copy-single-to-list! dispatch! dispatch-selection! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn deck
@@ -27,29 +26,29 @@
 
           :on-pointer-down
           (fn [e]
-            (.stopPropagation e)
-            (reset! drag-moved? false)
-            (reset! start-cx (.-clientX e))
-            (reset! start-cy (.-clientY e))
-            (let [rect (.getBoundingClientRect (.-currentTarget e))
-                  z    (get-in @app-state [:table :zoom] 1.0)]
-              (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
-              (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z))
-              (reset! dragging? true)
-              (.setPointerCapture (.-currentTarget e) (.-pointerId e)))
-            (let [handler (fn [ke]
-                            (when @dragging?
-                              (cond
-                                (and (.-ctrlKey ke) (= (.-key ke) "c"))
-                                (do (.preventDefault ke)
-                                    (copy-single-to-list! id))
-                                (and (.-ctrlKey ke) (= (.-key ke) "x"))
-                                (do (.preventDefault ke)
-                                    (copy-single-to-list! id)
-                                    (remove-component! id)
-                                    (reset! dragging? false)))))]
-              (reset! key-handler handler)
-              (.addEventListener js/document "keydown" handler)))
+            (when (= (.-button e) 0)
+              (.stopPropagation e)
+              (reset! drag-moved? false)
+              (reset! start-cx (.-clientX e))
+              (reset! start-cy (.-clientY e))
+              (let [rect (.getBoundingClientRect (.-currentTarget e))
+                    z    (get-in @app-state [:table :zoom] 1.0)]
+                (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
+                (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z))
+                (reset! dragging? true)
+                (.setPointerCapture (.-currentTarget e) (.-pointerId e)))
+              (let [handler (fn [ke]
+                              (when @dragging?
+                                (cond
+                                  (and (.-ctrlKey ke) (= (.-key ke) "c"))
+                                  (do (.preventDefault ke) (copy-single-to-list! id))
+                                  (and (.-ctrlKey ke) (= (.-key ke) "x"))
+                                  (do (.preventDefault ke)
+                                      (copy-single-to-list! id)
+                                      (dispatch-selection! id :remove)
+                                      (reset! dragging? false)))))]
+                (reset! key-handler handler)
+                (.addEventListener js/document "keydown" handler))))
 
           :on-pointer-move
           (fn [e]
@@ -94,11 +93,9 @@
           (fn [e]
             (.preventDefault e)
             (.stopPropagation e)
-            (let [sel  (:selection @app-state)
-                  ids  (if (contains? sel id) (vec sel) [id])
-                  items (into (component-actions deck)
-                              [{:label "Copy objects" :action #(copy-objects-to-list! ids)}])]
-              (open-context-menu! (.-clientX e) (.-clientY e) items)))}
+            (when-not (contains? (:selection @app-state) id)
+              (add-to-selection! id))
+            (open-context-menu! (.-clientX e) (.-clientY e) (component-actions deck)))}
 
          (if empty?
            [:div {:class "w-[70px] h-[100px] rounded-lg border-2 border-dashed border-gray-400

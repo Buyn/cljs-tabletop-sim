@@ -686,6 +686,10 @@ video {
   height: 100vh;
 }
 
+.h-\[24px\] {
+  height: 24px;
+}
+
 .w-16 {
   width: 4rem;
 }
@@ -716,6 +720,10 @@ video {
 
 .w-full {
   width: 100%;
+}
+
+.w-\[24px\] {
+  width: 24px;
 }
 
 .min-w-\[8rem\] {
@@ -1034,6 +1042,10 @@ video {
   line-height: 1rem;
 }
 
+.text-\[8px\] {
+  font-size: 8px;
+}
+
 .font-bold {
   font-weight: 700;
 }
@@ -1044,6 +1056,10 @@ video {
 
 .font-semibold {
   font-weight: 600;
+}
+
+.font-black {
+  font-weight: 900;
 }
 
 .uppercase {
@@ -1108,6 +1124,10 @@ video {
 
 .opacity-80 {
   opacity: 0.8;
+}
+
+.opacity-70 {
+  opacity: 0.7;
 }
 
 .shadow {

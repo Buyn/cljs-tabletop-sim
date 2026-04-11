@@ -17,100 +17,7 @@
 (defonce app-state (r/atom initial-state))
 
 ;; ---------------------------------------------------------------------------
-;; Dispatch system
-;; ---------------------------------------------------------------------------
-
-(defmulti perform-action
-  (fn [state id action & _]
-    [(:type (some #(when (= (:id %) id) %) (:components state))) action]))
-
-(defn dispatch! [id action & args]
-  (swap! app-state #(apply perform-action % id action args)))
-
-;; ---------------------------------------------------------------------------
-;; Deck actions
-;; ---------------------------------------------------------------------------
-
-(defn- find-and-rest [id cs]
-  (reduce (fn [[found others] c]
-            (if (= (:id c) id) [c others] [found (conj others c)]))
-          [nil []] cs))
-
-(defmethod perform-action [:deck :shuffle] [state id _]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id) (update % :cards shuffle-vec) %) cs))))
-
-(defmethod perform-action [:deck :draw-to-hand] [state id _]
-  (let [[deck others] (find-and-rest id (:components state))
-        card (first (:cards deck))]
-    (if card
-      (-> state
-          (assoc :components (conj (vec others) (update deck :cards (comp vec rest))))
-          (update :hand conj (assoc card :type :card)))
-      state)))
-
-(defmethod perform-action [:deck :draw-to-table] [state id _ x y]
-  (let [[deck others] (find-and-rest id (:components state))
-        card (first (:cards deck))]
-    (if card
-      (assoc state :components
-             (conj (vec others)
-                   (update deck :cards (comp vec rest))
-                   (assoc card :type :card :x x :y y :face-up? true)))
-      state)))
-
-(defmethod perform-action [:deck :flip] [state id _]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id)
-                            (update % :cards (fn [cards] (mapv (fn [c] (update c :face-up? not)) cards)))
-                            %) cs))))
-
-;; ---------------------------------------------------------------------------
-;; Card actions
-;; ---------------------------------------------------------------------------
-
-(defmethod perform-action [:card :flip] [state id _]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id) (update % :face-up? not) %) cs))))
-
-;; ---------------------------------------------------------------------------
-;; Die actions
-;; ---------------------------------------------------------------------------
-
-(defmethod perform-action [:die :roll] [state id _]
-  (update state :components
-          (fn [cs]
-            (mapv #(if (= (:id %) id)
-                     (assoc % :result (inc (rand-int (:faces % 6))))
-                     %) cs))))
-
-;; ---------------------------------------------------------------------------
-;; Component capabilities (data-driven context menus)
-;; ---------------------------------------------------------------------------
-
-(defmulti component-actions
-  "Returns a seq of {:label :action} maps for a component.
-   :action is a zero-arg fn."
-  :type)
-
-(defmethod component-actions :deck [{:keys [id x y cards]}]
-  (let [empty? (empty? cards)]
-    (cond-> []
-      (not empty?) (conj {:label "Draw to Table" :action #(dispatch! id :draw-to-table (+ x 80) y)})
-      (not empty?) (conj {:label "Draw to Hand"  :action #(dispatch! id :draw-to-hand)})
-      true         (conj {:label "Shuffle"        :action #(dispatch! id :shuffle)})
-      true         (conj {:label "Flip Deck"      :action #(dispatch! id :flip)}))))
-
-(defmethod component-actions :card [{:keys [id]}]
-  [{:label "Flip" :action #(dispatch! id :flip)}])
-
-(defmethod component-actions :die [{:keys [id]}]
-  [{:label "Roll" :action #(dispatch! id :roll)}])
-
-(defmethod component-actions :default [_] [])
-
-;; ---------------------------------------------------------------------------
-;; Pure state helpers
+;; Pure state helpers (used by action methods below)
 ;; ---------------------------------------------------------------------------
 
 (defn add-component [state component]
@@ -151,13 +58,13 @@
 ;; Effectful wrappers
 ;; ---------------------------------------------------------------------------
 
-(defn add-component!    [c]       (swap! app-state add-component c))
-(defn remove-component! [id]      (swap! app-state remove-component id))
-(defn move-component!   [id x y]  (swap! app-state move-component id x y))
-(defn move-card-to-hand! [id]     (swap! app-state move-card-to-hand id))
-(defn move-card-to-table! [id x y](swap! app-state move-card-to-table id x y))
-(defn pan-table!  [dx dy]         (swap! app-state pan-table dx dy))
-(defn zoom-table! [delta]         (swap! app-state zoom-table delta))
+(defn add-component!     [c]        (swap! app-state add-component c))
+(defn remove-component!  [id]       (swap! app-state remove-component id))
+(defn move-component!    [id x y]   (swap! app-state move-component id x y))
+(defn move-card-to-hand! [id]       (swap! app-state move-card-to-hand id))
+(defn move-card-to-table![id x y]   (swap! app-state move-card-to-table id x y))
+(defn pan-table!         [dx dy]    (swap! app-state pan-table dx dy))
+(defn zoom-table!        [delta]    (swap! app-state zoom-table delta))
 
 ;; ---------------------------------------------------------------------------
 ;; Selection
@@ -194,3 +101,105 @@
 (defn paste-to-hand! []
   (doseq [item (:copy-list @app-state)]
     (swap! app-state update :hand conj (assoc item :id (str (random-uuid))))))
+
+;; ---------------------------------------------------------------------------
+;; Dispatch system
+;; ---------------------------------------------------------------------------
+
+(defmulti perform-action
+  (fn [state id action & _]
+    [(:type (some #(when (= (:id %) id) %) (:components state))) action]))
+
+(defmethod perform-action :default [state _ _ & _] state)
+
+(defn dispatch! [id action & args]
+  (swap! app-state #(apply perform-action % id action args)))
+
+(defn dispatch-selection! [id action & args]
+  (let [sel (:selection @app-state)
+        ids (if (contains? sel id) sel #{id})]
+    (doseq [sid ids]
+      (apply dispatch! sid action args))))
+
+;; ---------------------------------------------------------------------------
+;; Action methods
+;; ---------------------------------------------------------------------------
+
+(defn- find-and-rest [id cs]
+  (reduce (fn [[found others] c]
+            (if (= (:id c) id) [c others] [found (conj others c)]))
+          [nil []] cs))
+
+(defmethod perform-action [:deck :shuffle] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :cards shuffle-vec) %) cs))))
+
+(defmethod perform-action [:deck :draw-to-hand] [state id _]
+  (let [[deck others] (find-and-rest id (:components state))
+        card (first (:cards deck))]
+    (if card
+      (-> state
+          (assoc :components (conj (vec others) (update deck :cards (comp vec rest))))
+          (update :hand conj (assoc card :type :card)))
+      state)))
+
+(defmethod perform-action [:deck :draw-to-table] [state id _ x y]
+  (let [[deck others] (find-and-rest id (:components state))
+        card (first (:cards deck))]
+    (if card
+      (assoc state :components
+             (conj (vec others)
+                   (update deck :cards (comp vec rest))
+                   (assoc card :type :card :x x :y y :face-up? true)))
+      state)))
+
+(defmethod perform-action [:deck :flip] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id)
+                            (update % :cards (fn [cards] (mapv (fn [c] (update c :face-up? not)) cards)))
+                            %) cs))))
+
+(defmethod perform-action [:card :flip] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :face-up? not) %) cs))))
+
+(defmethod perform-action [:die :roll] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id)
+                            (assoc % :result (inc (rand-int (:faces % 6))))
+                            %) cs))))
+
+(doseq [t [:card :die :deck]]
+  (defmethod perform-action [t :remove] [state id _]
+    (remove-component state id)))
+
+;; ---------------------------------------------------------------------------
+;; Component capabilities (data-driven context menus)
+;; ---------------------------------------------------------------------------
+
+(defmulti component-actions :type)
+
+(defn- common-actions [id]
+  [{:label "Copy"   :action #(copy-objects-to-list!
+                               (let [sel (:selection @app-state)]
+                                 (if (contains? sel id) (vec sel) [id])))}
+   {:label "Remove" :action #(dispatch-selection! id :remove)}])
+
+(defmethod component-actions :deck [{:keys [id x y cards]}]
+  (let [empty? (empty? cards)]
+    (into (cond-> []
+            (not empty?) (conj {:label "Draw to Table" :action #(dispatch! id :draw-to-table (+ x 80) y)})
+            (not empty?) (conj {:label "Draw to Hand"  :action #(dispatch! id :draw-to-hand)})
+            true         (conj {:label "Shuffle"        :action #(dispatch! id :shuffle)})
+            true         (conj {:label "Flip Deck"      :action #(dispatch-selection! id :flip)}))
+          (common-actions id))))
+
+(defmethod component-actions :card [{:keys [id]}]
+  (into [{:label "Flip" :action #(dispatch-selection! id :flip)}]
+        (common-actions id)))
+
+(defmethod component-actions :die [{:keys [id]}]
+  (into [{:label "Roll" :action #(dispatch-selection! id :roll)}]
+        (common-actions id)))
+
+(defmethod component-actions :default [c] (common-actions (:id c)))

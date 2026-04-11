@@ -2,13 +2,8 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    copy-objects-to-list! copy-single-to-list!
-                                    dispatch! component-actions]]
+                                    copy-single-to-list! dispatch! dispatch-selection! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
-
-;; ---------------------------------------------------------------------------
-;; Helpers
-;; ---------------------------------------------------------------------------
 
 (def die-colors
   {4   "bg-red-500 text-white"
@@ -19,60 +14,50 @@
    20  "bg-yellow-400 text-gray-900"
    100 "bg-pink-500 text-white"})
 
-(defn die-color [faces]
-  (get die-colors faces "bg-gray-500 text-white"))
-
-;; ---------------------------------------------------------------------------
-;; Component
-;; ---------------------------------------------------------------------------
-
-(defn die
-  [{:keys [die]}]
-  (let [dragging? (r/atom false)
-        moved?    (r/atom false)
-        start-x   (r/atom 0)
-        start-y   (r/atom 0)
-        offset-x  (r/atom 0)
-        offset-y  (r/atom 0)
+(defn die [{:keys [die]}]
+  (let [dragging?   (r/atom false)
+        moved?      (r/atom false)
+        start-x     (r/atom 0)
+        start-y     (r/atom 0)
+        offset-x    (r/atom 0)
+        offset-y    (r/atom 0)
         key-handler (r/atom nil)]
     (fn [{:keys [die]}]
       (let [{:keys [id faces result x y]} die
-            label     (str "d" faces)
             selected? (contains? (:selection @app-state) id)]
         [:div
-         {:class
-          (str "absolute select-none rounded-lg shadow-md cursor-pointer "
-               "w-[70px] h-[70px] flex flex-col items-center justify-center "
-               "font-bold "
-               (die-color faces)
-               (when selected? " ring-2 ring-cyan-400"))
+         {:class (str "absolute select-none rounded shadow-md cursor-pointer "
+                      "w-[24px] h-[24px] flex flex-col items-center justify-center "
+                      "font-bold text-[8px] "
+                      (get die-colors faces "bg-gray-500 text-white")
+                      (when selected? " ring-2 ring-cyan-400"))
           :style {:left (str x "px") :top (str y "px")}
 
           :on-pointer-down
           (fn [e]
-            (.stopPropagation e)
-            (reset! moved? false)
-            (reset! dragging? true)
-            (reset! start-x (.-clientX e))
-            (reset! start-y (.-clientY e))
-            (let [rect (.getBoundingClientRect (.-currentTarget e))
-                  z    (get-in @app-state [:table :zoom] 1.0)]
-              (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
-              (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
-            (.setPointerCapture (.-currentTarget e) (.-pointerId e))
-            (let [handler (fn [ke]
-                            (when @dragging?
-                              (cond
-                                (and (.-ctrlKey ke) (= (.-key ke) "c"))
-                                (do (.preventDefault ke)
-                                    (copy-single-to-list! id))
-                                (and (.-ctrlKey ke) (= (.-key ke) "x"))
-                                (do (.preventDefault ke)
-                                    (copy-single-to-list! id)
-                                    (remove-component! id)
-                                    (reset! dragging? false)))))]
-              (reset! key-handler handler)
-              (.addEventListener js/document "keydown" handler)))
+            (when (= (.-button e) 0)
+              (.stopPropagation e)
+              (reset! moved? false)
+              (reset! dragging? true)
+              (reset! start-x (.-clientX e))
+              (reset! start-y (.-clientY e))
+              (let [rect (.getBoundingClientRect (.-currentTarget e))
+                    z    (get-in @app-state [:table :zoom] 1.0)]
+                (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
+                (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
+              (.setPointerCapture (.-currentTarget e) (.-pointerId e))
+              (let [handler (fn [ke]
+                              (when @dragging?
+                                (cond
+                                  (and (.-ctrlKey ke) (= (.-key ke) "c"))
+                                  (do (.preventDefault ke) (copy-single-to-list! id))
+                                  (and (.-ctrlKey ke) (= (.-key ke) "x"))
+                                  (do (.preventDefault ke)
+                                      (copy-single-to-list! id)
+                                      (dispatch-selection! id :remove)
+                                      (reset! dragging? false)))))]
+                (reset! key-handler handler)
+                (.addEventListener js/document "keydown" handler))))
 
           :on-pointer-move
           (fn [e]
@@ -82,22 +67,18 @@
                 (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 5)
                   (reset! moved? true)
                   (let [z           (get-in @app-state [:table :zoom] 1.0)
-                        parent-rect (.getBoundingClientRect
-                                     (.-offsetParent (.-currentTarget e)))
+                        parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
                         new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
                         new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)
                         sel   (:selection @app-state)
-                        old-x (:x die x)
-                        old-y (:y die y)
-                        ddx   (- new-x old-x)
-                        ddy   (- new-y old-y)]
+                        ddx   (- new-x (:x die x))
+                        ddy   (- new-y (:y die y))]
                     (if (tabletop.components.hand/hand-drop-zone? [(.-clientX e) (.-clientY e)])
                       (if (contains? sel id)
                         (doseq [sid sel] (move-card-to-hand! sid))
                         (move-card-to-hand! id))
                       (if (contains? sel id)
-                        (doseq [c (:components @app-state)
-                                :when (contains? sel (:id c))]
+                        (doseq [c (:components @app-state) :when (contains? sel (:id c))]
                           (move-component! (:id c) (+ (:x c 0) ddx) (+ (:y c 0) ddy)))
                         (move-component! id new-x new-y))))))))
 
@@ -109,25 +90,19 @@
             (when @dragging?
               (reset! dragging? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
-              (if @moved?
-                nil
+              (when-not @moved?
                 (if (.-shiftKey e)
                   (add-to-selection! id)
-                  (do
-                    (clear-selection!)
-                    (dispatch! id :roll))))))
+                  (do (clear-selection!)
+                      (dispatch! id :roll))))))
 
           :on-context-menu
           (fn [e]
             (.preventDefault e)
             (.stopPropagation e)
-            (let [sel (:selection @app-state)
-                  ids (if (contains? sel id) (vec sel) [id])
-                  items (into (component-actions die)
-                              [{:label "Copy objects" :action #(copy-objects-to-list! ids)}
-                               {:label "Remove"       :action #(remove-component! id)}])]
-              (open-context-menu! (.-clientX e) (.-clientY e) items)))}
+            (when-not (contains? (:selection @app-state) id)
+              (add-to-selection! id))
+            (open-context-menu! (.-clientX e) (.-clientY e) (component-actions die)))}
 
-         [:span {:class "text-xs leading-none opacity-80"} label]
-         [:span {:class "text-xl leading-none mt-1"}
-          (if result (str result) "—")]]))))
+         [:span {:class "leading-none opacity-70"} (str "d" faces)]
+         [:span {:class "leading-none font-black"} (str result)]]))))
