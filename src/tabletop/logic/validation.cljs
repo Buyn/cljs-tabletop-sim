@@ -8,24 +8,29 @@
       (empty? (clojure.string/trim s))))
 
 (defn validate-deck-config
-  "Validates a deck config map {:suits [...] :ranks [...] :color \"...\"}.
-   Returns nil if valid (all 4 suits and 13 ranks are non-empty, non-whitespace strings).
-   Returns {:suit-errors {index \"error\"} :rank-errors {index \"error\"}} if invalid."
+  "Validates a deck config map.
+   suits is [{:label :color} ...], ranks is [string ...].
+   Returns nil if valid, or {:suit-errors {i msg} :rank-errors {i msg}} if invalid."
   [{:keys [suits ranks]}]
-  (let [suit-errors (->> (map-indexed
-                          (fn [i s]
-                            (when (blank? s)
-                              [i "Suit label must not be empty"]))
-                          suits)
-                         (filter some?)
-                         (into {}))
-        rank-errors (->> (map-indexed
-                          (fn [i r]
-                            (when (blank? r)
-                              [i "Rank label must not be empty"]))
-                          ranks)
-                         (filter some?)
-                         (into {}))]
+  (let [suit-labels  (mapv :label suits)
+        suit-errors  (into {}
+                       (concat
+                         ;; blank checks
+                         (keep-indexed (fn [i s] (when (blank? s) [i "Must not be empty"])) suit-labels)
+                         ;; uniqueness checks
+                         (keep-indexed (fn [i s]
+                                         (when (and (not (blank? s))
+                                                    (< 1 (count (filter #(= s %) suit-labels))))
+                                           [i "Must be unique"]))
+                                       suit-labels)))
+        ;; Only validate ranks that are non-empty (empty ones will be auto-filled)
+        rank-errors  (into {}
+                       (concat
+                         (keep-indexed (fn [i r]
+                                         (when (and (not (blank? r))
+                                                    (< 1 (count (filter #(= r %) ranks))))
+                                           [i "Must be unique"]))
+                                       ranks)))]
     (when (or (seq suit-errors) (seq rank-errors))
       {:suit-errors suit-errors
        :rank-errors rank-errors})))

@@ -1951,10 +1951,16 @@ and
 based on the previous assignment.
 *** cards in hand when hovering should increase by 3 times and not rise.
 
-** decks
+** TODO decks
 *** fix
 перетяшивание карты на любую часть дека, помешает карту в этот дек.
 тоесть любое перкрвание карты с деком приводи к помешению карты на верх дека.
+*** добовление нового дека происходит в фиксированую
+своподную позицию
+если позиция занята
+происходит смешение в прво или лево от позиции и происходт проверка на свободное место.
+и процес повторяется. пока позиция не будет найдена.
+либо где последний раз был мидл клик. если негде то позиция х=0 у=0
 *** сплит дек
 *** карта тянется последняя в колоде первой
 это считается врехом колоды
@@ -1970,6 +1976,10 @@ based on the previous assignment.
 *** долгое удержание удержание
 *** груперровка деков и крат
 *** перетягивание одно дека на другой
+*** довай внесём измение в документ requirements.md
+добовляший все эти пункты.
+если Ты видешь не обходимость изменить структуру файла, смело предлогай.
+Довай фаил сделаем удобным для использования и понятным и человеку и ИИ.
 ** DONE decks
 *** card is added to the deck when dragging a card onto the deck.
 *** combine cards into decks.
@@ -1986,7 +1996,7 @@ and for reflecting good functional code.
 the state of implementation is as it is now.
 game cards.
 and custom deck.
-** открытые карты
+** VERIFY открытые карты
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -2590,7 +2600,9 @@ Just show me the edits I need to make.
 11. The chosen suit color is used when rendering that suit on cards.
 *** I changed a number of points in requirements.md
 make sure they are implemented in the project
-** кости разной формы
+** игровые кости
+*** кости разной формы
+*** поле цвета при выборе дая
 ** кнопки управления
 *** кнопки действуют на обект под курсором
 как если бы он был перетягиваемый.
@@ -2607,7 +2619,6 @@ make sure they are implemented in the project
 *** клавиши копирования
 **** должны действовать на все выделеные обекты
 **** вынести все управляюшие клавиши в отделный фаил настроек
-** поле цвета при выборе дая
 ** все меню добовления обектов
 и свойст обекстов
 не модальные
@@ -3061,7 +3072,14 @@ The compiled JS files in `public/js/cljs-runtime/` can be used to infer current 
 
 ## TODO LIST
 ID if loaded: none
-
+** промтс
+*** I changed requirements.md
+let's make changes in accordance with the new requirements
+*** let's add it to requirements.md
+the state of implementation is as it is now.
+game cards.
+and custom deck.
+*** довай внесём измение в документ requirements.md
 * tools
 ** desktop
 (desktop-save "~/.emacs.d/emaks-sesions/clojure-tabletop-sim-kiro/")

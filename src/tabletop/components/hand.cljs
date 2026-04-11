@@ -83,7 +83,7 @@
   [card idx hovered-idx strip-w n on-reorder]
   (let [dragging?      (r/atom false)
         drag-outside?  (r/atom false)]
-    (fn [{:keys [id suit rank color]} idx hovered-idx strip-w n on-reorder]
+    (fn [{:keys [id suit rank face-color back-color text-color suit-color face-up?]} idx hovered-idx strip-w n on-reorder]
       (let [{:keys [tx z]} (nth (card-positions n @hovered-idx strip-w) idx {:tx 0 :z idx})
             is-hovered     (= @hovered-idx idx)]
         [:div
@@ -93,15 +93,16 @@
                           :width            (str card-w "px")
                           :height           (str card-h "px")
                           :z-index          z
+                          :background-color (or face-color "#ffffff")
+                          :border           "1px solid #d1d5db"
+                          :color            (or text-color "#111111")
                           :transform        (cond @drag-outside?  "scale(1)"
                                                   is-hovered      (str "scale(" hover-scale ")")
                                                   :else           "scale(1)")
                           :transform-origin "bottom center"
                           :transition       "left 0.15s ease, transform 0.15s ease"
                           :cursor           "grab"}
-          :class         (str "select-none rounded-lg border border-gray-300 shadow-md "
-                              "flex items-center justify-center font-bold overflow-hidden "
-                              color)
+          :class         "select-none rounded-lg shadow-md flex items-center justify-center font-bold overflow-hidden"
           :on-mouse-enter #(when-not @dragging? (reset! hovered-idx idx))
           :on-mouse-leave #(when (= @hovered-idx idx) (reset! hovered-idx nil))
 
@@ -147,7 +148,9 @@
 
          [:div {:class "flex flex-col items-center justify-center w-full h-full pointer-events-none"}
           [:span {:class "text-lg leading-none"} rank]
-          [:span {:class "text-xl leading-none"} suit]]]))))
+          [:span {:class "text-xl leading-none"
+                  :style {:color (or suit-color text-color "#111111")}} suit]]]))))
+
 
 ;; ─── hand area ───────────────────────────────────────────────────────────────
 
@@ -155,17 +158,21 @@
   (let [hovered?    (r/atom false)
         hovered-idx (r/atom nil)
         strip-w     (r/atom 800)
-        ;; 90% of strip-h slides away; thin edge = strip-h * 0.1 ≈ 12px remains
         slide       (* strip-h 0.9)]
     (fn []
       (let [hand      (:hand @app-state)
             n         (count hand)
             collapsed (and (not @hovered?) (nil? @hovered-idx))
             on-enter  (fn [] (reset! hovered? true))
-            on-leave  (fn [] (reset! hovered? false) (reset! hovered-idx nil))]
-
+            on-leave  (fn [] (reset! hovered? false) (reset! hovered-idx nil))
+            on-reorder (fn [from to]
+                         (swap! app-state update :hand
+                                (fn [h]
+                                  (let [card (nth h from)
+                                        h'   (vec (concat (subvec h 0 from) (subvec h (inc from))))]
+                                    (vec (concat (subvec h' 0 to) [card] (subvec h' to))))))
+                         (reset! hovered-idx to))]
         [:<>
-         ;; Layer 1: sliding background strip (thin edge when collapsed)
          [:div
           {:class "fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-600 z-10"
            :style {:height     (str strip-h "px")
@@ -173,35 +180,23 @@
                    :transition "transform 0.2s ease"}
            :on-mouse-enter on-enter
            :on-mouse-leave on-leave}]
-
-         ;; Layer 2: cards — fixed above strip bottom, never slide
          [:div
           {:ref   (fn [el]
                     (reset! hand-ref el)
                     (when el (reset! strip-w (.-offsetWidth el))))
            :class "fixed bottom-0 left-0 right-0 z-20"
-           :style {:height   (str strip-h "px")
-                   :overflow "visible"
+           :style {:height         (str strip-h "px")
+                   :overflow       "visible"
                    :pointer-events (if collapsed "none" "auto")}
            :on-mouse-enter on-enter
            :on-mouse-leave on-leave}
-
           (if (empty? hand)
             [:span {:class "absolute bottom-3 left-1/2 -translate-x-1/2 text-gray-500 text-sm italic"}
              "Hand is empty"]
-
             [:div {:style {:position "relative" :width "100%" :height "100%"}}
              (doall
               (map-indexed
                (fn [i c]
                  ^{:key (:id c)}
-                 [hand-card c i hovered-idx @strip-w n
-                  (fn [from to]
-                    (swap! app-state update :hand
-                           (fn [h]
-                             (let [card (nth h from)
-                                   h'   (vec (concat (subvec h 0 from) (subvec h (inc from))))]
-                               (vec (concat (subvec h' 0 to) [card] (subvec h' to))))))
-                    (reset! hovered-idx to))])
-               hand))])]])])))))
-
+                 [hand-card c i hovered-idx @strip-w n on-reorder])
+               hand))])]]))))

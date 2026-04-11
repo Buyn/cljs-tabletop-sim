@@ -27,18 +27,21 @@
         start-cy    (r/atom 0)
         key-handler (r/atom nil)]
     (fn [{:keys [card on-drag-end]}]
-      (let [{:keys [id suit rank color face-up? x y]} card
+      (let [{:keys [id suit rank face-color back-color text-color suit-color face-up? x y]} card
             face-up?  (boolean face-up?)
             zoom      (get-in @app-state [:table :zoom] 1.0)
             selected? (contains? (:selection @app-state) id)]
         [:div
          {:class (str "absolute select-none rounded-lg border shadow-md cursor-grab "
                       "w-[70px] h-[100px] flex items-center justify-center "
-                      "text-sm font-bold overflow-hidden "
-                      (if face-up? (str "border-gray-300 " color) "border-gray-600 bg-[#1e3a5f]")
+                      "text-sm font-bold overflow-hidden"
                       (when selected? " ring-2 ring-cyan-400"))
-          :style {:left (str x "px") :top (str y "px")
-                  :transform (when @over-hand? "scale(0.33)")
+          :style {:left             (str x "px")
+                  :top              (str y "px")
+                  :background-color (if face-up? (or face-color "#ffffff") (or back-color "#1e3a5f"))
+                  :border-color     (if face-up? "#d1d5db" "#4b5563")
+                  :color            (if face-up? (or text-color "#111111") "transparent")
+                  :transform        (when @over-hand? "scale(0.33)")
                   :transform-origin "top left"}
 
           :on-pointer-down
@@ -141,7 +144,9 @@
          (if face-up?
            [:div {:class "flex flex-col items-center justify-center w-full h-full"}
             [:span {:class "text-lg leading-none"} rank]
-            [:span {:class "text-xl leading-none"} suit]]
+            [:span {:class "text-xl leading-none"
+                    :style {:color (or suit-color text-color "#111111")}} suit]]
            [:div {:class "w-full h-full flex items-center justify-center"}
-            [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40
-                           bg-[repeating-linear-gradient(45deg,#2563eb,#2563eb_2px,transparent_2px,transparent_8px)]"}]])]))))
+            [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40"
+                   :style {:background (str "repeating-linear-gradient(45deg,"
+                                            "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])]))))

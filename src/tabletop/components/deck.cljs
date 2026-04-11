@@ -15,10 +15,10 @@
         offset-y    (r/atom 0)
         key-handler (r/atom nil)]
     (fn [{:keys [deck]}]
-      (let [{:keys [id x y cards color]} deck
+      (let [{:keys [id x y cards]} deck
             card-count (count cards)
             empty?     (zero? card-count)
-            bg         (or color "#1e40af")
+            bg         (or (:face-color (first cards)) "#1e40af")
             selected?  (contains? (:selection @app-state) id)]
         [:div
          {:class (str "absolute select-none" (when selected? " ring-2 ring-cyan-400 rounded-lg"))

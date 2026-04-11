@@ -27,8 +27,8 @@
             selected? (contains? (:selection @app-state) id)]
         [:div
          {:class (str "absolute select-none rounded shadow-md cursor-pointer "
-                      "w-[24px] h-[24px] flex flex-col items-center justify-center "
-                      "font-bold text-[8px] "
+                      "w-[37px] h-[37px] flex flex-col items-center justify-center "
+                      "font-bold text-[13px] "
                       (get die-colors faces "bg-gray-500 text-white")
                       (when selected? " ring-2 ring-cyan-400"))
           :style {:left (str x "px") :top (str y "px")}

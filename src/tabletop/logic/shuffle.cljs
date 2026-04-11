@@ -14,31 +14,50 @@
         (recur (dec i))))
     (vec arr)))
 
-(def ^:private standard-suits ["♠" "♥" "♦" "♣"])
+(def ^:private standard-suits
+  [{:label "♠" :color "#000000"}
+   {:label "♥" :color "#dc2626"}
+   {:label "♦" :color "#dc2626"}
+   {:label "♣" :color "#000000"}])
+
 (def ^:private standard-ranks ["A" "2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K"])
 
-(defn make-standard-deck
-  "Builds a shuffled 52-card vector using standard suits and ranks.
-   Each card is {:id uuid-string :suit string :rank string :color \"#ffffff\" :face-up? false}."
-  []
+(defn make-standard-deck []
   (shuffle-vec
-   (vec (for [suit standard-suits
+   (vec (for [{:keys [label color]} standard-suits
               rank standard-ranks]
-          {:id      (str (random-uuid))
-           :suit    suit
-           :rank    rank
-           :color   "#ffffff"
-           :face-up? false}))))
+          {:id         (str (random-uuid))
+           :suit       label
+           :suit-color color
+           :rank       rank
+           :face-color "#ffffff"
+           :back-color "#1e3a5f"
+           :text-color "#111111"
+           :face-up?   false}))))
+
+(defn auto-fill-ranks
+  "Fills a ranks vector to total-count. Existing entries kept; gaps filled with incrementing numbers."
+  [ranks total-count]
+  (let [n (count ranks)]
+    (if (>= n total-count)
+      (vec (take total-count ranks))
+      (vec (concat ranks
+                   (map str (range (inc n) (+ (inc n) (- total-count n)))))))))
 
 (defn make-custom-deck
-  "Builds a shuffled 52-card vector using caller-supplied suits (4), ranks (13), and color.
-   Each card is {:id uuid-string :suit string :rank string :color color :face-up? false}."
-  [suits ranks color]
-  (shuffle-vec
-   (vec (for [suit suits
-              rank ranks]
-          {:id      (str (random-uuid))
-           :suit    suit
-           :rank    rank
-           :color   color
-           :face-up? false}))))
+  "Builds a shuffled deck from config:
+   {:suits [{:label :color} ...] :ranks [...] :total-count n
+    :face-color :back-color :text-color}"
+  [{:keys [suits ranks total-count face-color back-color text-color]}]
+  (let [filled-ranks (auto-fill-ranks ranks total-count)]
+    (shuffle-vec
+     (vec (for [{:keys [label color]} suits
+                rank filled-ranks]
+            {:id         (str (random-uuid))
+             :suit       label
+             :suit-color color
+             :rank       rank
+             :face-color face-color
+             :back-color back-color
+             :text-color text-color
+             :face-up?   false})))))
