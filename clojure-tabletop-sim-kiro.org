@@ -1513,6 +1513,113 @@ The config uses a :node-test target, so it compiles to out/test.js and runs with
 
     <link href="css/style.css" rel="stylesheet" type="text/css">
 ** CONVERSATION SUMMARY
+*** 2026-04-11 04:30:04
+════════════════════════════════════════════════════════════════════════════════
+                       CONVERSATION SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+## OBJECTIVE
+Fix several issues in a ClojureScript tabletop simulator: add right-click context menus to card/die objects, preserve selection highlight on right-click, make context menu actions affect the entire selected group, reduce die size by 3x, and ensure dice always have a default random value.
+
+## USER GUIDANCE
+- Absolute minimal code — no verbose implementations
+- Right-click context menu must have: roll (flip for card), copy, flip, remove — plus all common actions
+- Highlight (ring) must not disappear on right-click
+- Context menu actions and keyboard commands affect the entire selected group
+- Dice size reduced 3x (from ~72px to ~24px)
+- Dice default value cannot be empty — always set to a random value on creation
+- Free to make changes to all objects as needed
+
+## COMPLETED
+
+### Changes Made (partially — interrupted mid-execution)
+
+1. **`logic/dice.cljs`** — `make-die` now sets `:result` to a random value on creation (was `nil`). ✅ Written.
+
+2. **`state.cljs`** — Added:
+   - `dispatch-selection!` — applies action to all selected components (or just the target if not in selection)
+   - `:remove` action via `doseq` over `[:card :die :deck]`
+   - `common-actions` helper (Copy + Remove) — placed after `paste-to-hand!` so `copy-objects-to-list!` is in scope
+   - Updated `component-actions` methods: `:deck` includes common-actions, `:card` has Flip+Roll+common, `:die` has Roll+common, `:default` returns common-actions
+   - **Problem**: The `component-actions` method definitions ended up before `common-actions` in the file due to a failed str_replace. The `defmulti` for `component-actions` is defined later in the file. File is currently in a broken ordering state.
+
+3. **`card.cljs`** — Full rewrite: right-click no longer clears selection (guarded `on-pointer-down` with `(= (.-button e) 0)`), context menu calls `add-to-selection!` if not already selected then opens `(component-actions card)`, uses `dispatch-selection!` for Ctrl+X. ✅ Written.
+
+4. **`die.cljs`** — Full rewrite: size reduced to `w-[24px] h-[24px]`, text `text-[8px]`, same right-click/selection fixes, uses `dispatch-selection!`. ✅ Written.
+
+5. **`deck.cljs`** — ns require updated to include `dispatch-selection!`, `on-pointer-down` guarded with `(= (.-button e) 0)`, `on-context-menu` simplified to use `(component-actions deck)` directly with `add-to-selection!` guard. ✅ Written.
+
+## TECHNICAL CONTEXT
+
+### Current Broken State of `state.cljs`
+The file has `component-actions` method definitions appearing **before** the `defmulti component-actions` declaration and before `common-actions`. The compile output showed:
+```
+WARNING: Use of undeclared Var tabletop.state/copy-objects-to-list!
+```
+This is because `common-actions` was placed before `copy-objects-to-list!` in the file. Then a str_replace moved `common-actions` after `paste-to-hand!`, but the `defmulti` and method definitions are still out of order.
+
+### Required Fix for `state.cljs`
+The correct ordering must be:
+1. `ns` + `initial-state` + pure state helpers (`add-component`, `remove-component`, `move-component`, etc.)
+2. `perform-action` multimethod + all methods (including `:remove`)
+3. `dispatch!` + `dispatch-selection!`
+4. Effectful wrappers (`add-component!`, `remove-component!`, etc.)
+5. Selection helpers (`set-selection!`, `clear-selection!`, `add-to-selection!`)
+6. Copy/paste helpers (`copy-objects-to-list!`, `copy-single-to-list!`, `paste-from-list!`, `paste-to-hand!`)
+7. `defmulti component-actions` + `common-actions` + all `defmethod component-actions` implementations
+
+### Key Symbols
+- `dispatch!` — `(dispatch! id :action & args)` — applies to single component
+- `dispatch-selection!` — `(dispatch-selection! id :action & args)` — applies to all selected (or just id)
+- `component-actions` — multimethod on `:type`, returns `[{:label :action}]`
+- `common-actions` — private fn returning Copy + Remove items for any component id
+- `open-context-menu!` — `(open-context-menu! client-x client-y items)`
+- `add-to-selection!` — adds id to `:selection` set without clearing others
+
+### Die Size
+Was: `w-[72px] h-[72px]` (or similar large size). Now: `w-[24px] h-[24px]`, `text-[8px]`, `font-black` for result.
+
+### Context Menu Right-Click Pattern (all objects)
+```clojure
+:on-context-menu
+(fn [e]
+  (.preventDefault e)
+  (.stopPropagation e)
+  (when-not (contains? (:selection @app-state) id)
+    (add-to-selection! id))
+  (open-context-menu! (.-clientX e) (.-clientY e) (component-actions component)))
+```
+
+### Pointer-Down Guard (prevents right-click from triggering drag)
+```clojure
+:on-pointer-down
+(fn [e]
+  (when (= (.-button e) 0)  ; left button only
+    ...))
+```
+
+## TOOLS EXECUTED
+- `str_replace` on `logic/dice.cljs` — set random initial result ✅
+- `str_replace` on `state.cljs` — added `dispatch-selection!` ✅
+- `str_replace` on `state.cljs` — added `:remove` methods + `common-actions` (placed incorrectly before `copy-objects-to-list!`) ⚠
+- `str_replace` on `state.cljs` — updated `component-actions` methods ✅
+- `str_replace` on `state.cljs` — moved `common-actions` after `paste-to-hand!` ✅
+- `str_replace` on `state.cljs` — removed duplicate `component-actions` methods block (accidentally removed section header) ✅
+- `create` on `card.cljs` — full rewrite ✅
+- `create` on `die.cljs` — full rewrite ✅
+- `str_replace` on `deck.cljs` — ns require, on-pointer-down, on-context-menu ✅
+- Compile: `npx shadow-cljs compile app` → WARNING about undeclared `copy-objects-to-list!` in `common-actions` (ordering issue)
+
+## NEXT STEPS
+1. **Read `state.cljs` in full** to understand current actual ordering
+2. **Rewrite `state.cljs`** with correct top-to-bottom ordering (pure helpers → perform-action → dispatch → effectful wrappers → selection → copy/paste → component-actions multimethod + common-actions + methods)
+3. **Compile** to verify 0 errors/warnings
+4. Verify `deck.cljs` full content is consistent (no leftover references to deleted fns like `copy-objects-to-list!` in the old inline context menu pattern)
+
+## TODO LIST
+ID if loaded: none
+
+
 *** 2026-04-11 02:56:53
 ════════════════════════════════════════════════════════════════════════════════
                        CONVERSATION SUMMARY
