@@ -17,221 +17,180 @@
 (defonce app-state (r/atom initial-state))
 
 ;; ---------------------------------------------------------------------------
-;; Pure state transition helpers (take state map, return new state map)
+;; Dispatch system
 ;; ---------------------------------------------------------------------------
 
-(defn add-component
-  "Conj component onto :components."
-  [state component]
+(defmulti perform-action
+  (fn [state id action & _]
+    [(:type (some #(when (= (:id %) id) %) (:components state))) action]))
+
+(defn dispatch! [id action & args]
+  (swap! app-state #(apply perform-action % id action args)))
+
+;; ---------------------------------------------------------------------------
+;; Deck actions
+;; ---------------------------------------------------------------------------
+
+(defn- find-and-rest [id cs]
+  (reduce (fn [[found others] c]
+            (if (= (:id c) id) [c others] [found (conj others c)]))
+          [nil []] cs))
+
+(defmethod perform-action [:deck :shuffle] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :cards shuffle-vec) %) cs))))
+
+(defmethod perform-action [:deck :draw-to-hand] [state id _]
+  (let [[deck others] (find-and-rest id (:components state))
+        card (first (:cards deck))]
+    (if card
+      (-> state
+          (assoc :components (conj (vec others) (update deck :cards (comp vec rest))))
+          (update :hand conj (assoc card :type :card)))
+      state)))
+
+(defmethod perform-action [:deck :draw-to-table] [state id _ x y]
+  (let [[deck others] (find-and-rest id (:components state))
+        card (first (:cards deck))]
+    (if card
+      (assoc state :components
+             (conj (vec others)
+                   (update deck :cards (comp vec rest))
+                   (assoc card :type :card :x x :y y :face-up? true)))
+      state)))
+
+(defmethod perform-action [:deck :flip] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id)
+                            (update % :cards (fn [cards] (mapv (fn [c] (update c :face-up? not)) cards)))
+                            %) cs))))
+
+;; ---------------------------------------------------------------------------
+;; Card actions
+;; ---------------------------------------------------------------------------
+
+(defmethod perform-action [:card :flip] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :face-up? not) %) cs))))
+
+;; ---------------------------------------------------------------------------
+;; Die actions
+;; ---------------------------------------------------------------------------
+
+(defmethod perform-action [:die :roll] [state id _]
+  (update state :components
+          (fn [cs]
+            (mapv #(if (= (:id %) id)
+                     (assoc % :result (inc (rand-int (:faces % 6))))
+                     %) cs))))
+
+;; ---------------------------------------------------------------------------
+;; Component capabilities (data-driven context menus)
+;; ---------------------------------------------------------------------------
+
+(defmulti component-actions
+  "Returns a seq of {:label :action} maps for a component.
+   :action is a zero-arg fn."
+  :type)
+
+(defmethod component-actions :deck [{:keys [id x y cards]}]
+  (let [empty? (empty? cards)]
+    (cond-> []
+      (not empty?) (conj {:label "Draw to Table" :action #(dispatch! id :draw-to-table (+ x 80) y)})
+      (not empty?) (conj {:label "Draw to Hand"  :action #(dispatch! id :draw-to-hand)})
+      true         (conj {:label "Shuffle"        :action #(dispatch! id :shuffle)})
+      true         (conj {:label "Flip Deck"      :action #(dispatch! id :flip)}))))
+
+(defmethod component-actions :card [{:keys [id]}]
+  [{:label "Flip" :action #(dispatch! id :flip)}])
+
+(defmethod component-actions :die [{:keys [id]}]
+  [{:label "Roll" :action #(dispatch! id :roll)}])
+
+(defmethod component-actions :default [_] [])
+
+;; ---------------------------------------------------------------------------
+;; Pure state helpers
+;; ---------------------------------------------------------------------------
+
+(defn add-component [state component]
   (update state :components conj component))
 
-(defn remove-component
-  "Remove the component with matching :id from :components."
-  [state id]
+(defn remove-component [state id]
   (update state :components (fn [cs] (vec (remove #(= (:id %) id) cs)))))
 
-(defn move-component
-  "Update :x and :y for the component with matching :id in :components."
-  [state id x y]
+(defn move-component [state id x y]
   (update state :components
-          (fn [cs]
-            (mapv (fn [c]
-                    (if (= (:id c) id)
-                      (assoc c :x x :y y)
-                      c))
-                  cs))))
+          (fn [cs] (mapv #(if (= (:id %) id) (assoc % :x x :y y) %) cs))))
 
-(defn toggle-card-face
-  "Toggle :face-up? for the card with matching :id in :components."
-  [state id]
-  (update state :components
-          (fn [cs]
-            (mapv (fn [c]
-                    (if (= (:id c) id)
-                      (update c :face-up? not)
-                      c))
-                  cs))))
-
-(defn move-card-to-hand
-  "Remove card with matching :id from :components and conj onto :hand."
-  [state id]
-  (let [card (first (filter #(= (:id %) id) (:components state)))]
+(defn move-card-to-hand [state id]
+  (let [card (some #(when (= (:id %) id) %) (:components state))]
     (if card
       (-> state
           (update :components (fn [cs] (vec (remove #(= (:id %) id) cs))))
           (update :hand conj card))
       state)))
 
-(defn move-card-to-table
-  "Remove card with matching :id from :hand and conj onto :components with :x x :y y."
-  [state id x y]
-  (let [card (first (filter #(= (:id %) id) (:hand state)))]
+(defn move-card-to-table [state id x y]
+  (let [card (some #(when (= (:id %) id) %) (:hand state))]
     (if card
       (-> state
           (update :hand (fn [h] (vec (remove #(= (:id %) id) h))))
           (update :components conj (assoc card :x x :y y)))
       state)))
 
-(defn draw-top-card
-  "Pop the first card from the deck's :cards vector and conj onto :hand.
-   No-op if the deck is empty."
-  [state deck-id]
-  (let [deck (first (filter #(= (:id %) deck-id) (:components state)))]
-    (if (and deck (seq (:cards deck)))
-      (let [top-card (assoc (first (:cards deck)) :type :card)]
-        (-> state
-            (update :components
-                    (fn [cs]
-                      (mapv (fn [c]
-                              (if (= (:id c) deck-id)
-                                (update c :cards (comp vec rest))
-                                c))
-                            cs)))
-            (update :hand conj top-card)))
-      state)))
-
-(defn draw-card-to-table
-  "Pop the first card from the deck's :cards vector and place it on the table
-   at position [x y] (offset from the deck)."
-  [state deck-id x y]
-  (let [deck (first (filter #(= (:id %) deck-id) (:components state)))]
-    (if (and deck (seq (:cards deck)))
-      (let [top-card (assoc (first (:cards deck)) :type :card :x x :y y :face-up? true)]
-        (-> state
-            (update :components
-                    (fn [cs]
-                      (mapv (fn [c]
-                              (if (= (:id c) deck-id)
-                                (update c :cards (comp vec rest))
-                                c))
-                            cs)))
-            (update :components conj top-card)))
-      state)))
-
-(defn shuffle-deck
-  "Apply shuffle-vec to the deck's :cards vector."
-  [state deck-id]
-  (update state :components
-          (fn [cs]
-            (mapv (fn [c]
-                    (if (= (:id c) deck-id)
-                      (update c :cards shuffle-vec)
-                      c))
-                  cs))))
-
-(defn flip-deck
-  "Toggle :face-up? on every card in the deck's :cards vector."
-  [state deck-id]
-  (update state :components
-          (fn [cs]
-            (mapv (fn [c]
-                    (if (= (:id c) deck-id)
-                      (update c :cards (fn [cards] (mapv #(update % :face-up? not) cards)))
-                      c))
-                  cs))))
-
-(defn pan-table
-  "Update :pan-x by dx and :pan-y by dy in :table."
-  [state dx dy]
+(defn pan-table [state dx dy]
   (-> state
       (update-in [:table :pan-x] + dx)
       (update-in [:table :pan-y] + dy)))
 
-(defn zoom-table
-  "Update :zoom in :table, clamped to [0.5, 2.0]."
-  [state delta]
-  (update-in state [:table :zoom]
-             (fn [z] (max 0.5 (min 2.0 (+ z delta))))))
+(defn zoom-table [state delta]
+  (update-in state [:table :zoom] (fn [z] (max 0.5 (min 2.0 (+ z delta))))))
 
 ;; ---------------------------------------------------------------------------
-;; swap! wrappers that operate on app-state
+;; Effectful wrappers
 ;; ---------------------------------------------------------------------------
 
-(defn add-component! [component]
-  (swap! app-state add-component component))
-
-(defn remove-component! [id]
-  (swap! app-state remove-component id))
-
-(defn move-component! [id x y]
-  (swap! app-state move-component id x y))
-
-(defn toggle-card-face! [id]
-  (swap! app-state toggle-card-face id))
-
-(defn move-card-to-hand! [id]
-  (swap! app-state move-card-to-hand id))
-
-(defn move-card-to-table! [id x y]
-  (swap! app-state move-card-to-table id x y))
-
-(defn draw-top-card! [deck-id]
-  (swap! app-state draw-top-card deck-id))
-
-(defn draw-card-to-table! [deck-id x y]
-  (swap! app-state draw-card-to-table deck-id x y))
-
-(defn shuffle-deck! [deck-id]
-  (swap! app-state shuffle-deck deck-id))
-
-(defn flip-deck! [deck-id]
-  (swap! app-state flip-deck deck-id))
-
-(defn pan-table! [dx dy]
-  (swap! app-state pan-table dx dy))
-
-(defn zoom-table! [delta]
-  (swap! app-state zoom-table delta))
+(defn add-component!    [c]       (swap! app-state add-component c))
+(defn remove-component! [id]      (swap! app-state remove-component id))
+(defn move-component!   [id x y]  (swap! app-state move-component id x y))
+(defn move-card-to-hand! [id]     (swap! app-state move-card-to-hand id))
+(defn move-card-to-table! [id x y](swap! app-state move-card-to-table id x y))
+(defn pan-table!  [dx dy]         (swap! app-state pan-table dx dy))
+(defn zoom-table! [delta]         (swap! app-state zoom-table delta))
 
 ;; ---------------------------------------------------------------------------
 ;; Selection
 ;; ---------------------------------------------------------------------------
 
-(defn set-selection! [ids]
-  (swap! app-state assoc :selection (set ids)))
-
-(defn clear-selection! []
-  (swap! app-state assoc :selection #{}))
-
-(defn toggle-selection! [id]
-  (swap! app-state update :selection
-         (fn [s] (if (contains? s id) (disj s id) (conj s id)))))
-
-(defn add-to-selection! [id]
-  (swap! app-state update :selection conj id))
+(defn set-selection!    [ids] (swap! app-state assoc :selection (set ids)))
+(defn clear-selection!  []    (swap! app-state assoc :selection #{}))
+(defn add-to-selection! [id]  (swap! app-state update :selection conj id))
 
 ;; ---------------------------------------------------------------------------
 ;; Copy list
 ;; ---------------------------------------------------------------------------
 
 (defn copy-objects-to-list! [ids]
-  (let [comps (:components @app-state)
-        selected (filter #(contains? (set ids) (:id %)) comps)]
-    (swap! app-state assoc :copy-list (vec selected))))
+  (let [id-set (set ids)]
+    (swap! app-state assoc :copy-list
+           (vec (filter #(id-set (:id %)) (:components @app-state))))))
 
 (defn copy-single-to-list! [id]
-  (let [comp (first (filter #(= (:id %) id) (:components @app-state)))]
-    (when comp
-      (swap! app-state assoc :copy-list [comp]))))
+  (when-let [c (some #(when (= (:id %) id) %) (:components @app-state))]
+    (swap! app-state assoc :copy-list [c])))
 
-(defn paste-from-list!
-  "Paste copy-list onto the table at [cx cy] (table coords), offset from first item."
-  [cx cy]
+(defn paste-from-list! [cx cy]
   (let [items (:copy-list @app-state)]
     (when (seq items)
       (let [base-x (:x (first items) 0)
             base-y (:y (first items) 0)]
         (doseq [item items]
-          (let [new-id (str (random-uuid))
-                dx     (- (:x item 0) base-x)
-                dy     (- (:y item 0) base-y)]
-            (add-component! (assoc item :id new-id :x (+ cx dx) :y (+ cy dy)))))))))
+          (add-component! (assoc item
+                                 :id (str (random-uuid))
+                                 :x (+ cx (- (:x item 0) base-x))
+                                 :y (+ cy (- (:y item 0) base-y)))))))))
 
-(defn paste-to-hand!
-  "Paste copy-list into the hand."
-  []
-  (let [items (:copy-list @app-state)]
-    (when (seq items)
-      (doseq [item items]
-        (let [new-id (str (random-uuid))]
-          (swap! app-state update :hand conj (assoc item :id new-id)))))))
+(defn paste-to-hand! []
+  (doseq [item (:copy-list @app-state)]
+    (swap! app-state update :hand conj (assoc item :id (str (random-uuid))))))

@@ -1254,14 +1254,28 @@ This is my vision of implementation, you are free to interpret it in your own wa
 The general task is to obtain certain properties that all objects will have. something that can be expanded into properties of specific objects.
 but the specific interpretation is up to you.
 
+if you need to change this in any other objects, you are free to make changes to all objects
 ** fix
-*** выделение не должно исчезать при
-нажатии правой кнопки мыши
-и выбраный пунк меню действует на всю выделную группу
-*** при перетягивание группы обектов
-и нахатие кнопок копирование 
-то действует на копирование всй групу
-а не только обекта под курсором
+*** overall good
+if you need to change this in any other objects, you are free to make changes to all objects
+*** needs fixing
+menu for cards and dice objects.
+It should open when you right-click.
+mast have:
+- roll (for a card it just flips the card)
+- copy
+- flip
+- remove
+and in general everything that all objects should have.
+
+*** the highlight should not disappear when on right click. 
+and the selected menu item affects the entire selected group
+*** when dragging a group of objects or on highlight
+Pressing the commands buttons\"item menu" or other commands affects the entire selected group. And not just the object under the cursor.
+*** dice
+**** reduce the size of the dice by 3 times.
+**** default dice value 
+cannot be empty it is always set to the random value possible for a given die.
 ** колоды
 *** карта добовляется в колоду
 *** обеденять карты в колоды
@@ -1272,6 +1286,8 @@ but the specific interpretation is up to you.
 по дефалту карта светлая шрфт тёмный.
 *** задать цвет перевёрнутой карты
 ** кости разной формы
+** карты можно перетягивать в руке
+меняя их сортировку
 ** выбор цвета костей
 ** все меню добовления обектов
 и свойст обекстов

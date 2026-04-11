@@ -1,8 +1,9 @@
 (ns tabletop.components.die
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
-                                    add-to-selection! clear-selection! copy-objects-to-list! copy-single-to-list!]]
-            [tabletop.logic.dice :refer [roll-die]]
+                                    add-to-selection! clear-selection!
+                                    copy-objects-to-list! copy-single-to-list!
+                                    dispatch! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 ;; ---------------------------------------------------------------------------
@@ -109,34 +110,23 @@
               (reset! dragging? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
               (if @moved?
-                ;; Drag ended — handle shift-click selection on pointer-up only if not moved
                 nil
                 (if (.-shiftKey e)
                   (add-to-selection! id)
                   (do
                     (clear-selection!)
-                    ;; Click: roll the die
-                    (swap! app-state update :components
-                           (fn [cs]
-                             (mapv (fn [c]
-                                     (if (= (:id c) id)
-                                       (roll-die c)
-                                       c))
-                                   cs))))))))
+                    (dispatch! id :roll))))))
 
           :on-context-menu
           (fn [e]
             (.preventDefault e)
             (.stopPropagation e)
             (let [sel (:selection @app-state)
-                  ids (if (contains? sel id) (vec sel) [id])]
-              (open-context-menu!
-               (.-clientX e)
-               (.-clientY e)
-               [{:label "Copy objects"
-                 :action #(copy-objects-to-list! ids)}
-                {:label "Remove"
-                 :action #(remove-component! id)}])))}
+                  ids (if (contains? sel id) (vec sel) [id])
+                  items (into (component-actions die)
+                              [{:label "Copy objects" :action #(copy-objects-to-list! ids)}
+                               {:label "Remove"       :action #(remove-component! id)}])]
+              (open-context-menu! (.-clientX e) (.-clientY e) items)))}
 
          [:span {:class "text-xs leading-none opacity-80"} label]
          [:span {:class "text-xl leading-none mt-1"}

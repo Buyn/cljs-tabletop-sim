@@ -1,7 +1,9 @@
 (ns tabletop.components.card
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! toggle-card-face! remove-component! move-card-to-hand!
-                                    add-to-selection! clear-selection! copy-objects-to-list! copy-single-to-list!]]
+            [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
+                                    add-to-selection! clear-selection!
+                                    copy-objects-to-list! copy-single-to-list!
+                                    dispatch! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn card
@@ -117,21 +119,18 @@
           :on-double-click
           (fn [e]
             (.stopPropagation e)
-            (toggle-card-face! id))
+            (dispatch! id :flip))
 
           :on-context-menu
           (fn [e]
             (.preventDefault e)
             (.stopPropagation e)
             (let [sel (:selection @app-state)
-                  ids (if (contains? sel id) (vec sel) [id])]
-              (open-context-menu!
-               (.-clientX e)
-               (.-clientY e)
-               [{:label "Copy objects"
-                 :action #(copy-objects-to-list! ids)}
-                {:label "Remove"
-                 :action #(remove-component! id)}])))}
+                  ids (if (contains? sel id) (vec sel) [id])
+                  items (into (component-actions card)
+                              [{:label "Copy objects" :action #(copy-objects-to-list! ids)}
+                               {:label "Remove"       :action #(remove-component! id)}])]
+              (open-context-menu! (.-clientX e) (.-clientY e) items)))}
 
          (if face-up?
            [:div {:class "flex flex-col items-center justify-center w-full h-full"}

@@ -1,7 +1,9 @@
 (ns tabletop.components.deck
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! remove-component! draw-top-card! draw-card-to-table! shuffle-deck! flip-deck! move-card-to-hand!
-                                    add-to-selection! clear-selection! copy-objects-to-list! copy-single-to-list!]]
+            [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
+                                    add-to-selection! clear-selection!
+                                    copy-objects-to-list! copy-single-to-list!
+                                    component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn deck
@@ -94,17 +96,8 @@
             (.stopPropagation e)
             (let [sel  (:selection @app-state)
                   ids  (if (contains? sel id) (vec sel) [id])
-                  items (cond-> []
-                          (not empty?) (conj {:label "Draw to Table"
-                                              :action #(draw-card-to-table! id (+ x 80) y)})
-                          (not empty?) (conj {:label "Draw to Hand"
-                                              :action #(draw-top-card! id)})
-                          true         (conj {:label "Shuffle"
-                                              :action #(shuffle-deck! id)})
-                          true         (conj {:label "Flip Deck"
-                                              :action #(flip-deck! id)})
-                          true         (conj {:label "Copy objects"
-                                              :action #(copy-objects-to-list! ids)}))]
+                  items (into (component-actions deck)
+                              [{:label "Copy objects" :action #(copy-objects-to-list! ids)}])]
               (open-context-menu! (.-clientX e) (.-clientY e) items)))}
 
          (if empty?
