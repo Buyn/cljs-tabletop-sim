@@ -2,7 +2,8 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state pan-table! zoom-table!
                                     set-selection! clear-selection!
-                                    paste-from-list! paste-to-hand!]]
+                                    paste-from-list! paste-to-hand!
+                                    set-last-middle-click!]]
             [tabletop.components.card :as card]
             [tabletop.components.deck :as deck]
             [tabletop.components.die :as die]
@@ -81,8 +82,10 @@
                                      (reset! sel-end [tx ty])))
 
                                  (= (.-button e) 1)
-                                 ;; Middle click → pan
+                                 ;; Middle click → pan + record position
                                  (do
+                                   (let [[tx ty] (client->table (.-clientX e) (.-clientY e) pan-x pan-y zoom)]
+                                     (set-last-middle-click! tx ty))
                                    (reset! panning? true)
                                    (.setPointerCapture (.-currentTarget e) (.-pointerId e))
                                    (reset! last-x (.-clientX e))

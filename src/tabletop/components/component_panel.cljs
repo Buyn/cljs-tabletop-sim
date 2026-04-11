@@ -2,18 +2,16 @@
   (:require [tabletop.logic.shuffle :refer [make-standard-deck]]
             [tabletop.logic.dice :refer [make-die]]
             [tabletop.logic.serialization :refer [serialize-state deserialize-state]]
-            [tabletop.state :refer [app-state add-component!]]))
+            [tabletop.state :refer [app-state add-component! placement-pos]]))
 
 (defn add-standard-deck! []
-  (add-component! {:id      (str (random-uuid))
-                   :type    :deck
-                   :x       200
-                   :y       200
-                   :cards   (make-standard-deck)
-                   :custom? false
-                   :suits   ["♠" "♥" "♦" "♣"]
-                   :ranks   ["A" "2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K"]
-                   :color   "#ffffff"}))
+  (let [[x y] (placement-pos)]
+    (add-component! {:id      (str (random-uuid))
+                     :type    :deck
+                     :x       x
+                     :y       y
+                     :cards   (make-standard-deck)
+                     :custom? false})))
 
 (def die-types [4 6 8 10 12 20 100])
 
@@ -94,7 +92,8 @@
                (for [faces die-types]
                  [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
                   {:key      faces
-                   :on-click #(add-component! (make-die faces))}
+                   :on-click #(let [[x y] (placement-pos)]
+                                (add-component! (make-die faces x y)))}
                   (str "d" faces)])])
 
             ;; Save / Load section

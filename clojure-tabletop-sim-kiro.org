@@ -1951,7 +1951,7 @@ and
 based on the previous assignment.
 *** cards in hand when hovering should increase by 3 times and not rise.
 
-** TODO decks
+** VERIFY decks
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -2612,6 +2612,8 @@ Just show me the edits I need to make.
 - и как аккуратно сделать split без копипасты логики
 
 Скажи слово.
+*** check the implementation of the custom deck appearance 
+After pressing the comfort button, the created deck will not appear.
 *** ---
 - **Deck** — an ordered stack (LIFO) of Cards where the top card is the last inserted and the first drawn.
 
@@ -2680,6 +2682,8 @@ Just show me the edits I need to make.
 4. Actions prioritize fluid gameplay over strict precision.
 *** I changed requirements.md
 let's make changes in accordance with the new requirements
+** FIXME check the implementation of the custom deck appearance 
+After pressing the comfort button, the created deck will not appear.
 ** DONE decks
 *** card is added to the deck when dragging a card onto the deck.
 *** combine cards into decks.
@@ -3303,6 +3307,14 @@ make sure they are implemented in the project
 ** игровые кости
 *** кости разной формы
 *** поле цвета при выборе дая
+** выбраная група карт
+*** перетягивается на дек
+*** одиночное нажатие на деке
+не должно сдовать карту
+*** нажал и потянул
+не стаёт карту на стол
+а стаёт её так что карта сразу тянится.
+** таил картинка
 ** кнопки управления
 *** кнопки действуют на обект под курсором
 как если бы он был перетягиваемый.
@@ -3326,7 +3338,6 @@ make sure they are implemented in the project
 
 ** двойное нажатие
 *** открывает меню свойств обекта
-** таил картинка
 ** токенты картинка
 ** гамбургер меню в маин меню
 *** должно отображатся
@@ -3425,6 +3436,160 @@ cd ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro;aider_clipboard
 ** dir
 cd ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro
 /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro
+** publish
+*** npm run build-gh
+cd ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro;npm run build-gh
+cd ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro
+npm run build-gh
+*** git
+git remote add origin https://github.com/Buyn/grom.org.git
+git branch -M main
+git push -u origin main
+
+https://buyn.github.io/
+
+https://<username>.github.io/<repo-name>/.
+https://buyn.github.io/grom.org.git
+https://buyn.github.io/grom.org.git/.
+*** build-gh
+
+cd /home/buyn/Dev/ClojureScript/grom.org
+npm run build-gh
+https://buyn.github.io/grom.org
+
+
+*** orign
+# Sample workflow for building and deploying a Jekyll site to GitHub Pages
+name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+*** static.yml
+
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+*** workflows
+grom.org/.github/workflows
+.github/workflows/deploy.yml
+*** name: Build and Deploy
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Clojure tools
+        uses: DeLaGuardo/setup-clojure@v2
+        with:
+          deps: 'true'
+          tools-deps: 'true'
+
+      - name: Build ClojureScript
+        run: |
+          lein clean
+          lein cljsbuild once min
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./resources/public
+
 ** run запуск проекта
 npm install
 npx shadow-cljs watch app
@@ -3783,7 +3948,30 @@ and custom deck.
 * tools
 ** desktop
 (desktop-save "~/.emacs.d/emaks-sesions/clojure-tabletop-sim-kiro/")
+** auto-tangle-block:
+#+NAME: auto-tangle-block
+#+begin_src emacs-lisp :results output silent :tangle no
+(setq org-src-preserve-indentation t)
+(untabify (point-min) (point-max))
+(save-buffer)
+;; (universal-argument)
+;; (universal-argument)
+;; (org-babel-tangle)
+(evil-close-fold)
+(evil-close-fold)
+(let ((curent-buffer (buffer-name)))
+  (if (get-buffer "*compilation*")
+    (progn
+      (select-frame-by-name "*compilation*")
+      (recompile)
+      (select-frame-by-name curent-buffer))
+    (compile "npm run build-gh")))
 
+;; (find-file-other-frame "reagent-test/src/learn_cljs/reagent_test.cljs")
+;; (find-file-other-frame "~/INI/hydra-cfg.el")
+;; (load "~/INI/hydra-cfg.el")
+;; (load "~/ELs/BuYn/reader.el")
+ #+end_src
 * 2026-04-10
 ** clojure-tabletop-sim-kiro.org
 (find-file-other-frame "/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/clojure-tabletop-sim-kiro.org")

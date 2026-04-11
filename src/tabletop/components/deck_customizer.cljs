@@ -2,7 +2,7 @@
   (:require [reagent.core :as r]
             [tabletop.logic.validation :refer [validate-deck-config]]
             [tabletop.logic.shuffle :refer [make-custom-deck auto-fill-ranks]]
-            [tabletop.state :refer [add-component!]]))
+            [tabletop.state :refer [add-component! placement-pos]]))
 
 (def ^:private default-suits
   [{:label "♠" :color "#000000"}
@@ -128,11 +128,12 @@
                    (reset! errors errs)
                    (do
                      (reset! errors nil)
-                     (add-component! {:id      (str (random-uuid))
-                                      :type    :deck
-                                      :x       200
-                                      :y       200
-                                      :cards   (make-custom-deck cfg')
-                                      :custom? true})
+                     (let [[px py] (placement-pos)]
+                       (add-component! {:id      (str (random-uuid))
+                                        :type    :deck
+                                        :x       px
+                                        :y       py
+                                        :cards   (make-custom-deck cfg')
+                                        :custom? true}))
                      (on-close)))))}
             "Confirm"]]]]))))
