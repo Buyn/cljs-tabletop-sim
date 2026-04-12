@@ -2,19 +2,23 @@
   (:require [reagent.core :as r]))
 
 (def default-bindings
-  {:copy      "c"
-   :cut       "x"
-   :paste     "v"
-   :rotate-cw "w"
-   :rotate-ccw "r"
-   :flip      "a"
-   :to-hand   "q"
-   :roll-shuffle "t"
-   :lock      "h"
-   :group     "g"
-   :scale     "z"
-   :properties "m"
-   :camera-pan " "})
+  {:copy           "c"
+   :cut            "x"
+   :paste          "v"
+   :rotate-cw      "w"
+   :rotate-ccw     "r"
+   :flip           "a"
+   :to-hand        "q"
+   :roll-shuffle   "t"
+   :lock           "h"
+   :group          "g"
+   :scale-up       "Z"
+   :scale-down     "z"
+   :bring-to-front "O"
+   :send-to-back   "o"
+   :delete         "Delete"
+   :properties     "m"
+   :camera-pan     " "})
 
 (defonce bindings (r/atom default-bindings))
 

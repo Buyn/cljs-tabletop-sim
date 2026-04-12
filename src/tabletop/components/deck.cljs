@@ -27,7 +27,7 @@
         offset-x    (r/atom 0)
         offset-y    (r/atom 0)]
     (fn [{:keys [deck]}]
-      (let [{:keys [id x y cards]} deck
+      (let [{:keys [id x y cards locked?]} deck
             card-count (count cards)
             empty?     (zero? card-count)
             bg         (or (:face-color (first cards)) "#1e40af")
@@ -38,7 +38,7 @@
 
           :on-pointer-down
           (fn [e]
-            (when (= (.-button e) 0)
+            (when (and (= (.-button e) 0) (not locked?))
               (.stopPropagation e)
               (reset! drag-moved? false)
               (reset! long-press? false)

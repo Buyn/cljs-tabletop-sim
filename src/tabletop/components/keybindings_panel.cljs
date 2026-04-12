@@ -3,11 +3,23 @@
             [tabletop.logic.keybindings :as kb]))
 
 (def action-labels
-  {:copy "Copy" :cut "Cut" :paste "Paste"
-   :rotate-cw "Rotate CW" :rotate-ccw "Rotate CCW"
-   :flip "Flip" :to-hand "To Hand" :roll-shuffle "Roll / Shuffle"
-   :lock "Lock" :group "Group" :scale "Scale"
-   :properties "Properties" :camera-pan "Camera Pan"})
+  {:copy           "Copy"
+   :cut            "Cut"
+   :paste          "Paste"
+   :rotate-cw      "Rotate CW"
+   :rotate-ccw     "Rotate CCW"
+   :flip           "Flip"
+   :to-hand        "To Hand"
+   :roll-shuffle   "Roll / Shuffle"
+   :lock           "Lock / Unlock"
+   :group          "Group"
+   :scale-up       "Scale Up"
+   :scale-down     "Scale Down"
+   :bring-to-front "Bring to Front"
+   :send-to-back   "Send to Back"
+   :delete         "Delete"
+   :properties     "Properties Editor"
+   :camera-pan     "Fast Camera Pan"})
 
 (defn- save-bindings! []
   (let [json (js/JSON.stringify (kb/serialize))

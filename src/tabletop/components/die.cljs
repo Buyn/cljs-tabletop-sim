@@ -22,19 +22,20 @@
         offset-x    (r/atom 0)
         offset-y    (r/atom 0)]
     (fn [{:keys [die]}]
-      (let [{:keys [id faces result x y]} die
+      (let [{:keys [id faces result x y locked?]} die
             selected? (contains? (:selection @app-state) id)]
         [:div
-         {:class (str "absolute select-none rounded shadow-md cursor-pointer "
+         {:class (str "absolute select-none rounded shadow-md "
                       "w-[37px] h-[37px] flex flex-col items-center justify-center "
                       "font-bold text-[13px] "
                       (get die-colors faces "bg-gray-500 text-white")
+                      (if locked? " cursor-not-allowed opacity-80" " cursor-pointer")
                       (when selected? " ring-2 ring-cyan-400"))
           :style {:left (str x "px") :top (str y "px")}
 
           :on-pointer-down
           (fn [e]
-            (when (= (.-button e) 0)
+            (when (and (= (.-button e) 0) (not locked?))
               (.stopPropagation e)
               (reset! moved? false)
               (reset! dragging? true)

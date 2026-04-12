@@ -26,16 +26,17 @@
         start-cx    (r/atom 0)
         start-cy    (r/atom 0)]
     (fn [{:keys [card on-drag-end]}]
-      (let [{:keys [id suit rank face-color back-color text-color suit-color face-up? x y rotation scale]} card
+      (let [{:keys [id suit rank face-color back-color text-color suit-color face-up? x y rotation scale locked?]} card
             face-up?  (boolean face-up?)
             zoom      (get-in @app-state [:table :zoom] 1.0)
             selected? (contains? (:selection @app-state) id)
             transform (str (when rotation (str "rotate(" rotation "deg) "))
                            (when (and scale (not= scale 1.0)) (str "scale(" scale ")")))]
         [:div
-         {:class (str "absolute select-none rounded-lg border shadow-md cursor-grab "
+         {:class (str "absolute select-none rounded-lg border shadow-md "
                       "w-[70px] h-[100px] flex items-center justify-center "
                       "text-sm font-bold overflow-hidden"
+                      (if locked? " cursor-not-allowed opacity-80" " cursor-grab")
                       (when selected? " ring-2 ring-cyan-400"))
           :style {:left             (str x "px")
                   :top              (str y "px")
@@ -43,11 +44,11 @@
                   :border-color     (if face-up? "#d1d5db" "#4b5563")
                   :color            (if face-up? (or text-color "#111111") "transparent")
                   :transform        (str (when @over-hand? "scale(0.33) ") transform)
-                  :transform-origin "top left"}
+                  :transform-origin "center center"}
 
           :on-pointer-down
           (fn [e]
-            (when (= (.-button e) 0)
+            (when (and (= (.-button e) 0) (not locked?))
               (.stopPropagation e)
               (reset! drag-moved? false)
               (reset! start-cx (.-clientX e))

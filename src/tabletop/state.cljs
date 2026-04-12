@@ -328,47 +328,75 @@
 (defmethod perform-action [:die :roll-increment] [state id _]
   (update state :components
           (fn [cs] (mapv #(if (= (:id %) id)
-                            (update % :result (fn [r] (min (:faces % 6) (inc (or r 1)))))
+                            (let [faces (:faces % 6)
+                                  r     (or (:result %) 1)]
+                              (assoc % :result (if (>= r faces) 1 (inc r))))
                             %) cs))))
 
 (defmethod perform-action [:die :roll-decrement] [state id _]
   (update state :components
           (fn [cs] (mapv #(if (= (:id %) id)
-                            (update % :result (fn [r] (max 1 (dec (or r 1)))))
+                            (let [faces (:faces % 6)
+                                  r     (or (:result %) 1)]
+                              (assoc % :result (if (<= r 1) faces (dec r))))
                             %) cs))))
 
 (doseq [t [:card :deck :die :tile-piece]]
   (defmethod perform-action [t :lock] [state id _]
     (update state :components
             (fn [cs] (mapv #(if (= (:id %) id) (update % :locked? not) %) cs))))
-  (defmethod perform-action [t :scale] [state id _ factor]
+  (defmethod perform-action [t :scale-up] [state id _]
     (update state :components
-            (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) factor) %) cs)))))
+            (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) 1.25) %) cs))))
+  (defmethod perform-action [t :scale-down] [state id _]
+    (update state :components
+            (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) (/ 1.0 1.25)) %) cs)))))
+
+;; Z-order: move to front (last in render list) or back (first)
+(doseq [t [:card :deck :die :tile-piece]]
+  (defmethod perform-action [t :bring-to-front] [state id _]
+    (let [c (some #(when (= (:id %) id) %) (:components state))]
+      (if c
+        (update state :components (fn [cs] (conj (vec (remove #(= (:id %) id) cs)) c)))
+        state)))
+  (defmethod perform-action [t :send-to-back] [state id _]
+    (let [c (some #(when (= (:id %) id) %) (:components state))]
+      (if c
+        (update state :components (fn [cs] (into [c] (remove #(= (:id %) id) cs))))
+        state))))
 
 ;; ---------------------------------------------------------------------------
 ;; Component under cursor
 ;; ---------------------------------------------------------------------------
 
 (defn component-at
-  "Returns the topmost component whose bounding box contains table point [tx ty]."
+  "Returns the topmost non-locked component whose bounding box contains table point [tx ty]."
   [tx ty]
-  (let [comps (:components @app-state)]
-    (last (filter (fn [c]
-                    (let [cw (if (= (:type c) :die) 37 70)
-                          ch (if (= (:type c) :die) 37 100)]
-                      (and (>= tx (:x c 0)) (<= tx (+ (:x c 0) cw))
-                           (>= ty (:y c 0)) (<= ty (+ (:y c 0) ch)))))
-                  comps))))
+  (last (filter (fn [c]
+                  (let [cw (if (= (:type c) :die) 37 70)
+                        ch (if (= (:type c) :die) 37 100)]
+                    (and (>= tx (:x c 0)) (<= tx (+ (:x c 0) cw))
+                         (>= ty (:y c 0)) (<= ty (+ (:y c 0) ch)))))
+                (:components @app-state))))
 
 (defmulti component-actions :type)
 
 (defn- common-actions [id]
-  (cond-> [{:label "Copy"   :action #(copy-objects-to-list!
-                                       (let [sel (:selection @app-state)]
-                                         (if (contains? sel id) (vec sel) [id])))}
-           {:label "Remove" :action #(dispatch-selection! id :remove)}]
-    (> (count (:selection @app-state)) 1)
-    (conj {:label "Group" :action group-selection!})))
+  (let [sel     (:selection @app-state)
+        ids     (if (contains? sel id) (vec sel) [id])
+        locked? (:locked? (some #(when (= (:id %) id) %) (:components @app-state)))]
+    (cond-> [{:label (if locked? "Unlock" "Lock")
+              :action #(doseq [i ids] (dispatch! i :lock))}
+             {:label "Bring to Front"
+              :action #(doseq [i ids] (dispatch! i :bring-to-front))}
+             {:label "Send to Back"
+              :action #(doseq [i ids] (dispatch! i :send-to-back))}
+             {:label "Copy"
+              :action #(copy-objects-to-list! ids)}
+             {:label "Remove"
+              :action #(doseq [i ids] (dispatch! i :remove))}]
+      (> (count sel) 1)
+      (conj {:label "Group" :action group-selection!}))))
 
 (defmethod component-actions :deck [{:keys [id x y cards]}]
   (let [empty? (empty? cards)

@@ -171,8 +171,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 10. Each suit has an associated color selector displayed next to its symbol input.
 11. The chosen suit color is used when rendering that suit on cards.
 
-### 5. Card Manipulation
-    
+### 5. Components Behavior
+#### 5.1 Card Manipulation
 1. Dragging a Card moves it in real time.
 2. Double-clicking a Card toggles face-up / face-down.
 3. Dragging a Card into the Hand area moves it from the table to the hand; while dragging over the hand the card visually shrinks to hand scale (scale 0.33 from top-left).
@@ -194,7 +194,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - "Bring to Front"
    - "Send to Back"
 
-### 5A. Deck Interaction (Advanced Behavior)
+#### 5.2 Deck Interaction (Advanced Behavior)
 1. Dragging a Card over any part of a Deck and releasing it places the card on top of that deck.
 1. Dragging a Deck over any part Card of a and releasing it places the card on bottom of that deck.
 2. Any overlap between a Card and a Deck during drop is sufficient to trigger insertion into the deck.
@@ -225,7 +225,67 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 10. Single-click on a Deck places card  onto the table:
    - The card becomes a table component immediately.
 
-### 6. Card Appearance
+#### 5.3 Grouping Layout Behavior for not Cards and/or not Decks components
+1. When grouping not Cards and/or not Decks components:
+   - components do not stack
+   - All resulting components must be repositioned around a computed group center.
+   - The group center is defined as the average position of all grouped components.
+2. Layout rules:
+   - Components must not overlap.
+   - Components must be placed as compactly as possible.
+   - Minimal spacing between components must be preserved.
+3. Placement strategy:
+   - Components are arranged in a grid or radial layout around the group center.
+   - Layout must prioritize:
+     - No intersections,
+     - Visual compactness,
+     - Stable and predictable positioning.
+4. The resulting grouped structure must feel like a physically stacked or neatly arranged set.
+
+#### 5.4 Deck Drag Behavior
+1. Immediate drag (no hold delay):
+   - Instantly draws the top card from the deck.
+   - The drawn card becomes the dragged object.
+   - The card is drawn face-down (back side up).
+   - Drag continues with this card.
+
+2. Long press (≥ 1 second):
+   - Enables dragging of the entire deck.
+
+3. This behavior prioritizes card interaction and eliminates delay when drawing cards.
+
+#### 5.5 Hand Behavior
+1. The hand strip is fixed at the bottom of the viewport.
+   - When neither the strip nor any card in it is hovered, the hand body slides down by ~90%, leaving only a thin edge visible.
+   - Cards remain visible above the hand and are not clipped; approximately half of each card’s height remains visible.
+   - When the hand or any card is hovered, the hand returns to its full visible position.
+2. Cards in the hand are centered horizontally and arranged as compactly as possible:
+   - Cards avoid overlapping if there is sufficient horizontal space.
+   - If space is limited, cards overlap uniformly.
+   - No unnecessary gaps are left between cards.
+   - Layout density only changes when interaction (e.g., hover) requires cards to move.
+3. When a card is hovered it scales up 3× in place (transform-origin: bottom center) without moving.
+4. The scaled card must not visually cover its neighbors:
+   - Neighboring cards shift outward just enough to accommodate the enlarged card.
+   - The expanded edge of the hovered card meets but does not overlap adjacent cards.
+   - Cards only move as much as necessary; the layout remains as compact as possible.
+5. Card visibility is prioritized based on proximity to the hovered card:
+   - Cards closest to the hovered card must remain clearly visible with minimal overlap.
+   - Cards farther from the hovered card may be increasingly overlapped to preserve space.
+   - Overlap is redistributed dynamically so that nearer cards are revealed at the expense of farther ones.
+   - No empty gaps are introduced; the layout remains visually continuous and compact.
+6. Z-order is determined by proximity to the hovered card: the closest neighbor renders on top of farther ones; the hovered card is always topmost.
+7. Cards in the hand can be dragged horizontally to reorder them; releasing within the hand strip inserts the card at the nearest slot.
+8. While dragging a card:
+   - If the bottom of the dragged card leaves the hand area, the card visually transitions to table scale.
+   - If any draggable component is hovered over the hand area during drag, it becomes eligible to enter the hand on drop.
+9. Releasing a dragged hand card outside the hand strip moves it onto the table at the drop position with table scale applied.
+10. Tile Pieces can be moved into the hand and back to the table:
+   - They behave identically to Cards in the hand.
+   - Scaling and layout rules apply the same way.
+
+### 6. Components Appearance
+#### 6.1 Card Appearance
 
 1. A face-up card shows its rank and suit centered on a colored background.
 2. A face-down card shows a blue hatched pattern on a dark background.
@@ -239,7 +299,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
     - Spades (♠) and Clubs (♣) render in black,
     - Hearts (♥) and Diamonds (♦) render in red.
 
-### 6A. Tile Piece Appearance
+#### 6.2 Tile Piece Appearance
 
 1. A Tile Piece renders as a fragment of its source image.
 
@@ -287,25 +347,34 @@ Example for d6:
 1. Left-click drag on empty table draws a rubber-band selection rectangle; releasing selects all intersecting components.
 2. Middle-click drag pans the viewport.
 3. Scroll zooms the viewport, clamped to [0.1, 10.0], centered on the cursor.
+  3.1 Scroll zoom behavior:
+    - Zoom must always be centered on the mouse cursor position.
+    - The point under the cursor before zoom must remain under the cursor after zoom.
+  3.2 Implementation rule:
+    - Zoom must be calculated relative to world coordinates, not absolute screen coordinates.
+    - Camera pan must be adjusted during zoom to preserve cursor anchoring.
+  3.3 This applies to:
+    - Zoom in (scroll up),
+    - Zoom out (scroll down).
+  3.4 Result:
+    - Zooming feels like scaling the world toward or away from the cursor.
 4. Right-clicking empty table shows a context menu with "Paste".
-5. New components (Decks, Dice) are placed at:
+5. All New components (Decks, Dice, etc) are placed at:
    - the last middle-click position, if available,
    - otherwise at the center of the viewport.
 
-### 8A. Deck Drag Behavior
-1. Immediate drag (no hold delay):
-   - Instantly draws the top card from the deck.
-   - The drawn card becomes the dragged object.
-   - The card is drawn face-down (back side up).
-   - Drag continues with this card.
-
-2. Long press (≥ 1 second):
-   - Enables dragging of the entire deck.
-
-3. This behavior prioritizes card interaction and eliminates delay when drawing cards.
+### 8B. Camera Zoom Consistency
+1. Both zoom-in and zoom-out operations must:
+   - Preserve cursor-relative positioning,
+   - Adjust camera pan dynamically.
+2. No zoom operation should:
+   - Snap to center,
+   - Use fixed viewport origin.
+3. The camera must behave as if:
+   - The cursor is "anchored" to the world,
+   - And the world scales around that anchor point.
 
 ### 9. Selection and Clipboard
-
 1. Shift-clicking a component adds it to the selection; plain click clears the selection.
 2. Selected components are highlighted with a cyan ring.
 3. The highlight persists when a context menu is opened via right-click.
@@ -316,38 +385,8 @@ Example for d6:
 8. "X" while dragging copies and removes the dragged component.
 9. "V" pastes the copy list: into the hand if the cursor is over the hand, otherwise onto the table at the cursor position.
 
-### 10. Hand Behavior
-1. The hand strip is fixed at the bottom of the viewport.
-   - When neither the strip nor any card in it is hovered, the hand body slides down by ~90%, leaving only a thin edge visible.
-   - Cards remain visible above the hand and are not clipped; approximately half of each card’s height remains visible.
-   - When the hand or any card is hovered, the hand returns to its full visible position.
-2. Cards in the hand are centered horizontally and arranged as compactly as possible:
-   - Cards avoid overlapping if there is sufficient horizontal space.
-   - If space is limited, cards overlap uniformly.
-   - No unnecessary gaps are left between cards.
-   - Layout density only changes when interaction (e.g., hover) requires cards to move.
-3. When a card is hovered it scales up 3× in place (transform-origin: bottom center) without moving.
-4. The scaled card must not visually cover its neighbors:
-   - Neighboring cards shift outward just enough to accommodate the enlarged card.
-   - The expanded edge of the hovered card meets but does not overlap adjacent cards.
-   - Cards only move as much as necessary; the layout remains as compact as possible.
-5. Card visibility is prioritized based on proximity to the hovered card:
-   - Cards closest to the hovered card must remain clearly visible with minimal overlap.
-   - Cards farther from the hovered card may be increasingly overlapped to preserve space.
-   - Overlap is redistributed dynamically so that nearer cards are revealed at the expense of farther ones.
-   - No empty gaps are introduced; the layout remains visually continuous and compact.
-6. Z-order is determined by proximity to the hovered card: the closest neighbor renders on top of farther ones; the hovered card is always topmost.
-7. Cards in the hand can be dragged horizontally to reorder them; releasing within the hand strip inserts the card at the nearest slot.
-8. While dragging a card:
-   - If the bottom of the dragged card leaves the hand area, the card visually transitions to table scale.
-   - If any draggable component is hovered over the hand area during drag, it becomes eligible to enter the hand on drop.
-9. Releasing a dragged hand card outside the hand strip moves it onto the table at the drop position with table scale applied.
-10. Tile Pieces can be moved into the hand and back to the table:
-   - They behave identically to Cards in the hand.
-   - Scaling and layout rules apply the same way.
-
 ## Input & Controls System
-### 11.1 General Principles
+### 1 General Principles
 1. All UI panels must be:
    - Non-modal,
    - Draggable by their title bar,
@@ -358,7 +397,7 @@ Example for d6:
    - Dragged component(s),
    - Component under cursor (as if selected).
 
-### 11.2 Keybinding System
+### 2 Keybinding System
 1. All keybindings must be:
    - Defined in a separate configuration file,
    - Not hardcoded in source code.
@@ -379,7 +418,7 @@ Example for d6:
    - Non-modal,
    - Draggable panel.
 
-### 11.3 Core Controls
+### 3 Core Controls
 #### Rotation
 - `W` — rotate clockwise
 - `R` — rotate counter-clockwise
@@ -390,8 +429,8 @@ Rules:
 3. Rotation step is defined in General Settings.
 
 Dice behavior:
-- `W` — increment value by 1
-- `R` — decrement value by 1
+- `R` — increment value by 1
+- `W` — decrement value by 1
 
 #### Flip
 - `A` — flip component (card or deck)
@@ -411,14 +450,25 @@ Lock behavior:
    - Cannot be selected,
    - Cannot be dragged or moved,
    - Cannot be part of selection.
-2. Still allowed:
+2. Still allowed all other actions:
    - Context menu actions,
-   - Keyboard actions targeting it directly,
+   - Actions targeting it directly,
+   - Interaction Actions,
+   - drag events used for not moved action (example: a locked deck with a short “drag” event will give up one card, but will ignore a long “pull” event, since it would cause the need to move the deck),
    - Serialization / saving.
-3. Lock state is preserved in Game State.
+3. Lock applies to ALL component types:
+   - Cards,
+   - Decks,
+   - Dice,
+   - Tile Pieces.
+4. Lock state must always be respected consistently across:
+   - Input system,
+   - Drag system,
+   - Selection system.
 
+5. Lock state is preserved in Game State.
 - `G` — group selected components
-- `z` — down component
+- `z` — scale down component
 - `Z` — scale up component
 - `o` — move component to bottom (back)
 - `O` — move component to top (front)
@@ -436,16 +486,29 @@ Z-order rules:
 - `V` — paste
 
 Rules:
-1. Works on:
+1. Copy (`C`):
+   - Adds target component(s) to the Copy List.
+   - Does not modify the original.
+2. Cut (`X`):
+   - First copies the target component(s) into the Copy List.
+   - Then removes the component(s) from the table or hand.
+   - This is equivalent to performing Copy followed by Remove.
+3. Paste (`V`):
+   - Inserts components from the Copy List:
+     - Into the hand if cursor is over the hand,
+     - Otherwise onto the table at cursor position.
+4. Works on:
    - Selected components,
    - Dragged component,
    - Component under cursor.
+5. Order of operations must always be:
+   Copy → then Remove (for Cut).
 
 #### Camera Movement
 - `Space` — enable fast camera pan
 
 Rules:
-1. Moves camera at 3× speed of mouse drag. In the direction of mouse movement.
+1. Moves camera at 5× speed of mouse drag. In the opposite direction to mouse movement.
 
 2. Works even while:
    - Dragging component(s),
@@ -461,7 +524,7 @@ Rules:
    - Component under cursor.
 2. If multiple components are selected, all are removed.
 3. Locked components cannot be removed via selection or cursor.
-### 11.4 Properties Editor
+### 4 Properties Editor
 - `M` — open Properties Editor
 
 Input actions for:
@@ -481,7 +544,7 @@ Behavior:
    - The edited data is deserialized,
    - The component is replaced as if loaded from save.
 
-### 11.5 Interaction Priority
+### 5 Interaction Priority
 Input actions must resolve in the following priority:
 
 1. Dragged component(s)
@@ -504,7 +567,6 @@ This rule applies uniformly across:
 - Mouse interactions.
 
 ## Design Principles
-
 1. All deck operations follow intuitive physical card behavior.
 2. "Top of deck" is always the most recently added card.
 3. Any visual overlap implies interaction (merge, drop, combine).
@@ -520,6 +582,7 @@ This rule applies uniformly across:
 13. UI panels must follow consistent interaction rules (non-modal, draggable, closable).
 14. Input handling must prioritize fluid gameplay and minimal friction.
 15. All component transformations (rotation, scaling) must be performed relative to the visual center of the component, not its corner.
+16. All spatial transformations (zoom, grouping, placement) must preserve intuitive physical behavior and spatial consistency.
 
 ## Code Principles
 1. The code must be reliable, modular, without unnecessary repetition and functional.

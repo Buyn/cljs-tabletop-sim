@@ -9,7 +9,8 @@
             [tabletop.components.die :as die]
             [tabletop.components.hand :as hand]
             [tabletop.components.tile-piece :as tile-piece]
-            [tabletop.components.context-menu :refer [open-context-menu!]]))
+            [tabletop.components.context-menu :refer [open-context-menu!]]
+            [tabletop.logic.keybindings :as kb]))
 
 ;; Track last known mouse position (also tracked in input.cljs — kept for context-menu paste)
 (defonce last-mouse-pos (atom [0 0]))
@@ -18,6 +19,34 @@
   (do (.addEventListener js/document "mousemove"
                          (fn [e] (reset! last-mouse-pos [(.-clientX e) (.-clientY e)])))
       true))
+
+;; Space fast-pan: track held state and last position
+(defonce ^:private space-pan-state (atom {:active false :last-x 0 :last-y 0}))
+
+(defonce ^:private space-pan-handlers
+  (do
+    (.addEventListener js/document "keydown"
+                       (fn [e]
+                         (when (and (= (.-key e) (kb/key-for :camera-pan))
+                                    (not (#{"INPUT" "TEXTAREA"} (.-tagName (.-target e))))
+                                    (not (:active @space-pan-state)))
+                           (.preventDefault e)
+                           (let [[cx cy] @last-mouse-pos]
+                             (swap! space-pan-state assoc :active true :last-x cx :last-y cy)))))
+    (.addEventListener js/document "keyup"
+                       (fn [e]
+                         (when (= (.-key e) (kb/key-for :camera-pan))
+                           (swap! space-pan-state assoc :active false))))
+    (.addEventListener js/document "mousemove"
+                       (fn [e]
+                         (when (:active @space-pan-state)
+                           (let [cx  (.-clientX e)
+                                 cy  (.-clientY e)
+                                 dx  (* 3 (- cx (:last-x @space-pan-state)))
+                                 dy  (* 3 (- cy (:last-y @space-pan-state)))]
+                             (pan-table! dx dy)
+                             (swap! space-pan-state assoc :last-x cx :last-y cy)))))
+    true))
 
 (defn- client->table [cx cy pan-x pan-y zoom]
   [(/ (- cx pan-x) zoom)

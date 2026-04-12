@@ -19,10 +19,6 @@
     (vector? (:cards component))
     (update :cards (fn [cards] (mapv keywordize-type cards)))))
 
-;; ---------------------------------------------------------------------------
-;; Public API
-;; ---------------------------------------------------------------------------
-
 (defn serialize-state
   "Extracts :table, :components, :hand, :menu-open, and :menu-section from state
    and returns a JSON string with version 1 wrapping those keys."
