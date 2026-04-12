@@ -23,7 +23,8 @@
 (defonce ^:private ctrl-v-handler
   (do (.addEventListener js/document "keydown"
                          (fn [e]
-                           (when (and (.-ctrlKey e) (= (.-key e) "v"))
+                           (when (and (.-ctrlKey e) (= (.-key e) "v")
+                                      (not (#{"INPUT" "TEXTAREA"} (.-tagName (.-target e)))))
                              (.preventDefault e)
                              (let [[cx cy] @last-mouse-pos]
                                (if (tabletop.components.hand/hand-drop-zone? [cx cy])
