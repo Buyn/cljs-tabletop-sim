@@ -2,7 +2,7 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    copy-single-to-list! dispatch! dispatch-selection! component-actions]]
+                                    dispatch! dispatch-selection! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn- find-deck-at
@@ -25,8 +25,7 @@
         start-cx    (r/atom 0)
         start-cy    (r/atom 0)
         offset-x    (r/atom 0)
-        offset-y    (r/atom 0)
-        key-handler (r/atom nil)]
+        offset-y    (r/atom 0)]
     (fn [{:keys [deck]}]
       (let [{:keys [id x y cards]} deck
             card-count (count cards)
@@ -51,18 +50,6 @@
                 (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
               (.setPointerCapture (.-currentTarget e) (.-pointerId e))
               (reset! press-timer (js/setTimeout #(reset! long-press? true) 1000))
-              (let [handler (fn [ke]
-                              (when @dragging?
-                                (cond
-                                  (and (.-ctrlKey ke) (= (.-key ke) "c"))
-                                  (do (.preventDefault ke) (copy-single-to-list! id))
-                                  (and (.-ctrlKey ke) (= (.-key ke) "x"))
-                                  (do (.preventDefault ke)
-                                      (copy-single-to-list! id)
-                                      (dispatch-selection! id :remove)
-                                      (reset! dragging? false)))))]
-                (reset! key-handler handler)
-                (.addEventListener js/document "keydown" handler))
               (reset! dragging? true)))
 
           :on-pointer-move
@@ -97,9 +84,6 @@
             (when @press-timer
               (js/clearTimeout @press-timer)
               (reset! press-timer nil))
-            (when @key-handler
-              (.removeEventListener js/document "keydown" @key-handler)
-              (reset! key-handler nil))
             (when @dragging?
               (reset! dragging? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))

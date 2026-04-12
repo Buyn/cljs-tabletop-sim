@@ -2,7 +2,8 @@
   (:require [tabletop.logic.shuffle :refer [make-standard-deck]]
             [tabletop.logic.dice :refer [make-die]]
             [tabletop.logic.serialization :refer [serialize-state deserialize-state]]
-            [tabletop.state :refer [app-state add-component! placement-pos]]))
+            [tabletop.logic.keybindings :as kb]
+            [tabletop.state :refer [app-state general-settings add-component! placement-pos]]))
 
 (defn add-standard-deck! []
   (let [[x y] (placement-pos)]
@@ -29,6 +30,30 @@
      [:span label]
      [:span (if open? "▲" "▼")]]))
 
+(defn- save-settings! []
+  (let [payload (js/JSON.stringify
+                 (clj->js {:keybindings (kb/serialize)
+                            :general     @general-settings}))
+        blob (js/Blob. #js [payload] #js {:type "application/json"})
+        url  (js/URL.createObjectURL blob)
+        a    (.createElement js/document "a")]
+    (set! (.-href a) url)
+    (set! (.-download a) "tabletop-settings.json")
+    (.appendChild (.-body js/document) a)
+    (.click a)
+    (.removeChild (.-body js/document) a)
+    (js/URL.revokeObjectURL url)))
+
+(defn- load-settings! [file]
+  (when file
+    (let [reader (js/FileReader.)]
+      (set! (.-onload reader)
+            (fn [ev]
+              (let [parsed (js->clj (js/JSON.parse (-> ev .-target .-result)) :keywordize-keys true)]
+                (when-let [kb (:keybindings parsed)] (kb/deserialize (clj->js kb)))
+                (when-let [gs (:general parsed)] (reset! general-settings gs)))))
+      (.readAsText reader file))))
+
 (defn- save-game! []
   (let [json-str (serialize-state @app-state)
         blob     (js/Blob. #js [json-str] #js {:type "application/json"})
@@ -54,9 +79,10 @@
                     (swap! app-state assoc :error (str "Failed to load: " (.-message ex))))))))
       (.readAsText reader file))))
 
-(defn component-panel [{:keys [on-open-customizer on-open-tile-panel]}]
-  (let [file-input (atom nil)]
-    (fn [{:keys [on-open-customizer on-open-tile-panel]}]
+(defn component-panel [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-general-settings]}]
+  (let [file-input    (atom nil)
+        settings-file (atom nil)]
+    (fn [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-general-settings]}]
       (let [{:keys [menu-open menu-section]} @app-state]
         [:div
          {:class "fixed left-0 top-0 z-20 menu-panel"
@@ -119,4 +145,23 @@
                         :class     "hidden"
                         :ref       #(reset! file-input %)
                         :on-change (fn [e]
-                                     (load-game! (-> e .-target .-files (aget 0))))}]])])]))))
+                                     (load-game! (-> e .-target .-files (aget 0))))}]])
+
+            ;; Settings section
+            [section-header "Settings" :settings]
+            (when (= menu-section :settings)
+              [:div {:class "mb-2"}
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click on-open-keybindings}
+                "Configure Keybindings"]
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click on-open-general-settings}
+                "General Settings"]
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click save-settings!}
+                "Save Settings"]
+               [:label.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm.cursor-pointer.block
+                "Load Settings"
+                [:input {:type "file" :accept ".json" :class "hidden"
+                         :ref  #(reset! settings-file %)
+                         :on-change #(load-settings! (-> % .-target .-files (aget 0)))}]]])])]))))

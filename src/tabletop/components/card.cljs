@@ -2,7 +2,7 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    copy-single-to-list! dispatch! dispatch-selection! component-actions]]
+                                    dispatch! dispatch-selection! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn- find-deck-at
@@ -24,13 +24,14 @@
         offset-y    (r/atom 0)
         drag-moved? (r/atom false)
         start-cx    (r/atom 0)
-        start-cy    (r/atom 0)
-        key-handler (r/atom nil)]
+        start-cy    (r/atom 0)]
     (fn [{:keys [card on-drag-end]}]
-      (let [{:keys [id suit rank face-color back-color text-color suit-color face-up? x y]} card
+      (let [{:keys [id suit rank face-color back-color text-color suit-color face-up? x y rotation scale]} card
             face-up?  (boolean face-up?)
             zoom      (get-in @app-state [:table :zoom] 1.0)
-            selected? (contains? (:selection @app-state) id)]
+            selected? (contains? (:selection @app-state) id)
+            transform (str (when rotation (str "rotate(" rotation "deg) "))
+                           (when (and scale (not= scale 1.0)) (str "scale(" scale ")")))]
         [:div
          {:class (str "absolute select-none rounded-lg border shadow-md cursor-grab "
                       "w-[70px] h-[100px] flex items-center justify-center "
@@ -41,7 +42,7 @@
                   :background-color (if face-up? (or face-color "#ffffff") (or back-color "#1e3a5f"))
                   :border-color     (if face-up? "#d1d5db" "#4b5563")
                   :color            (if face-up? (or text-color "#111111") "transparent")
-                  :transform        (when @over-hand? "scale(0.33)")
+                  :transform        (str (when @over-hand? "scale(0.33) ") transform)
                   :transform-origin "top left"}
 
           :on-pointer-down
@@ -55,19 +56,7 @@
                 (reset! offset-x (/ (- (.-clientX e) (.-left rect)) zoom))
                 (reset! offset-y (/ (- (.-clientY e) (.-top rect)) zoom))
                 (reset! dragging? true)
-                (.setPointerCapture (.-currentTarget e) (.-pointerId e)))
-              (let [handler (fn [ke]
-                              (when @dragging?
-                                (cond
-                                  (and (.-ctrlKey ke) (= (.-key ke) "c"))
-                                  (do (.preventDefault ke) (copy-single-to-list! id))
-                                  (and (.-ctrlKey ke) (= (.-key ke) "x"))
-                                  (do (.preventDefault ke)
-                                      (copy-single-to-list! id)
-                                      (dispatch-selection! id :remove)
-                                      (reset! dragging? false)))))]
-                (reset! key-handler handler)
-                (.addEventListener js/document "keydown" handler))))
+                (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-pointer-move
           (fn [e]
@@ -100,9 +89,6 @@
 
           :on-pointer-up
           (fn [e]
-            (when @key-handler
-              (.removeEventListener js/document "keydown" @key-handler)
-              (reset! key-handler nil))
             (when @dragging?
               (reset! dragging? false)
               (reset! over-hand? false)
@@ -125,7 +111,7 @@
                       (if (.-shiftKey e)
                         (add-to-selection! id)
                         (clear-selection!)))
-                    (when on-drag-end (on-drag-end [final-x final-y])))))))
+                    (when on-drag-end (on-drag-end [final-x final-y]))))))))
 
           :on-double-click
           (fn [e]

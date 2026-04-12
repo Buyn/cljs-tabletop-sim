@@ -2,7 +2,7 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    copy-single-to-list! dispatch! dispatch-selection! component-actions]]
+                                    dispatch! dispatch-selection! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (def die-colors
@@ -20,8 +20,7 @@
         start-x     (r/atom 0)
         start-y     (r/atom 0)
         offset-x    (r/atom 0)
-        offset-y    (r/atom 0)
-        key-handler (r/atom nil)]
+        offset-y    (r/atom 0)]
     (fn [{:keys [die]}]
       (let [{:keys [id faces result x y]} die
             selected? (contains? (:selection @app-state) id)]
@@ -45,19 +44,7 @@
                     z    (get-in @app-state [:table :zoom] 1.0)]
                 (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
                 (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
-              (.setPointerCapture (.-currentTarget e) (.-pointerId e))
-              (let [handler (fn [ke]
-                              (when @dragging?
-                                (cond
-                                  (and (.-ctrlKey ke) (= (.-key ke) "c"))
-                                  (do (.preventDefault ke) (copy-single-to-list! id))
-                                  (and (.-ctrlKey ke) (= (.-key ke) "x"))
-                                  (do (.preventDefault ke)
-                                      (copy-single-to-list! id)
-                                      (dispatch-selection! id :remove)
-                                      (reset! dragging? false)))))]
-                (reset! key-handler handler)
-                (.addEventListener js/document "keydown" handler))))
+              (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-pointer-move
           (fn [e]
@@ -84,9 +71,6 @@
 
           :on-pointer-up
           (fn [e]
-            (when @key-handler
-              (.removeEventListener js/document "keydown" @key-handler)
-              (reset! key-handler nil))
             (when @dragging?
               (reset! dragging? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))

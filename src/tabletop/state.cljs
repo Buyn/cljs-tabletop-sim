@@ -15,7 +15,11 @@
    :copy-list         []
    :last-middle-click nil})
 
+(defonce general-settings (r/atom {:rotation-step 45 :scale-step 1.25}))
+
 (defonce app-state (r/atom initial-state))
+
+
 
 ;; ---------------------------------------------------------------------------
 ;; Pure state helpers (used by action methods below)
@@ -306,8 +310,55 @@
                      (add-component new-deck))))))))
 
 ;; ---------------------------------------------------------------------------
-;; Component actions (context menu)
+;; Rotation / Lock / Scale
 ;; ---------------------------------------------------------------------------
+
+(defmethod perform-action [:card :rotate] [state id _ deg]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
+
+(defmethod perform-action [:deck :rotate] [state id _ deg]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
+
+(defmethod perform-action [:tile-piece :rotate] [state id _ deg]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
+
+(defmethod perform-action [:die :roll-increment] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id)
+                            (update % :result (fn [r] (min (:faces % 6) (inc (or r 1)))))
+                            %) cs))))
+
+(defmethod perform-action [:die :roll-decrement] [state id _]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id)
+                            (update % :result (fn [r] (max 1 (dec (or r 1)))))
+                            %) cs))))
+
+(doseq [t [:card :deck :die :tile-piece]]
+  (defmethod perform-action [t :lock] [state id _]
+    (update state :components
+            (fn [cs] (mapv #(if (= (:id %) id) (update % :locked? not) %) cs))))
+  (defmethod perform-action [t :scale] [state id _ factor]
+    (update state :components
+            (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) factor) %) cs)))))
+
+;; ---------------------------------------------------------------------------
+;; Component under cursor
+;; ---------------------------------------------------------------------------
+
+(defn component-at
+  "Returns the topmost component whose bounding box contains table point [tx ty]."
+  [tx ty]
+  (let [comps (:components @app-state)]
+    (last (filter (fn [c]
+                    (let [cw (if (= (:type c) :die) 37 70)
+                          ch (if (= (:type c) :die) 37 100)]
+                      (and (>= tx (:x c 0)) (<= tx (+ (:x c 0) cw))
+                           (>= ty (:y c 0)) (<= ty (+ (:y c 0) ch)))))
+                  comps))))
 
 (defmulti component-actions :type)
 

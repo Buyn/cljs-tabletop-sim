@@ -2,7 +2,7 @@
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state pan-table! zoom-table!
                                     set-selection! clear-selection!
-                                    paste-from-list! paste-to-hand!
+                                    paste-from-list!
                                     set-last-middle-click!]]
             [tabletop.components.card :as card]
             [tabletop.components.deck :as deck]
@@ -11,28 +11,12 @@
             [tabletop.components.tile-piece :as tile-piece]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
-;; Track last known mouse position for Ctrl+V
+;; Track last known mouse position (also tracked in input.cljs — kept for context-menu paste)
 (defonce last-mouse-pos (atom [0 0]))
 
 (defonce ^:private mouse-tracker
   (do (.addEventListener js/document "mousemove"
                          (fn [e] (reset! last-mouse-pos [(.-clientX e) (.-clientY e)])))
-      true))
-
-;; Global Ctrl+V handler
-(defonce ^:private ctrl-v-handler
-  (do (.addEventListener js/document "keydown"
-                         (fn [e]
-                           (when (and (.-ctrlKey e) (= (.-key e) "v")
-                                      (not (#{"INPUT" "TEXTAREA"} (.-tagName (.-target e)))))
-                             (.preventDefault e)
-                             (let [[cx cy] @last-mouse-pos]
-                               (if (tabletop.components.hand/hand-drop-zone? [cx cy])
-                                 (paste-to-hand!)
-                                 (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
-                                       tx (/ (- cx pan-x) zoom)
-                                       ty (/ (- cy pan-y) zoom)]
-                                   (paste-from-list! tx ty)))))))
       true))
 
 (defn- client->table [cx cy pan-x pan-y zoom]

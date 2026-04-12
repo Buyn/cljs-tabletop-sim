@@ -189,15 +189,19 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 13. "C" while dragging a card copies it to the copy list.
 14. "X" while dragging a card copies it and removes it from the table.
 15. Selecting multiple components and right-clicking shows a "Group" action that merges multiple Cards and/or Decks into a deck (or into an existing selected single deck).
+16. All component context menus must include:
+   - "Lock / Unlock"
+   - "Bring to Front"
+   - "Send to Back"
 
 ### 5A. Deck Interaction (Advanced Behavior)
-
 1. Dragging a Card over any part of a Deck and releasing it places the card on top of that deck.
+1. Dragging a Deck over any part Card of a and releasing it places the card on bottom of that deck.
 2. Any overlap between a Card and a Deck during drop is sufficient to trigger insertion into the deck.
 3. Cards added to a deck are always placed on top unless explicitly specified otherwise.
 4. The top card of a deck is always the first one drawn.
 
-5. Dragging one Deck over another merges them:
+5. Drag and drop one Deck over another merges them:
    - The dragged deck is placed on top of the target deck.
    - Any overlap between decks triggers merging.
 
@@ -217,6 +221,9 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 9. Splitting rules:
    - Cards are divided as evenly as possible.
    - New decks appear adjacent to the original deck.
+
+10. Single-click on a Deck places card  onto the table:
+   - The card becomes a table component immediately.
 
 ### 6. Card Appearance
 
@@ -264,32 +271,38 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Copy / paste,
    - Hand interaction.
 ### 7. Dice
-
 1. Clicking a Die rolls it: generates a uniform random integer in [1, N] and displays it immediately.
+1A. Increment / decrement behavior:
+- Increment wraps: max → 1
+- Decrement wraps: 1 → max
+
+Example for d6:
+- Increment: 4 → 5 → 6 → 1 → 2
+- Decrement: 5 → 4 → 3 → 2 → 1 → 6
 2. A newly placed die always shows a random initial roll result — never empty.
 3. Dragging a Die moves it without triggering a roll.
 4. Right-clicking a Die shows: "Roll", "Copy", "Remove".
 
 ### 8. Table Interaction
-
 1. Left-click drag on empty table draws a rubber-band selection rectangle; releasing selects all intersecting components.
 2. Middle-click drag pans the viewport.
-3. Scroll zooms the viewport, clamped to [0.5, 2.0], centered on the cursor.
+3. Scroll zooms the viewport, clamped to [0.1, 10.0], centered on the cursor.
 4. Right-clicking empty table shows a context menu with "Paste".
 5. New components (Decks, Dice) are placed at:
    - the last middle-click position, if available,
    - otherwise at the center of the viewport.
 
 ### 8A. Deck Drag Behavior
+1. Immediate drag (no hold delay):
+   - Instantly draws the top card from the deck.
+   - The drawn card becomes the dragged object.
+   - The card is drawn face-down (back side up).
+   - Drag continues with this card.
 
-1. Short click-and-drag on a Deck (less than 1 second):
-   - Does not move the deck.
-   - Instead draws the top card for dragging.
-
-2. Long press (≥ 1 second) on a Deck:
+2. Long press (≥ 1 second):
    - Enables dragging of the entire deck.
 
-3. This behavior prevents accidental deck movement and prioritizes card interaction.
+3. This behavior prioritizes card interaction and eliminates delay when drawing cards.
 
 ### 9. Selection and Clipboard
 
@@ -334,9 +347,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Scaling and layout rules apply the same way.
 
 ## Input & Controls System
-
 ### 11.1 General Principles
-
 1. All UI panels must be:
    - Non-modal,
    - Draggable by their title bar,
@@ -347,10 +358,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Dragged component(s),
    - Component under cursor (as if selected).
 
----
-
 ### 11.2 Keybinding System
-
 1. All keybindings must be:
    - Defined in a separate configuration file,
    - Not hardcoded in source code.
@@ -371,12 +379,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Non-modal,
    - Draggable panel.
 
----
-
 ### 11.3 Core Controls
-
 #### Rotation
-
 - `W` — rotate clockwise
 - `R` — rotate counter-clockwise
 
@@ -389,13 +393,8 @@ Dice behavior:
 - `W` — increment value by 1
 - `R` — decrement value by 1
 
----
-
 #### Flip
-
 - `A` — flip component (card or deck)
-
----
 
 #### Hand ↔ Table
 
@@ -405,16 +404,33 @@ Dice behavior:
 ---
 
 #### Actions
-
 - `T` — roll die / shuffle deck
 - `H` — lock / unlock component
-- `G` — group selected components
-- `Z` — scale up / down component
+Lock behavior:
+1. Locked component:
+   - Cannot be selected,
+   - Cannot be dragged or moved,
+   - Cannot be part of selection.
+2. Still allowed:
+   - Context menu actions,
+   - Keyboard actions targeting it directly,
+   - Serialization / saving.
+3. Lock state is preserved in Game State.
 
----
+- `G` — group selected components
+- `z` — down component
+- `Z` — scale up component
+- `o` — move component to bottom (back)
+- `O` — move component to top (front)
+Z-order rules:
+1. Affects rendering order only.
+2. Applies to:
+   - Dragged,
+   - Selected,
+   - Component under cursor.
+3. Does not change logical grouping or deck structure.
 
 #### Clipboard
-
 - `C` — copy
 - `X` — cut
 - `V` — paste
@@ -425,48 +441,68 @@ Rules:
    - Dragged component,
    - Component under cursor.
 
----
-
 #### Camera Movement
-
 - `Space` — enable fast camera pan
 
 Rules:
-1. Moves camera at 3× speed of middle mouse drag.
+1. Moves camera at 3× speed of mouse drag. In the direction of mouse movement.
+
 2. Works even while:
    - Dragging component(s),
    - Having active selection.
 
----
+#### Deletion
+- `Del` — remove component(s)
 
+Rules:
+1. Applies in priority order:
+   - Dragged component(s),
+   - Selected components,
+   - Component under cursor.
+2. If multiple components are selected, all are removed.
+3. Locked components cannot be removed via selection or cursor.
 ### 11.4 Properties Editor
-
 - `M` — open Properties Editor
 
+Input actions for:
+1. Selected components
+2. Component under cursor
+
 Behavior:
-
 1. Opens a non-modal draggable panel.
-2. Displays selected component(s) state as raw serialized text.
-3. Format must match save file structure.
-
+2. Displays the current serialized state of the selected component(s).
+   - The content must match exactly the structure used in Save Files.
+   - If no component is selected, displays an empty structure: [].
+3. The editor always reflects the real current state that would be saved.
 4. The panel includes:
    - A large editable text area,
    - "Apply" button.
-
 5. On Apply:
    - The edited data is deserialized,
    - The component is replaced as if loaded from save.
 
----
-
 ### 11.5 Interaction Priority
-
 Input actions must resolve in the following priority:
 
 1. Dragged component(s)
 2. Selected components
 3. Component under cursor
 4. No target → no-op
+
+## Interaction Model
+### Target Resolution Priority
+All actions resolve targets in the following order:
+
+1. Dragged component(s)
+2. Selected components
+3. Component under cursor
+4. No target → no-op
+
+This rule applies uniformly across:
+- Keyboard actions,
+- Context menu actions,
+- Mouse interactions.
+
 ## Design Principles
 
 1. All deck operations follow intuitive physical card behavior.
@@ -483,6 +519,7 @@ Input actions must resolve in the following priority:
 12. All user interaction must be configurable and externally defined where possible (e.g., keybindings).
 13. UI panels must follow consistent interaction rules (non-modal, draggable, closable).
 14. Input handling must prioritize fluid gameplay and minimal friction.
+15. All component transformations (rotation, scaling) must be performed relative to the visual center of the component, not its corner.
 
 ## Code Principles
 1. The code must be reliable, modular, without unnecessary repetition and functional.
