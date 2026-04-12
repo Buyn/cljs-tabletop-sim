@@ -887,8 +887,19 @@ let's make changes in accordance with the new requirements
 должно быть что одна карта заняла 1 процент экрана.
 или уменьшилась до размера пиксиля.
 взависимости что проще реализовать.
+** заменить кнопки
+*** с контролов на просто x c v
+я заменил в спецификации кноспки с контол+ x c v
+на x c v - без контрол.
 
-** фикс тайлов
+I replaced the buttons in the specification with control+ c v v 
+on x c v - without control.
+в импут полях кнопки вставки из в буфер с контролом должны работаь стандартно.
+
+сейчас они не работают.
+
+In input fields, buttons for inserting from and into the buffer with a control, should work as standard.  they don't work now.
+** DONE фикс тайлов
 *** задание формы тайлов
 **** форма определяется от центра каждово тайла
 определены как и стандартные но радиусом фигуры вписаной в старндарыный прямоуголник

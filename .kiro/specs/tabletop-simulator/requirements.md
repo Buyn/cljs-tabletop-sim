@@ -20,7 +20,6 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 - **Tile Piece** — a single rectangular fragment of a Tile Image.
 
 ## Requirements
-
 ### 1. Session Start
 
 1. On load the app shows a start screen with "New Game" and "Load Game".
@@ -62,9 +61,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 2. Selecting it opens a non-modal draggable panel:
    - The panel can be dragged by its title bar.
    - It does not block interaction with the table.
-   - A close ("×") button in the title bar closes the panel.
+   - A close ("×") button in the title bar closes the panel, cancel creation.
 
----
 
 #### Tile Source
 
@@ -175,7 +173,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 11. The chosen suit color is used when rendering that suit on cards.
 
 ### 5. Card Manipulation
-
+    
 1. Dragging a Card moves it in real time.
 2. Double-clicking a Card toggles face-up / face-down.
 3. Dragging a Card into the Hand area moves it from the table to the hand; while dragging over the hand the card visually shrinks to hand scale (scale 0.33 from top-left).
@@ -189,8 +187,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 10. "Flip Deck" toggles face-up/face-down on every card in the deck.
 11. "Draw to Table" and "Draw to Hand" are disabled (hidden) when the deck is empty.
 12. Right-clicking a Card shows: "Flip", "Copy", "Remove".
-13. Ctrl+C while dragging a card copies it to the copy list.
-14. Ctrl+X while dragging a card copies it and removes it from the table.
+13. "C" while dragging a card copies it to the copy list.
+14. "X" while dragging a card copies it and removes it from the table.
 15. Selecting multiple components and right-clicking shows a "Group" action that merges multiple Cards and/or Decks into a deck (or into an existing selected single deck).
 
 ### 5A. Deck Interaction (Advanced Behavior)
@@ -302,9 +300,9 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 4. Context menu actions (Flip, Roll, Remove, Copy) apply to the entire selection when the right-clicked object is part of it.
 5. Dragging any selected component moves all selected components together (delta-based).
 6. Dragging a selected component into the hand moves all selected components to the hand.
-7. Ctrl+C while dragging copies the dragged component to the copy list.
-8. Ctrl+X while dragging copies and removes the dragged component.
-9. Ctrl+V pastes the copy list: into the hand if the cursor is over the hand, otherwise onto the table at the cursor position.
+7. "C" while dragging copies the dragged component to the copy list.
+8. "X" while dragging copies and removes the dragged component.
+9. "V" pastes the copy list: into the hand if the cursor is over the hand, otherwise onto the table at the cursor position.
 
 ### 10. Hand Behavior
 1. The hand strip is fixed at the bottom of the viewport.

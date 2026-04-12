@@ -68,7 +68,8 @@
              (reset! drag-ox (- (.-clientX e) @panel-x))
              (reset! drag-oy (- (.-clientY e) @panel-y)))}
           [:span {:style {:font-weight "600" :font-size "14px"}} "Add Tile Image"]
-          [:button {:on-click on-close
+          [:button {:on-click        on-close
+                    :on-pointer-down #(.stopPropagation %)
                     :style {:background "none" :border "none" :color "white"
                             :cursor "pointer" :font-size "16px"}} "×"]]
 
