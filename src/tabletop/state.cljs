@@ -202,6 +202,15 @@
           (collapse-deck id))
       state)))
 
+;; Silently removes top card from deck (used by deck drag to draw card for inline dragging)
+(defmethod perform-action [:deck :draw-card-silent] [state id _]
+  (let [[deck others] (find-and-rest id (:components state))]
+    (if (seq (:cards deck))
+      (-> state
+          (assoc :components (conj (vec others) (update deck :cards (comp vec butlast))))
+          (collapse-deck id))
+      state)))
+
 (defmethod perform-action [:deck :draw-bottom] [state id _]
   (let [[deck others] (find-and-rest id (:components state))
         card (first (:cards deck))]

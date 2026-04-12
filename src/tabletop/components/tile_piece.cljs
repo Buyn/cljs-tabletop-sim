@@ -114,10 +114,9 @@
               (reset! drag-moved? false)
               (reset! start-cx (.-clientX e))
               (reset! start-cy (.-clientY e))
-              (let [rect (.getBoundingClientRect (.-currentTarget e))
-                    z    (get-in @app-state [:table :zoom] 1.0)]
-                (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
-                (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
+              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)]
+                (reset! offset-x (- (/ (- (.-clientX e) pan-x) zoom) x))
+                (reset! offset-y (- (/ (- (.-clientY e) pan-y) zoom) y)))
               (.setPointerCapture (.-currentTarget e) (.-pointerId e))
               (reset! dragging? true)))
 
@@ -128,19 +127,17 @@
                     dy (- (.-clientY e) @start-cy)]
                 (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 4)
                   (reset! drag-moved? true)))
-              (when @drag-moved?
-                (let [z           (get-in @app-state [:table :zoom] 1.0)
-                      parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
-                      new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
-                      new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)
-                      sel   (:selection @app-state)
-                      ddx   (- new-x x)
-                      ddy   (- new-y y)]
-                  (if (contains? sel id)
-                    (doseq [c (:components @app-state)
-                            :when (contains? sel (:id c))]
-                      (move-component! (:id c) (+ (:x c 0) ddx) (+ (:y c 0) ddy)))
-                    (move-component! id new-x new-y))))))
+              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
+                    new-x (- (/ (- (.-clientX e) pan-x) zoom) @offset-x)
+                    new-y (- (/ (- (.-clientY e) pan-y) zoom) @offset-y)
+                    sel   (:selection @app-state)
+                    ddx   (- new-x x)
+                    ddy   (- new-y y)]
+                (if (contains? sel id)
+                  (doseq [c (:components @app-state)
+                          :when (contains? sel (:id c))]
+                    (move-component! (:id c) (+ (:x c 0) ddx) (+ (:y c 0) ddy)))
+                  (move-component! id new-x new-y)))))
 
           :on-pointer-up
           (fn [e]

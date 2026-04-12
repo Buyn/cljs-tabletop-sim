@@ -2569,7 +2569,7 @@ Follow the best functional code standards for clojour and clojour script.
 ** DONE - "Send to Back"
 работает как кнопка
 но не работает как опция меню
-** FIXME команды групировки и удаления
+** VERIFY команды групировки и удаления
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -3750,11 +3750,35 @@ Rules:
 *** I changed requirements.md
 let's make changes in accordance with the new requirements
 
-** dont work
+** DONE dont work
 1. Immediate drag (no hold delay):
    - Instantly draws the top card from the deck.
 
-1. Dragging a Card moves it in real time.
+Dragging a Card dont work.
+Immediate drag (no hold delay) Instantly draws the top card from the deck. (work, but somthing broken, with movement oj new card)
+p
+
+Instantly draws the top card from the deck. (work, but somthing broken)
+после вытягивания первой карты и дропа её на стол.
+вмето карты появлется красный прямоугольник с натпесью "Unknown type:".
+если запросить его свойства:
+[
+  {
+    "y": 619,
+    "suit": "♣",
+    "suit-color": "#000000",
+    "face-color": "#ffffff",
+    "text-color": "#111111",
+    "rank": "J",
+    "face-up?": false,
+    "id": "b6d1d403-2a94-4a46-aef4-e33f318eab85",
+    "back-color": "#1e3a5f",
+    "x": 490
+  }
+]
+
+вторая ветянутая карта не может покинуть зоны колоды, перемешается в пределах колоды.
+попробуй это подчянить
 
 (doesn't work for Tile Images)
 - `Del` — remove component(s) 
@@ -3764,6 +3788,29 @@ let's make changes in accordance with the new requirements
 - `z` — scale down component
 - `Z` — scale up component
 
+
+** fix
+Instantly draws the top card from the deck. (work, but somthing broken)
+после вытягивания первой карты и дропа её на стол.
+вмето карты появлется красный прямоугольник с натпесью "Unknown type:".
+если запросить его свойства:
+[
+  {
+    "y": 619,
+    "suit": "♣",
+    "suit-color": "#000000",
+    "face-color": "#ffffff",
+    "text-color": "#111111",
+    "rank": "J",
+    "face-up?": false,
+    "id": "b6d1d403-2a94-4a46-aef4-e33f318eab85",
+    "back-color": "#1e3a5f",
+    "x": 490
+  }
+]
+
+вторая ветянутая карта не может покинуть зоны колоды, перемешается в пределах колоды.
+попробуй это подчянить
 
 ** VERIFY карты не перетягиваются
 с костями и колодоами всё работает как ожидается

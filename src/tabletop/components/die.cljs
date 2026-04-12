@@ -41,10 +41,9 @@
               (reset! dragging? true)
               (reset! start-x (.-clientX e))
               (reset! start-y (.-clientY e))
-              (let [rect (.getBoundingClientRect (.-currentTarget e))
-                    z    (get-in @app-state [:table :zoom] 1.0)]
-                (reset! offset-x (/ (- (.-clientX e) (.-left rect)) z))
-                (reset! offset-y (/ (- (.-clientY e) (.-top rect)) z)))
+              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)]
+                (reset! offset-x (- (/ (- (.-clientX e) pan-x) zoom) x))
+                (reset! offset-y (- (/ (- (.-clientY e) pan-y) zoom) y)))
               (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-pointer-move
@@ -54,10 +53,9 @@
                     dy (- (.-clientY e) @start-y)]
                 (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 5)
                   (reset! moved? true)
-                  (let [z           (get-in @app-state [:table :zoom] 1.0)
-                        parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
-                        new-x (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
-                        new-y (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)
+                  (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
+                        new-x (- (/ (- (.-clientX e) pan-x) zoom) @offset-x)
+                        new-y (- (/ (- (.-clientY e) pan-y) zoom) @offset-y)
                         sel   (:selection @app-state)
                         ddx   (- new-x (:x die x))
                         ddy   (- new-y (:y die y))]

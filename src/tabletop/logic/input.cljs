@@ -18,9 +18,7 @@
         {:keys [pan-x pan-y zoom]} (:table @app-state)]
     [(/ (- cx pan-x) zoom) (/ (- cy pan-y) zoom)]))
 
-(defn- target-ids
-  "Returns ids to act on in priority order: selection → component under cursor."
-  []
+(defn- target-ids []
   (let [sel (:selection @app-state)]
     (if (seq sel)
       (vec sel)
@@ -34,29 +32,25 @@
                      (not (:locked? (some #(when (= (:id %) id) %) comps))))
                    ids)))))
 
-(defn- hand-index->id [n]
-  (get-in @app-state [:hand (dec n) :id]))
-
 (defn- component-type [id]
   (:type (some #(when (= (:id %) id) %) (:components @app-state))))
 
 (defn- handle-key [e]
   (when-not (input-focused? e)
-    ;; Use raw key (case-sensitive) for Z/z/O/o distinction
     (let [k   (.-key e)
           act (kb/action-for k)]
-      (case act
-        :copy
+      (cond
+        (= act :copy)
         (do (.preventDefault e)
             (when-let [ids (target-ids)] (copy-objects-to-list! ids)))
 
-        :cut
+        (= act :cut)
         (do (.preventDefault e)
             (when-let [ids (unlocked-targets)]
               (copy-objects-to-list! ids)
               (doseq [id ids] (dispatch! id :remove))))
 
-        :paste
+        (= act :paste)
         (do (.preventDefault e)
             (let [[cx cy] @last-mouse-pos]
               (if (hand/hand-drop-zone? [cx cy])
@@ -64,31 +58,31 @@
                 (let [[tx ty] (table-pos)]
                   (paste-from-list! tx ty)))))
 
-        :rotate-cw
-        (do (.preventDefault e)
-            (let [step (:rotation-step @general-settings 45)]
-              (doseq [id (or (unlocked-targets) [])]
-                (if (= :die (component-type id))
-                  (dispatch! id :roll-increment)
-                  (dispatch! id :rotate step)))))
-
-        :rotate-ccw
+        (= act :rotate-cw)
         (do (.preventDefault e)
             (let [step (:rotation-step @general-settings 45)]
               (doseq [id (or (unlocked-targets) [])]
                 (if (= :die (component-type id))
                   (dispatch! id :roll-decrement)
+                  (dispatch! id :rotate step)))))
+
+        (= act :rotate-ccw)
+        (do (.preventDefault e)
+            (let [step (:rotation-step @general-settings 45)]
+              (doseq [id (or (unlocked-targets) [])]
+                (if (= :die (component-type id))
+                  (dispatch! id :roll-increment)
                   (dispatch! id :rotate (- step))))))
 
-        :flip
+        (= act :flip)
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])] (dispatch! id :flip)))
 
-        :to-hand
+        (= act :to-hand)
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])] (move-card-to-hand! id)))
 
-        :roll-shuffle
+        (= act :roll-shuffle)
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])]
               (case (component-type id)
@@ -96,52 +90,49 @@
                 :deck (dispatch! id :shuffle)
                 nil)))
 
-        :lock
+        (= act :lock)
         (do (.preventDefault e)
-            ;; Lock/unlock applies even to locked components (to unlock them)
             (doseq [id (or (target-ids) [])] (dispatch! id :lock)))
 
-        :group
+        (= act :group)
         (do (.preventDefault e) (group-selection!))
 
-        :scale-up
+        (= act :scale-up)
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])] (dispatch! id :scale-up)))
 
-        :scale-down
+        (= act :scale-down)
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])] (dispatch! id :scale-down)))
 
-        :bring-to-front
+        (= act :bring-to-front)
         (do (.preventDefault e)
             (doseq [id (or (target-ids) [])] (dispatch! id :bring-to-front)))
 
-        :send-to-back
+        (= act :send-to-back)
         (do (.preventDefault e)
             (doseq [id (or (target-ids) [])] (dispatch! id :send-to-back)))
 
-        :delete
+        (= act :delete)
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])] (dispatch! id :remove)))
 
-        :properties
+        (= act :properties)
         (do (.preventDefault e)
             (swap! app-state assoc :show-properties? true :properties-text nil))
 
         ;; 1–0: move hand card N to table at cursor
-        nil
-        (when (re-matches #"[0-9]" k)
-          (let [n (if (= k "0") 10 (js/parseInt k 10))]
-            (when (get-in @app-state [:hand (dec n)])
-              (.preventDefault e)
-              (let [[tx ty] (table-pos)]
-                (swap! app-state
-                       (fn [s]
-                         (let [card (get-in s [:hand (dec n)])]
-                           (-> s
-                               (update :hand #(vec (concat (take (dec n) %) (drop n %))))
-                               (update :components conj (assoc card :x tx :y ty))))))))))
-        nil))))
+        (re-matches #"[0-9]" k)
+        (let [n (if (= k "0") 10 (js/parseInt k 10))]
+          (when (get-in @app-state [:hand (dec n)])
+            (.preventDefault e)
+            (let [[tx ty] (table-pos)]
+              (swap! app-state
+                     (fn [s]
+                       (let [card (get-in s [:hand (dec n)])]
+                         (-> s
+                             (update :hand #(vec (concat (take (dec n) %) (drop n %))))
+                             (update :components conj (assoc card :x tx :y ty)))))))))))))
 
 (defonce ^:private _installed
   (do

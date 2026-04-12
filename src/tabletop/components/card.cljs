@@ -53,11 +53,11 @@
               (reset! drag-moved? false)
               (reset! start-cx (.-clientX e))
               (reset! start-cy (.-clientY e))
-              (let [rect (.getBoundingClientRect (.-currentTarget e))]
-                (reset! offset-x (/ (- (.-clientX e) (.-left rect)) zoom))
-                (reset! offset-y (/ (- (.-clientY e) (.-top rect)) zoom))
-                (reset! dragging? true)
-                (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
+              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)]
+                (reset! offset-x (- (/ (- (.-clientX e) pan-x) zoom) x))
+                (reset! offset-y (- (/ (- (.-clientY e) pan-y) zoom) y)))
+              (reset! dragging? true)
+              (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-pointer-move
           (fn [e]
@@ -66,11 +66,10 @@
                     dy (- (.-clientY e) @start-cy)]
                 (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 4)
                   (reset! drag-moved? true)))
-              (let [z           (get-in @app-state [:table :zoom] 1.0)
-                    parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
-                    new-x       (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
-                    new-y       (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)
-                    card-bottom (+ (.-clientY e) (* (- 100 (* @offset-y z)) z))
+              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
+                    new-x       (- (/ (- (.-clientX e) pan-x) zoom) @offset-x)
+                    new-y       (- (/ (- (.-clientY e) pan-y) zoom) @offset-y)
+                    card-bottom (+ (.-clientY e) (* (- 100 (* @offset-y zoom)) zoom))
                     in-hand?    (tabletop.components.hand/hand-drop-zone? [(.-clientX e) card-bottom])]
                 (reset! over-hand? in-hand?)
                 (if in-hand?
@@ -94,10 +93,9 @@
               (reset! dragging? false)
               (reset! over-hand? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
-              (let [z           (get-in @app-state [:table :zoom] 1.0)
-                    parent-rect (.getBoundingClientRect (.-offsetParent (.-currentTarget e)))
-                    final-x     (- (/ (- (.-clientX e) (.-left parent-rect)) z) @offset-x)
-                    final-y     (- (/ (- (.-clientY e) (.-top parent-rect)) z) @offset-y)]
+              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
+                    final-x (- (/ (- (.-clientX e) pan-x) zoom) @offset-x)
+                    final-y (- (/ (- (.-clientY e) pan-y) zoom) @offset-y)]
                 (if (and @drag-moved? (find-deck-at final-x final-y id))
                   ;; Dropped onto a deck — add card to it
                   (let [target-deck (find-deck-at final-x final-y id)
@@ -112,7 +110,7 @@
                       (if (.-shiftKey e)
                         (add-to-selection! id)
                         (clear-selection!)))
-                    (when on-drag-end (on-drag-end [final-x final-y]))))))))
+                    (when on-drag-end (on-drag-end [final-x final-y])))))))
 
           :on-double-click
           (fn [e]
