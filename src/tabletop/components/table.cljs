@@ -8,6 +8,7 @@
             [tabletop.components.deck :as deck]
             [tabletop.components.die :as die]
             [tabletop.components.hand :as hand]
+            [tabletop.components.tile-piece :as tile-piece]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 ;; Track last known mouse position for Ctrl+V
@@ -149,6 +150,7 @@
               :deck ^{:key (:id component)} [deck/deck {:deck component}]
               :card ^{:key (:id component)} [card/card {:card component}]
               :die  ^{:key (:id component)} [die/die  {:die  component}]
+              :tile-piece ^{:key (:id component)} [tile-piece/tile-piece {:piece component}]
               ^{:key (:id component)} [:div {:class "absolute bg-red-500 text-white text-xs p-1 rounded"
                                              :style {:left (str (:x component 0) "px")
                                                      :top  (str (:y component 0) "px")}}

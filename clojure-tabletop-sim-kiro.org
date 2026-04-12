@@ -11,9 +11,13 @@
 After pressing the comfort button, the created deck will not appear.
 5. On valid confirmation, a shuffled 52-card custom deck is placed at a fixed position on the table.
 ** кнопки управления
+*** кнопки действуют на выделеные или перетягиваемые обект 
 *** кнопки действуют на обект под курсором
 как если бы он был перетягиваемый.
+или выделеный.
+*** 
 *** w и r
+кнопки для поворота обектов. по часовой и против часовой кнопки
 поворот для всех кроме дайсов
 для дайсов уменшить
 *** 
@@ -26,7 +30,8 @@ After pressing the comfort button, the created deck will not appear.
 *** клавиши копирования
 **** должны действовать на все выделеные обекты
 **** вынести все управляюшие клавиши в отделный фаил настроек
-** таил картинка
+** DONE таил картинка
+** тайлов
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -759,9 +764,29 @@ Just show me the edits I need to make.
 8. Tile Image configuration must be fully reconstructible from saved state.
 ---
 
-*** I changed requirements.md
+*** DONE I changed requirements.md
 let's make changes in accordance with the new requirements
-
+** фикс тайлов
+*** задание формы тайлов
+**** круглые
+**** шестиграные
+**** прямоуголные
+*** задовать отступы
+от файлов исходников
+*** задание бордюров
+*** крестик в тайтле должен закрывать
+панель создания
+*** 1х1
+работает
+проверь работму 5х3
+** перетягивание повышает z
+*** тоесть любой перетягиваяемый обект
+становится самым топ обектом.
+*** лочимы становится самым дальним
+** приближение
+*** происходит центрованием
+на курсоре мыши
+тоесть увеличивается приближает координаты где расположена мышь.
 ** описать гамбургер меню
 *** и маин меню
 *** let's add it to requirements.md
@@ -1078,7 +1103,36 @@ git remote add origin https://github.com/Buyn/cljs-tabletop-sim.git
 git push -u origin main
 
 https://github.com/Buyn/cljs-tabletop-sim.git
+* resurs
+** tiles
+*** квадрат
+**** полы стенны
+***** 5х3
+https://t3.ftcdn.net/jpg/11/03/12/88/360_F_1103128869_wO3gmLmH8lfZd4iUMx8PwAejDekHqzp2.jpg
+*** карты ДнД
+**** agrigator
+https://www.shutterstock.com/image-illustration/dnd-map-cursed-crypt-hides-mournful-2348748001
+**** files
+https://www.shutterstock.com/image-illustration/dnd-map-cursed-crypt-hides-600w-2348748001.jpg
+https://www.shutterstock.com/image-illustration/dnd-map-eerie-silence-envelops-600w-2348749377.jpg
+https://www.shutterstock.com/image-illustration/dnd-map-desolate-ruins-consumed-600w-2348746253.jpg
+https://www.shutterstock.com/image-illustration/combat-adventure-map-board-game-600w-2159291169.jpg
+https://www.shutterstock.com/image-illustration/combat-adventure-map-board-game-600w-2159291167.jpg
+https://www.shutterstock.com/image-illustration/game-map-dungeon-view-above-600w-2062099757.jpg
+https://www.shutterstock.com/image-illustration/dnd-map-eerie-silence-envelops-600w-2348749377.jpg
 
+
+** токены
+*** персонажы 
+**** фулл
+***** пиксель
+****** 12х8
+https://gcup.ru/_ld/26/s55406376.jpg
+
+** dominos
+*** maджонг
+**** 5х4
+https://magnit.ucoz.com/_nw/0/67842954.jpg
 * спекс
 ** спекс
 *** раскажи мне о состоянии проекта

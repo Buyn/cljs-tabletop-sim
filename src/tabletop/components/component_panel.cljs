@@ -54,9 +54,9 @@
                     (swap! app-state assoc :error (str "Failed to load: " (.-message ex))))))))
       (.readAsText reader file))))
 
-(defn component-panel [{:keys [on-open-customizer]}]
+(defn component-panel [{:keys [on-open-customizer on-open-tile-panel]}]
   (let [file-input (atom nil)]
-    (fn [{:keys [on-open-customizer]}]
+    (fn [{:keys [on-open-customizer on-open-tile-panel]}]
       (let [{:keys [menu-open menu-section]} @app-state]
         [:div
          {:class "fixed left-0 top-0 z-20 menu-panel"
@@ -84,6 +84,14 @@
                [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
                 {:on-click on-open-customizer}
                 "Add Custom Deck"]])
+
+            ;; Tile Images section
+            [section-header "Tile Images" :tiles]
+            (when (= menu-section :tiles)
+              [:div {:class "mb-2"}
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click on-open-tile-panel}
+                "Add Tile Image"]])
 
             ;; Dice section
             [section-header "Dice" :dice]

@@ -340,4 +340,7 @@
   (into [{:label "Roll" :action #(dispatch-selection! id :roll)}]
         (common-actions id)))
 
+(defmethod component-actions :tile-piece [{:keys [id]}]
+  (common-actions id))
+
 (defmethod component-actions :default [c] (common-actions (:id c)))
