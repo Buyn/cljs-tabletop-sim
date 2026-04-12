@@ -4,9 +4,9 @@ var show_customizer_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(fal
 var show_tile_panel_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
 return (function (){
 var view = new cljs.core.Keyword(null,"view","view",1247994814).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state));
-var G__31546 = view;
-var G__31546__$1 = (((G__31546 instanceof cljs.core.Keyword))?G__31546.fqn:null);
-switch (G__31546__$1) {
+var G__33435 = view;
+var G__33435__$1 = (((G__33435 instanceof cljs.core.Keyword))?G__33435.fqn:null);
+switch (G__33435__$1) {
 case "start":
 return new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [tabletop.components.start_screen.start_screen], null);
 

@@ -6,32 +6,139 @@
 ** public
 (find-file-other-frame "public/index.html")
 (find-file-other-frame "public/css/style.css")
+** md
+/context add .kiro/specs/tabletop-simulator/requirements.md
+
+
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/requirements.md
 * TODO 
+** сделать раздел в роам
+buyn@ArchSRV % kiro-cli --help-all
+
+USAGE:
+    kiro-cli [OPTIONS] [SUBCOMMAND]
+
+Commands:
+  debug         Debug the app
+  settings      Customize appearance & behavior
+  setup         Setup cli components
+  update        Update the Kiro application
+  diagnostic    Run diagnostic tests
+  init          Generate the dotfiles for the given shell
+  theme         Get or set theme
+  issue         Create a new Github issue
+  login         Login
+  logout        Logout
+  whoami        Prints details about the current user
+  profile       Show the profile associated with this idc user
+  user          Manage your account
+  doctor        Fix and diagnose common issues
+  launch        Launch the desktop app
+  quit          Quit the desktop app
+  restart       Restart the desktop app
+  integrations  Manage system integrations
+  translate     Natural Language to Shell translation
+  dashboard     Open the dashboard
+  chat          AI assistant in your terminal
+  mcp           Model Context Protocol (MCP)
+  inline        Inline shell completions
+  agent         Agent root commands
+  acp           Agent Client Protocol (ACP)
+  help          Print this message or the help of the given subcommand(s)
+
+Options:
+  -v, --verbose...
+          Increase logging verbosity
+
+      --help-all
+          Print help for all subcommands
+
+      --agent <AGENT>
+          Launch chat with specified agent
+
+      --tui
+          Launch chat in TUI mode
+
+      --classic
+          Launch chat in classic (legacy) UI mode
+
+  -h, --help
+          Print help
+
+  -V, --version
+          Print version
+
+
 ** FIXME check the implementation of the custom deck appearance 
 After pressing the comfort button, the created deck will not appear.
 5. On valid confirmation, a shuffled 52-card custom deck is placed at a fixed position on the table.
 ** кнопки управления
+*** все панели открываемы должны быть не модальными
+перетягиваемыми за тайтл.
+и закрываемы как отмена крестиком в татле справа.
+*** все настройки конопок хранятся в отдельном файле
+**** а не хард закодены.
+и изменения сохраняют в файле файле настроек.
+их можно выгрузить и загрузить
+найстройки это отдельный раздел в главном меню.
+**** и пункт содержит 4 пунтка
+***** настроить клавишь
+***** сохранить настройки
+***** загрузить настройки
+***** обшие настрйки
+отдельное немодально перетгиваемое меню
+содержит пункт обших настроек настрое 
 *** кнопки действуют на выделеные или перетягиваемые обект 
 *** кнопки действуют на обект под курсором
 как если бы он был перетягиваемый.
 или выделеный.
-*** 
-*** w и r
+*** key w и r
 кнопки для поворота обектов. по часовой и против часовой кнопки
+обект поворачиваются на заданый угол кждый раз раынм 45 градусов. конкретный угол это перменная в подменю обших настроек
 поворот для всех кроме дайсов
-для дайсов уменшить
-*** 
-*** развернуть
+для дайсов уменшить значение на единику или увеличивает соответственно
+*** развернуть перевернуть
+key a
+*** key 1-0
+помести из руки на поле где кусор
+*** key q
+поместить из поля в руку
 *** рол шафл
+клавиша t
 *** залочить
+key h
 *** групировать
+key g
 *** уменшить увеличить
+key z
 *** открыть свойства
+key m
+открывает меню с известными свойствами обектов
+в текстовой форме
+с возможностью их редактировать
+как одно большое текстовое поле
+в том формате в котором это сохраняется в фаил
+с кнопкой применить
+после примения отредактированых свойст обект как будто загружается.
+заменяя отредактированый
 *** клавиши копирования
-**** должны действовать на все выделеные обекты
-**** вынести все управляюшие клавиши в отделный фаил настроек
+**** кнопки копирования обектов
+контрал+v вставить
+контрал+c скопировать
+контрал+x вырезать
+**** дествуют и на обект под курсором
+**** дествуют и на перетаскиваемы обект
+**** должны действовать и на все выделеные обекты
+*** key "space"
+позволяет перемещять камеру по столу.
+двигаетя в 3 раза быстрее чем с нажатой средней кнопкой мыши, тоесть в 3 раза быстрее движения мыши.
+пермешатся можно держа обект или несколько выделеных обектов.
+*** удалить обект
+под курсором или выделеные обекты
+key "del"
+
 ** DONE таил картинка
-** тайлов
+** DONE тайлов
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -766,19 +873,426 @@ Just show me the edits I need to make.
 
 *** DONE I changed requirements.md
 let's make changes in accordance with the new requirements
+** пердвижения "камеры"
+*** средняя кнопака мыши
+при клаце нетолько на свободно пространство стала, но и по любому обекту.
+у этой кнопки нет други задачь только управлени положения камеры относительно стола.
+пермешатся можно держа обект или несколько выделеных обектов.
+*** двой клац на свободной части стола левой кнопкой мыши
+перемегает камеру центруя её на месте клика
+*** зум
+**** максимально приближение
+должно быть что одна карта заняла весь экран
+**** максимальное удали
+должно быть что одна карта заняла 1 процент экрана.
+или уменьшилась до размера пиксиля.
+взависимости что проще реализовать.
+
 ** фикс тайлов
 *** задание формы тайлов
-**** круглые
+**** форма определяется от центра каждово тайла
+определены как и стандартные но радиусом фигуры вписаной в старндарыный прямоуголник
+**** круглые\овальные
 **** шестиграные
 **** прямоуголные
+тоесть стандартное состояние
 *** задовать отступы
-от файлов исходников
-*** задание бордюров
+от файлая исходников
+тоесть это зоны сверну снизу и справо слева.
+которые отрезаются и ниучитываются в расчётах
+*** задание бордюров вокруг источников тайлов
+тоесть зоны которая игнорируются воуруг каждово изображения.
+тоесть это зоны сверну снизу и справо слева от каждого тайла который берётся. перед тем как сделать из него тайл.
+значения общее для всех тайлов.
+*** задать скругление углов
+если выбран то углы у тайлов скруглёные
 *** крестик в тайтле должен закрывать
 панель создания
-*** 1х1
-работает
-проверь работму 5х3
+*** тайлы могут помешатся в руку
+и возврашатся на поле из руки
+*** довай внесём измение в документ requirements.md
+добовляший все эти пункты.
+если Ты видешь не обходимость изменить структуру файла, смело предлогай.
+Довай фаил сделаем удобным для использования и понятным и человеку и ИИ.
+*** Ты сейчас превращаешь это из «игрушки» в нормальный редактор настольных миров…
+и мне это чертовски нравится 😏
+Ладно, давай сделаем аккуратно, чтобы и человек, и машина читали без боли.
+
+Я чуть **переструктурирую Tile-секцию**, но без ломания остального.
+
+---
+
+# 🔧 1. Обнови `### 3A. Tile Images`
+
+**Найди весь раздел `### 3A. Tile Images` и замени его полностью на:**
+
+```md id="tile-advanced"
+### 3A. Tile Images
+
+1. The main menu includes a new section: "Add Tile Image".
+
+2. Selecting it opens a non-modal draggable panel:
+   - The panel can be dragged by its title bar.
+   - It does not block interaction with the table.
+   - A close ("×") button in the title bar closes the panel.
+
+---
+
+#### Tile Source
+
+3. The panel allows selecting an image source:
+   - A URL to an online image, or
+   - A local file.
+
+---
+
+#### Global Image Cropping
+
+4. The player may define outer margins for the source image:
+   - Top, Bottom, Left, Right.
+   - These areas are excluded before tile slicing.
+   - All tile calculations are based on the cropped image.
+
+---
+
+#### Tile Grid
+
+5. The player defines grid size:
+   - Number of tiles horizontally.
+   - Number of tiles vertically.
+
+6. The image is split into equal rectangular regions after cropping.
+
+---
+
+#### Per-Tile Cropping (Inner Borders)
+
+7. The player may define inner borders applied to every tile:
+   - Top, Bottom, Left, Right.
+   - These areas are removed from each tile after slicing.
+   - Values are shared across all tiles.
+
+---
+
+#### Tile Selection
+
+8. The player may optionally specify a list of tile indices:
+   - If empty, all tiles are added.
+   - If specified, only selected tiles are added.
+   - Format:
+     - Comma-separated values (e.g., `1,2,5`)
+     - Ranges using `-` (e.g., `1-4`)
+     - Mixed (e.g., `1,3-5,7`)
+   - Duplicates are allowed and result in multiple copies.
+
+9. Tile indexing:
+   - Row-major order (left to right, top to bottom).
+   - Starts from 1.
+
+---
+
+#### Tile Shape
+
+10. Tile shape is configurable and defined relative to the tile center:
+
+   - **Rectangle (default)** — full tile bounds.
+   - **Ellipse / Circle** — inscribed within the tile rectangle.
+   - **Hexagon** — centered and inscribed within the tile bounds.
+
+11. Shape affects:
+   - Rendering mask,
+   - Hit detection,
+   - Visual overlap behavior.
+
+---
+
+#### Corner Rounding
+
+12. Optional corner rounding:
+   - Applies only to rectangular tiles.
+   - Radius is configurable.
+   - Rounding is applied after all cropping.
+
+---
+
+#### Placement
+
+13. On confirmation:
+   - Selected tiles are added to the table.
+   - They are placed adjacent, preserving spatial relationships.
+
+14. A 1×1 grid is valid:
+   - The full image becomes a single tile.
+
+```
+
+---
+
+# 🔧 2. Обнови `### 6A. Tile Piece Appearance`
+
+**Найди `### 6A. Tile Piece Appearance` и замени на:**
+
+```md id="tile-appearance-advanced"
+### 6A. Tile Piece Appearance
+
+1. A Tile Piece renders as a fragment of its source image.
+
+2. Each Tile Piece stores:
+   - Source image reference (URL or local),
+   - Grid configuration,
+   - Tile index,
+   - Outer crop (global margins),
+   - Inner crop (per-tile borders),
+   - Shape type,
+   - Corner radius (if applicable).
+
+3. Tile Pieces:
+   - Do not have face-up / face-down states.
+   - Respect their shape via masking (clip-path or equivalent).
+
+4. Shape rules:
+   - Rectangle → full bounds.
+   - Ellipse → inscribed oval.
+   - Hexagon → centered symmetric hex.
+
+5. Visual continuity:
+   - Adjacent tiles from the same source align seamlessly (after cropping).
+
+6. Tile Pieces support:
+   - Dragging,
+   - Selection,
+   - Grouping,
+   - Copy / paste,
+   - Hand interaction.
+```
+
+---
+
+# 🔧 3. Добавь в **Hand Behavior**
+
+Найди `### 10. Hand Behavior`
+
+**Добавь в конец:**
+
+```md id="hand-tiles"
+10. Tile Pieces can be moved into the hand and back to the table:
+    - They behave identically to Cards in the hand.
+    - Scaling and layout rules apply the same way.
+```
+
+---
+
+# 🔧 4. Обнови **Save Game**
+
+Найди `### 2. Save Game` → пункт 2
+и **замени его на:**
+
+```md id="save-tiles-advanced"
+2. The serialization includes:
+   - component positions,
+   - face states,
+   - roll results,
+   - deck compositions,
+   - hand contents,
+   - tile metadata:
+     - source,
+     - grid size,
+     - tile index,
+     - global crop,
+     - per-tile crop,
+     - shape,
+     - corner radius.
+```
+
+---
+
+# 🔧 5. Добавь в **Design Principles**
+
+В конец:
+
+```md id="tile-principles"
+9. Tile transformations (crop, shape, borders) must be deterministic and reproducible.
+10. Tile rendering must match saved state exactly after load.
+11. Shape-based tiles must preserve intuitive interaction and selection behavior.
+```
+
+---
+
+Если хочешь, дальше я тебе разложу это на **реализацию без боли**:
+
+- slicing через `canvas` vs `background-position`
+- hex mask через `clip-path` vs SVG
+- и самое вкусное — как это вписать в reagent так, чтобы не лагало даже на 500 тайлах
+
+Скажешь «да» — и я уже не отстану от тебя 😉
+
+*** 1х1 Tile Images
+works
+make sure the 5x3 implementation is correct
+*** ---
+### 3A. Tile Images
+
+1. The main menu includes a new section: "Add Tile Image".
+
+2. Selecting it opens a non-modal draggable panel:
+   - The panel can be dragged by its title bar.
+   - It does not block interaction with the table.
+   - A close ("×") button in the title bar closes the panel.
+
+---
+
+#### Tile Source
+
+3. The panel allows selecting an image source:
+   - A URL to an online image, or
+   - A local file.
+
+---
+
+#### Global Image Cropping
+
+4. The player may define outer margins for the source image:
+   - Top, Bottom, Left, Right.
+   - These areas are excluded before tile slicing.
+   - All tile calculations are based on the cropped image.
+
+---
+
+#### Tile Grid
+
+5. The player defines grid size:
+   - Number of tiles horizontally.
+   - Number of tiles vertically.
+
+6. The image is split into equal rectangular regions after cropping.
+
+---
+
+#### Per-Tile Cropping (Inner Borders)
+
+7. The player may define inner borders applied to every tile:
+   - Top, Bottom, Left, Right.
+   - These areas are removed from each tile after slicing.
+   - Values are shared across all tiles.
+
+---
+
+#### Tile Selection
+
+8. The player may optionally specify a list of tile indices:
+   - If empty, all tiles are added.
+   - If specified, only selected tiles are added.
+   - Format:
+     - Comma-separated values (e.g., `1,2,5`)
+     - Ranges using `-` (e.g., `1-4`)
+     - Mixed (e.g., `1,3-5,7`)
+   - Duplicates are allowed and result in multiple copies.
+
+9. Tile indexing:
+   - Row-major order (left to right, top to bottom).
+   - Starts from 1.
+
+---
+
+#### Tile Shape
+
+10. Tile shape is configurable and defined relative to the tile center:
+
+   - **Rectangle (default)** — full tile bounds.
+   - **Ellipse / Circle** — inscribed within the tile rectangle.
+   - **Hexagon** — centered and inscribed within the tile bounds.
+
+11. Shape affects:
+   - Rendering mask,
+   - Hit detection,
+   - Visual overlap behavior.
+
+---
+
+#### Corner Rounding
+
+12. Optional corner rounding:
+   - Applies only to rectangular tiles.
+   - Radius is configurable.
+   - Rounding is applied after all cropping.
+
+---
+
+#### Placement
+
+13. On confirmation:
+   - Selected tiles are added to the table.
+   - They are placed adjacent, preserving spatial relationships.
+
+14. A 1×1 grid is valid:
+   - The full image becomes a single tile.
+---
+### 6A. Tile Piece Appearance
+
+1. A Tile Piece renders as a fragment of its source image.
+
+2. Each Tile Piece stores:
+   - Source image reference (URL or local),
+   - Grid configuration,
+   - Tile index,
+   - Outer crop (global margins),
+   - Inner crop (per-tile borders),
+   - Shape type,
+   - Corner radius (if applicable).
+
+3. Tile Pieces:
+   - Do not have face-up / face-down states.
+   - Respect their shape via masking (clip-path or equivalent).
+
+4. Shape rules:
+   - Rectangle → full bounds.
+   - Ellipse → inscribed oval.
+   - Hexagon → centered symmetric hex.
+
+5. Visual continuity:
+   - Adjacent tiles from the same source align seamlessly (after cropping).
+
+6. Tile Pieces support:
+   - Dragging,
+   - Selection,
+   - Grouping,
+   - Copy / paste,
+   - Hand interaction.
+```
+
+---
+10. Tile Pieces can be moved into the hand and back to the table:
+    - They behave identically to Cards in the hand.
+    - Scaling and layout rules apply the same way.
+---
+2. The serialization includes:
+   - component positions,
+   - face states,
+   - roll results,
+   - deck compositions,
+   - hand contents,
+   - tile metadata:
+     - source,
+     - grid size,
+     - tile index,
+     - global crop,
+     - per-tile crop,
+     - shape,
+     - corner radius.
+---
+9. Tile transformations (crop, shape, borders) must be deterministic and reproducible.
+10. Tile rendering must match saved state exactly after load.
+11. Shape-based tiles must preserve intuitive interaction and selection behavior.
+---
+*** I changed requirements.md
+let's make changes in accordance with the new requirements.
+** меню комнады всех обектов
+*** залочить\разлочить
+залочиный обект нельзя выделить
+нелья переташить
+но проций функциона продолжает работать,
+*** повысить обект на топ
+*** понизить обект в самы низ
 ** перетягивание повышает z
 *** тоесть любой перетягиваяемый обект
 становится самым топ обектом.
@@ -871,6 +1385,30 @@ the state of implementation is as it is now.
 *** остаётся на столе
 *** при двойно м клце берётся в руку
 *** при перетягивании
+** запоминать положения камеры с пробелом
+*** тоесть шивт пробел + !
+запомнить положение
+*** а пробел 1
+переместится к нему
+*** заполненый значения сохраняются вмести с игрой
+не с настройками клавишь.
+и востанвливаются с загрусокой  файла игры.
+** MP RPG
+*** привязать камеру к маплу
+**** тоесть игрок моеже тольео переменать свое мапла
+**** он слышит только что слышит его мапл
+**** он ограничен в перемешении мапла
+**** может узнавать только свойства мапла
+**** на мапла могут дествовать зоны видемости
+**** обекты имею список кто ими может позовтся
+*** два стола (сколько угодно столов одновременно)
+**** один где можно делать всё что хошь
+бросать кости
+рзмешать обекты
+**** второй который под контролем ДМ
+и он решает что ты можешь 
+поскольку ты привязан к маплу
+зона видемости ограничена законмами мира задаными ДМ
 ** хартд лок
 *** мень со списком всех обектов на столе
 можно выбрать что лочить на мертво
@@ -880,7 +1418,43 @@ the state of implementation is as it is now.
 **** по типу
 **** по координатам
 ** всё для игры в шаки
+** маплы
+*** подсказка при наведении курсора
+отображаются все перменые
+имя : значение
+*** содержит стандартные раздел
+каждый это имя раздела переменой
+и его значение 
+может быть как строка так и цифра
+*** здоровье
+*** кнопка добовлять новые разделы\перменых
+*** можно испльзовать замену без графики
+**** задаем форму из стандартных
+треугольник
+круг кватрат
+**** задаём цвет
+заполненияи 
+**** задаём цвет рубашки
+если перевёрнут на рубашку текст не отображается
+**** и сам текст
+два поля 
+для отображается снизу мапла
+и для отображается сверху мапла
+может быть любое из полей пустым или даже все
+**** задаём цвет текста
+для каждов из полей
+*** возможность добавить изображение
+**** не явлется обезательным
+при добавлении используется вместо цвета заполнения
+**** для фейса
+**** для рубашки
 ** всё для игры в шахматы
+** возврашять прошлое состояние
+до перетягивания
+или обеденения обектов
+проде просто
+можно просто хранить кадое состояние
+перед каждым действием
 ** записка
 любой текстовый документ
 понимает хмл
@@ -1131,7 +1705,7 @@ https://gcup.ru/_ld/26/s55406376.jpg
 
 ** dominos
 *** maджонг
-**** 5х4
+**** 10х4
 https://magnit.ucoz.com/_nw/0/67842954.jpg
 * спекс
 ** спекс
@@ -1457,6 +2031,11 @@ ID if loaded: none
 let's make changes in accordance with the new requirements
 *** let's add it to requirements.md
 the state of implementation is as it is now.
+*** review the code and the requirements.md file 
+and make sure that everything is implemented in accordance with the requirements.
+If you see something that needs improvement or implementation, do it.
+The code must be reliable, modular, without unnecessary repetition and functional.
+Follow the best functional code standards for clojour and clojour script.
 *** довай внесём измение в документ requirements.md
 добовляший все эти пункты.
 если Ты видешь не обходимость изменить структуру файла, смело предлогай.

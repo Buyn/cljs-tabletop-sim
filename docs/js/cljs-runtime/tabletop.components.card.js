@@ -11,11 +11,11 @@ return null;
 }
 }),new cljs.core.Keyword(null,"components","components",-1073188942).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state)));
 });
-tabletop.components.card.card = (function tabletop$components$card$card(p__31214){
-var map__31215 = p__31214;
-var map__31215__$1 = cljs.core.__destructure_map(map__31215);
-var card = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31215__$1,new cljs.core.Keyword(null,"card","card",-1430355152));
-var on_drag_end = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31215__$1,new cljs.core.Keyword(null,"on-drag-end","on-drag-end",520272671));
+tabletop.components.card.card = (function tabletop$components$card$card(p__33159){
+var map__33161 = p__33159;
+var map__33161__$1 = cljs.core.__destructure_map(map__33161);
+var card = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33161__$1,new cljs.core.Keyword(null,"card","card",-1430355152));
+var on_drag_end = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33161__$1,new cljs.core.Keyword(null,"on-drag-end","on-drag-end",520272671));
 var dragging_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
 var over_hand_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
 var offset_x = reagent.core.atom.cljs$core$IFn$_invoke$arity$1((0));
@@ -24,23 +24,23 @@ var drag_moved_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
 var start_cx = reagent.core.atom.cljs$core$IFn$_invoke$arity$1((0));
 var start_cy = reagent.core.atom.cljs$core$IFn$_invoke$arity$1((0));
 var key_handler = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(null);
-return (function (p__31227){
-var map__31228 = p__31227;
-var map__31228__$1 = cljs.core.__destructure_map(map__31228);
-var card__$1 = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31228__$1,new cljs.core.Keyword(null,"card","card",-1430355152));
-var on_drag_end__$1 = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31228__$1,new cljs.core.Keyword(null,"on-drag-end","on-drag-end",520272671));
-var map__31229 = card__$1;
-var map__31229__$1 = cljs.core.__destructure_map(map__31229);
-var x = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"x","x",2099068185));
-var suit = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"suit","suit",-869827520));
-var y = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"y","y",-1757859776));
-var suit_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"suit-color","suit-color",1331901960));
-var face_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"face-color","face-color",-919913463));
-var text_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"text-color","text-color",1728708298));
-var rank = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"rank","rank",-1706728502));
-var face_up_QMARK_ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"face-up?","face-up?",-1866751117));
-var id = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"id","id",-1388402092));
-var back_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__31229__$1,new cljs.core.Keyword(null,"back-color","back-color",-672417547));
+return (function (p__33165){
+var map__33167 = p__33165;
+var map__33167__$1 = cljs.core.__destructure_map(map__33167);
+var card__$1 = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33167__$1,new cljs.core.Keyword(null,"card","card",-1430355152));
+var on_drag_end__$1 = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33167__$1,new cljs.core.Keyword(null,"on-drag-end","on-drag-end",520272671));
+var map__33170 = card__$1;
+var map__33170__$1 = cljs.core.__destructure_map(map__33170);
+var x = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"x","x",2099068185));
+var suit = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"suit","suit",-869827520));
+var y = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"y","y",-1757859776));
+var suit_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"suit-color","suit-color",1331901960));
+var face_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"face-color","face-color",-919913463));
+var text_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"text-color","text-color",1728708298));
+var rank = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"rank","rank",-1706728502));
+var face_up_QMARK_ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"face-up?","face-up?",-1866751117));
+var id = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"id","id",-1388402092));
+var back_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33170__$1,new cljs.core.Keyword(null,"back-color","back-color",-672417547));
 var face_up_QMARK___$1 = cljs.core.boolean$(face_up_QMARK_);
 var zoom = cljs.core.get_in.cljs$core$IFn$_invoke$arity$3(cljs.core.deref(tabletop.state.app_state),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"table","table",-564943036),new cljs.core.Keyword(null,"zoom","zoom",-1827487038)], null),1.0);
 var selected_QMARK_ = cljs.core.contains_QMARK_(new cljs.core.Keyword(null,"selection","selection",975998651).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state)),id);
@@ -72,10 +72,10 @@ cljs.core.reset_BANG_(start_cx,e.clientX);
 
 cljs.core.reset_BANG_(start_cy,e.clientY);
 
-var rect_31369 = e.currentTarget.getBoundingClientRect();
-cljs.core.reset_BANG_(offset_x,((e.clientX - rect_31369.left) / zoom));
+var rect_33288 = e.currentTarget.getBoundingClientRect();
+cljs.core.reset_BANG_(offset_x,((e.clientX - rect_33288.left) / zoom));
 
-cljs.core.reset_BANG_(offset_y,((e.clientY - rect_31369.top) / zoom));
+cljs.core.reset_BANG_(offset_y,((e.clientY - rect_33288.top) / zoom));
 
 cljs.core.reset_BANG_(dragging_QMARK_,true);
 
@@ -124,9 +124,9 @@ return null;
 }
 }),new cljs.core.Keyword(null,"on-pointer-move","on-pointer-move",-775121695),(function (e){
 if(cljs.core.truth_(cljs.core.deref(dragging_QMARK_))){
-var dx_31373 = (e.clientX - cljs.core.deref(start_cx));
-var dy_31374 = (e.clientY - cljs.core.deref(start_cy));
-if((Math.sqrt(((dx_31373 * dx_31373) + (dy_31374 * dy_31374))) > (4))){
+var dx_33301 = (e.clientX - cljs.core.deref(start_cx));
+var dy_33302 = (e.clientY - cljs.core.deref(start_cy));
+if((Math.sqrt(((dx_33301 * dx_33301) + (dy_33302 * dy_33302))) > (4))){
 cljs.core.reset_BANG_(drag_moved_QMARK_,true);
 } else {
 }
@@ -142,53 +142,53 @@ cljs.core.reset_BANG_(over_hand_QMARK_,in_hand_QMARK_);
 if(cljs.core.truth_(in_hand_QMARK_)){
 var sel = new cljs.core.Keyword(null,"selection","selection",975998651).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state));
 if(cljs.core.contains_QMARK_(sel,id)){
-var seq__31287 = cljs.core.seq(sel);
-var chunk__31288 = null;
-var count__31289 = (0);
-var i__31290 = (0);
+var seq__33175 = cljs.core.seq(sel);
+var chunk__33176 = null;
+var count__33177 = (0);
+var i__33178 = (0);
 while(true){
-if((i__31290 < count__31289)){
-var sid = chunk__31288.cljs$core$IIndexed$_nth$arity$2(null,i__31290);
+if((i__33178 < count__33177)){
+var sid = chunk__33176.cljs$core$IIndexed$_nth$arity$2(null,i__33178);
 tabletop.state.move_card_to_hand_BANG_(sid);
 
 
-var G__31376 = seq__31287;
-var G__31377 = chunk__31288;
-var G__31378 = count__31289;
-var G__31379 = (i__31290 + (1));
-seq__31287 = G__31376;
-chunk__31288 = G__31377;
-count__31289 = G__31378;
-i__31290 = G__31379;
+var G__33305 = seq__33175;
+var G__33306 = chunk__33176;
+var G__33307 = count__33177;
+var G__33308 = (i__33178 + (1));
+seq__33175 = G__33305;
+chunk__33176 = G__33306;
+count__33177 = G__33307;
+i__33178 = G__33308;
 continue;
 } else {
-var temp__5804__auto__ = cljs.core.seq(seq__31287);
+var temp__5804__auto__ = cljs.core.seq(seq__33175);
 if(temp__5804__auto__){
-var seq__31287__$1 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(seq__31287__$1)){
-var c__5525__auto__ = cljs.core.chunk_first(seq__31287__$1);
-var G__31380 = cljs.core.chunk_rest(seq__31287__$1);
-var G__31381 = c__5525__auto__;
-var G__31382 = cljs.core.count(c__5525__auto__);
-var G__31383 = (0);
-seq__31287 = G__31380;
-chunk__31288 = G__31381;
-count__31289 = G__31382;
-i__31290 = G__31383;
+var seq__33175__$1 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(seq__33175__$1)){
+var c__5525__auto__ = cljs.core.chunk_first(seq__33175__$1);
+var G__33309 = cljs.core.chunk_rest(seq__33175__$1);
+var G__33310 = c__5525__auto__;
+var G__33311 = cljs.core.count(c__5525__auto__);
+var G__33312 = (0);
+seq__33175 = G__33309;
+chunk__33176 = G__33310;
+count__33177 = G__33311;
+i__33178 = G__33312;
 continue;
 } else {
-var sid = cljs.core.first(seq__31287__$1);
+var sid = cljs.core.first(seq__33175__$1);
 tabletop.state.move_card_to_hand_BANG_(sid);
 
 
-var G__31384 = cljs.core.next(seq__31287__$1);
-var G__31385 = null;
-var G__31386 = (0);
-var G__31387 = (0);
-seq__31287 = G__31384;
-chunk__31288 = G__31385;
-count__31289 = G__31386;
-i__31290 = G__31387;
+var G__33313 = cljs.core.next(seq__33175__$1);
+var G__33314 = null;
+var G__33315 = (0);
+var G__33316 = (0);
+seq__33175 = G__33313;
+chunk__33176 = G__33314;
+count__33177 = G__33315;
+i__33178 = G__33316;
 continue;
 }
 } else {
@@ -207,76 +207,76 @@ var old_y = new cljs.core.Keyword(null,"y","y",-1757859776).cljs$core$IFn$_invok
 var ddx = (new_x - old_x);
 var ddy = (new_y - old_y);
 if(cljs.core.contains_QMARK_(sel,id)){
-var seq__31330 = cljs.core.seq(new cljs.core.Keyword(null,"components","components",-1073188942).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state)));
-var chunk__31332 = null;
-var count__31333 = (0);
-var i__31334 = (0);
+var seq__33189 = cljs.core.seq(new cljs.core.Keyword(null,"components","components",-1073188942).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state)));
+var chunk__33191 = null;
+var count__33192 = (0);
+var i__33193 = (0);
 while(true){
-if((i__31334 < count__31333)){
-var c = chunk__31332.cljs$core$IIndexed$_nth$arity$2(null,i__31334);
+if((i__33193 < count__33192)){
+var c = chunk__33191.cljs$core$IIndexed$_nth$arity$2(null,i__33193);
 if(cljs.core.contains_QMARK_(sel,new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(c))){
 tabletop.state.move_component_BANG_(new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(c),(new cljs.core.Keyword(null,"x","x",2099068185).cljs$core$IFn$_invoke$arity$2(c,(0)) + ddx),(new cljs.core.Keyword(null,"y","y",-1757859776).cljs$core$IFn$_invoke$arity$2(c,(0)) + ddy));
 
 
-var G__31388 = seq__31330;
-var G__31389 = chunk__31332;
-var G__31390 = count__31333;
-var G__31391 = (i__31334 + (1));
-seq__31330 = G__31388;
-chunk__31332 = G__31389;
-count__31333 = G__31390;
-i__31334 = G__31391;
+var G__33317 = seq__33189;
+var G__33318 = chunk__33191;
+var G__33319 = count__33192;
+var G__33320 = (i__33193 + (1));
+seq__33189 = G__33317;
+chunk__33191 = G__33318;
+count__33192 = G__33319;
+i__33193 = G__33320;
 continue;
 } else {
-var G__31392 = seq__31330;
-var G__31393 = chunk__31332;
-var G__31394 = count__31333;
-var G__31395 = (i__31334 + (1));
-seq__31330 = G__31392;
-chunk__31332 = G__31393;
-count__31333 = G__31394;
-i__31334 = G__31395;
+var G__33321 = seq__33189;
+var G__33322 = chunk__33191;
+var G__33323 = count__33192;
+var G__33324 = (i__33193 + (1));
+seq__33189 = G__33321;
+chunk__33191 = G__33322;
+count__33192 = G__33323;
+i__33193 = G__33324;
 continue;
 }
 } else {
-var temp__5804__auto__ = cljs.core.seq(seq__31330);
+var temp__5804__auto__ = cljs.core.seq(seq__33189);
 if(temp__5804__auto__){
-var seq__31330__$1 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(seq__31330__$1)){
-var c__5525__auto__ = cljs.core.chunk_first(seq__31330__$1);
-var G__31396 = cljs.core.chunk_rest(seq__31330__$1);
-var G__31397 = c__5525__auto__;
-var G__31398 = cljs.core.count(c__5525__auto__);
-var G__31399 = (0);
-seq__31330 = G__31396;
-chunk__31332 = G__31397;
-count__31333 = G__31398;
-i__31334 = G__31399;
+var seq__33189__$1 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(seq__33189__$1)){
+var c__5525__auto__ = cljs.core.chunk_first(seq__33189__$1);
+var G__33325 = cljs.core.chunk_rest(seq__33189__$1);
+var G__33326 = c__5525__auto__;
+var G__33327 = cljs.core.count(c__5525__auto__);
+var G__33328 = (0);
+seq__33189 = G__33325;
+chunk__33191 = G__33326;
+count__33192 = G__33327;
+i__33193 = G__33328;
 continue;
 } else {
-var c = cljs.core.first(seq__31330__$1);
+var c = cljs.core.first(seq__33189__$1);
 if(cljs.core.contains_QMARK_(sel,new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(c))){
 tabletop.state.move_component_BANG_(new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(c),(new cljs.core.Keyword(null,"x","x",2099068185).cljs$core$IFn$_invoke$arity$2(c,(0)) + ddx),(new cljs.core.Keyword(null,"y","y",-1757859776).cljs$core$IFn$_invoke$arity$2(c,(0)) + ddy));
 
 
-var G__31400 = cljs.core.next(seq__31330__$1);
-var G__31401 = null;
-var G__31402 = (0);
-var G__31403 = (0);
-seq__31330 = G__31400;
-chunk__31332 = G__31401;
-count__31333 = G__31402;
-i__31334 = G__31403;
+var G__33329 = cljs.core.next(seq__33189__$1);
+var G__33330 = null;
+var G__33331 = (0);
+var G__33332 = (0);
+seq__33189 = G__33329;
+chunk__33191 = G__33330;
+count__33192 = G__33331;
+i__33193 = G__33332;
 continue;
 } else {
-var G__31404 = cljs.core.next(seq__31330__$1);
-var G__31405 = null;
-var G__31406 = (0);
-var G__31407 = (0);
-seq__31330 = G__31404;
-chunk__31332 = G__31405;
-count__31333 = G__31406;
-i__31334 = G__31407;
+var G__33333 = cljs.core.next(seq__33189__$1);
+var G__33334 = null;
+var G__33335 = (0);
+var G__33336 = (0);
+seq__33189 = G__33333;
+chunk__33191 = G__33334;
+count__33192 = G__33335;
+i__33193 = G__33336;
 continue;
 }
 }
@@ -322,75 +322,75 @@ return and__5000__auto__;
 var target_deck = tabletop.components.card.find_deck_at(final_x,final_y,id);
 var sel = new cljs.core.Keyword(null,"selection","selection",975998651).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state));
 var card_ids = ((cljs.core.contains_QMARK_(sel,id))?sel:cljs.core.PersistentHashSet.createAsIfByAssoc([id]));
-var seq__31362 = cljs.core.seq(card_ids);
-var chunk__31363 = null;
-var count__31364 = (0);
-var i__31365 = (0);
+var seq__33209 = cljs.core.seq(card_ids);
+var chunk__33210 = null;
+var count__33211 = (0);
+var i__33212 = (0);
 while(true){
-if((i__31365 < count__31364)){
-var cid = chunk__31363.cljs$core$IIndexed$_nth$arity$2(null,i__31365);
-if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"card","card",-1430355152),new cljs.core.Keyword(null,"type","type",1174270348).cljs$core$IFn$_invoke$arity$1(cljs.core.some(((function (seq__31362,chunk__31363,count__31364,i__31365,cid,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__31229,map__31229__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__31228,map__31228__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__31215,map__31215__$1,card,on_drag_end){
-return (function (p1__31209_SHARP_){
-if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(p1__31209_SHARP_),cid)){
-return p1__31209_SHARP_;
+if((i__33212 < count__33211)){
+var cid = chunk__33210.cljs$core$IIndexed$_nth$arity$2(null,i__33212);
+if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"card","card",-1430355152),new cljs.core.Keyword(null,"type","type",1174270348).cljs$core$IFn$_invoke$arity$1(cljs.core.some(((function (seq__33209,chunk__33210,count__33211,i__33212,cid,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__33170,map__33170__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__33167,map__33167__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__33161,map__33161__$1,card,on_drag_end){
+return (function (p1__33154_SHARP_){
+if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(p1__33154_SHARP_),cid)){
+return p1__33154_SHARP_;
 } else {
 return null;
 }
-});})(seq__31362,chunk__31363,count__31364,i__31365,cid,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__31229,map__31229__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__31228,map__31228__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__31215,map__31215__$1,card,on_drag_end))
+});})(seq__33209,chunk__33210,count__33211,i__33212,cid,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__33170,map__33170__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__33167,map__33167__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__33161,map__33161__$1,card,on_drag_end))
 ,new cljs.core.Keyword(null,"components","components",-1073188942).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state)))))){
 tabletop.state.dispatch_BANG_.cljs$core$IFn$_invoke$arity$variadic(cid,new cljs.core.Keyword(null,"drop-on-deck","drop-on-deck",195247249),cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(target_deck)], 0));
 } else {
 }
 
 
-var G__31408 = seq__31362;
-var G__31409 = chunk__31363;
-var G__31410 = count__31364;
-var G__31411 = (i__31365 + (1));
-seq__31362 = G__31408;
-chunk__31363 = G__31409;
-count__31364 = G__31410;
-i__31365 = G__31411;
+var G__33340 = seq__33209;
+var G__33341 = chunk__33210;
+var G__33342 = count__33211;
+var G__33343 = (i__33212 + (1));
+seq__33209 = G__33340;
+chunk__33210 = G__33341;
+count__33211 = G__33342;
+i__33212 = G__33343;
 continue;
 } else {
-var temp__5804__auto__ = cljs.core.seq(seq__31362);
+var temp__5804__auto__ = cljs.core.seq(seq__33209);
 if(temp__5804__auto__){
-var seq__31362__$1 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(seq__31362__$1)){
-var c__5525__auto__ = cljs.core.chunk_first(seq__31362__$1);
-var G__31412 = cljs.core.chunk_rest(seq__31362__$1);
-var G__31413 = c__5525__auto__;
-var G__31414 = cljs.core.count(c__5525__auto__);
-var G__31415 = (0);
-seq__31362 = G__31412;
-chunk__31363 = G__31413;
-count__31364 = G__31414;
-i__31365 = G__31415;
+var seq__33209__$1 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(seq__33209__$1)){
+var c__5525__auto__ = cljs.core.chunk_first(seq__33209__$1);
+var G__33344 = cljs.core.chunk_rest(seq__33209__$1);
+var G__33345 = c__5525__auto__;
+var G__33346 = cljs.core.count(c__5525__auto__);
+var G__33347 = (0);
+seq__33209 = G__33344;
+chunk__33210 = G__33345;
+count__33211 = G__33346;
+i__33212 = G__33347;
 continue;
 } else {
-var cid = cljs.core.first(seq__31362__$1);
-if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"card","card",-1430355152),new cljs.core.Keyword(null,"type","type",1174270348).cljs$core$IFn$_invoke$arity$1(cljs.core.some(((function (seq__31362,chunk__31363,count__31364,i__31365,cid,seq__31362__$1,temp__5804__auto__,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__31229,map__31229__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__31228,map__31228__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__31215,map__31215__$1,card,on_drag_end){
-return (function (p1__31209_SHARP_){
-if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(p1__31209_SHARP_),cid)){
-return p1__31209_SHARP_;
+var cid = cljs.core.first(seq__33209__$1);
+if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"card","card",-1430355152),new cljs.core.Keyword(null,"type","type",1174270348).cljs$core$IFn$_invoke$arity$1(cljs.core.some(((function (seq__33209,chunk__33210,count__33211,i__33212,cid,seq__33209__$1,temp__5804__auto__,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__33170,map__33170__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__33167,map__33167__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__33161,map__33161__$1,card,on_drag_end){
+return (function (p1__33154_SHARP_){
+if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(p1__33154_SHARP_),cid)){
+return p1__33154_SHARP_;
 } else {
 return null;
 }
-});})(seq__31362,chunk__31363,count__31364,i__31365,cid,seq__31362__$1,temp__5804__auto__,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__31229,map__31229__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__31228,map__31228__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__31215,map__31215__$1,card,on_drag_end))
+});})(seq__33209,chunk__33210,count__33211,i__33212,cid,seq__33209__$1,temp__5804__auto__,target_deck,sel,card_ids,z,parent_rect,final_x,final_y,map__33170,map__33170__$1,x,suit,y,suit_color,face_color,text_color,rank,face_up_QMARK_,id,back_color,face_up_QMARK___$1,zoom,selected_QMARK_,map__33167,map__33167__$1,card__$1,on_drag_end__$1,dragging_QMARK_,over_hand_QMARK_,offset_x,offset_y,drag_moved_QMARK_,start_cx,start_cy,key_handler,map__33161,map__33161__$1,card,on_drag_end))
 ,new cljs.core.Keyword(null,"components","components",-1073188942).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state)))))){
 tabletop.state.dispatch_BANG_.cljs$core$IFn$_invoke$arity$variadic(cid,new cljs.core.Keyword(null,"drop-on-deck","drop-on-deck",195247249),cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([new cljs.core.Keyword(null,"id","id",-1388402092).cljs$core$IFn$_invoke$arity$1(target_deck)], 0));
 } else {
 }
 
 
-var G__31417 = cljs.core.next(seq__31362__$1);
-var G__31418 = null;
-var G__31419 = (0);
-var G__31420 = (0);
-seq__31362 = G__31417;
-chunk__31363 = G__31418;
-count__31364 = G__31419;
-i__31365 = G__31420;
+var G__33348 = cljs.core.next(seq__33209__$1);
+var G__33349 = null;
+var G__33350 = (0);
+var G__33351 = (0);
+seq__33209 = G__33348;
+chunk__33210 = G__33349;
+count__33211 = G__33350;
+i__33212 = G__33351;
 continue;
 }
 } else {
@@ -410,8 +410,8 @@ tabletop.state.clear_selection_BANG_();
 }
 
 if(cljs.core.truth_(on_drag_end__$1)){
-var G__31368 = new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [final_x,final_y], null);
-return (on_drag_end__$1.cljs$core$IFn$_invoke$arity$1 ? on_drag_end__$1.cljs$core$IFn$_invoke$arity$1(G__31368) : on_drag_end__$1.call(null,G__31368));
+var G__33221 = new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [final_x,final_y], null);
+return (on_drag_end__$1.cljs$core$IFn$_invoke$arity$1 ? on_drag_end__$1.cljs$core$IFn$_invoke$arity$1(G__33221) : on_drag_end__$1.call(null,G__33221));
 } else {
 return null;
 }

@@ -27,13 +27,15 @@
 - [x] UI components
   - [x] `start_screen.cljs` — new/load game, error display
   - [x] `table.cljs` — viewport, pan (middle-click), zoom, drag-select (left-click), paste (right-click + Ctrl+V)
-  - [x] `hand.cljs` — hand strip, collapse animation, hover zoom, drag-to-table, `hand-drop-zone?`
+  - [x] `hand.cljs` — hand strip, collapse animation, hover zoom, drag-to-table, `hand-drop-zone?`, tile piece support
   - [x] `card.cljs` — render, drag, group drag, shift-select, double-click flip, right-click menu
   - [x] `die.cljs` — render (24×24px), drag, click-to-roll, right-click menu
   - [x] `deck.cljs` — render (stack + count badge), drag, group drag, right-click menu
   - [x] `context_menu.cljs` — floating menu, click-outside + Escape dismiss
   - [x] `component_panel.cljs` — sidebar: add decks/dice, save/load game
   - [x] `deck_customizer.cljs` — modal: suit/rank inputs, color palette, validation
+  - [x] `tile_panel.cljs` — draggable panel: image source, global crop, per-tile crop, shape, corner radius, tile indices
+  - [x] `tile_piece.cljs` — render with shape masking (clip-path), inner/outer crop, hand drop support
 
 ---
 

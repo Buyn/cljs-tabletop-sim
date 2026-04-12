@@ -32,7 +32,20 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 ### 2. Save Game
 
 1. "Save Game" serializes the current Game State to JSON and downloads it as `tabletop-save.json`.
-2. The serialization includes all component positions, face states, roll results, deck compositions, hand contents, and tile image metadata (source, grid configuration, and tile index).
+2. The serialization includes:
+   - component positions,
+   - face states,
+   - roll results,
+   - deck compositions,
+   - hand contents,
+   - tile metadata:
+     - source,
+     - grid size,
+     - tile index,
+     - global crop,
+     - per-tile crop,
+     - shape,
+     - corner radius.
 3. Saving does not mutate state or interrupt the session.
 
 ### 3. Add Components
@@ -44,39 +57,100 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ### 3A. Tile Images
 
-1. The main menu includes a new section "Tile" and in it: "Add Tile Image".
+1. The main menu includes a new section: "Add Tile Image".
+
 2. Selecting it opens a non-modal draggable panel:
    - The panel can be dragged by its title bar.
    - It does not block interaction with the table.
+   - A close ("×") button in the title bar closes the panel.
 
-3. The panel allows configuring a Tile Image:
-   - Source:
-     - A URL to an online image, or
-     - A local file.
-   - Grid size:
-     - Number of tiles horizontally.
-     - Number of tiles vertically.
+---
 
-4. The image is split into equal rectangular Tile Pieces based on the grid.
+#### Tile Source
 
-5. The player may optionally specify a list of tile indices:
+3. The panel allows selecting an image source:
+   - A URL to an online image, or
+   - A local file.
+
+---
+
+#### Global Image Cropping
+
+4. The player may define outer margins for the source image:
+   - Top, Bottom, Left, Right.
+   - These areas are excluded before tile slicing.
+   - All tile calculations are based on the cropped image.
+
+---
+
+#### Tile Grid
+
+5. The player defines grid size:
+   - Number of tiles horizontally.
+   - Number of tiles vertically.
+
+6. The image is split into equal rectangular regions after cropping.
+
+---
+
+#### Per-Tile Cropping (Inner Borders)
+
+7. The player may define inner borders applied to every tile:
+   - Top, Bottom, Left, Right.
+   - These areas are removed from each tile after slicing.
+   - Values are shared across all tiles.
+
+---
+
+#### Tile Selection
+
+8. The player may optionally specify a list of tile indices:
    - If empty, all tiles are added.
    - If specified, only selected tiles are added.
    - Format:
      - Comma-separated values (e.g., `1,2,5`)
      - Ranges using `-` (e.g., `1-4`)
      - Mixed (e.g., `1,3-5,7`)
-   - Duplicates are allowed and result in multiple copies of the same tile.
+   - Duplicates are allowed and result in multiple copies.
 
-6. Tile indexing:
-   - Tiles are indexed sequentially (row-major order, left to right, top to bottom), starting from 1.
+9. Tile indexing:
+   - Row-major order (left to right, top to bottom).
+   - Starts from 1.
 
-7. On confirmation:
-   - Selected Tile Pieces are added to the table.
-   - They are placed adjacent to each other preserving their relative positions.
+---
 
-8. It is valid to configure a 1×1 grid:
-   - In this case, the full image is added as a single Tile Piece.
+#### Tile Shape
+
+10. Tile shape is configurable and defined relative to the tile center:
+
+   - **Rectangle (default)** — full tile bounds.
+   - **Ellipse / Circle** — inscribed within the tile rectangle.
+   - **Hexagon** — centered and inscribed within the tile bounds.
+
+11. Shape affects:
+   - Rendering mask,
+   - Hit detection,
+   - Visual overlap behavior.
+
+---
+
+#### Corner Rounding
+
+12. Optional corner rounding:
+   - Applies only to rectangular tiles.
+   - Radius is configurable.
+   - Rounding is applied after all cropping.
+
+---
+
+#### Placement
+
+13. On confirmation:
+   - Selected tiles are added to the table.
+   - They are placed adjacent, preserving spatial relationships.
+
+14. A 1×1 grid is valid:
+   - The full image becomes a single tile.
 
 ### 4. Deck Customization
 
@@ -163,14 +237,35 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ### 6A. Tile Piece Appearance
 
-1. A Tile Piece renders as a rectangular fragment of its source image.
-2. Each Tile Piece knows:
-   - The source image (URL or local reference),
-   - Grid dimensions,
-   - Its tile index within the grid.
-3. Tile Pieces do not have face-up / face-down states.
-4. Tile Pieces can be selected, dragged, copied, and grouped like Cards.
+1. A Tile Piece renders as a fragment of its source image.
 
+2. Each Tile Piece stores:
+   - Source image reference (URL or local),
+   - Grid configuration,
+   - Tile index,
+   - Outer crop (global margins),
+   - Inner crop (per-tile borders),
+   - Shape type,
+   - Corner radius (if applicable).
+
+3. Tile Pieces:
+   - Do not have face-up / face-down states.
+   - Respect their shape via masking (clip-path or equivalent).
+
+4. Shape rules:
+   - Rectangle → full bounds.
+   - Ellipse → inscribed oval.
+   - Hexagon → centered symmetric hex.
+
+5. Visual continuity:
+   - Adjacent tiles from the same source align seamlessly (after cropping).
+
+6. Tile Pieces support:
+   - Dragging,
+   - Selection,
+   - Grouping,
+   - Copy / paste,
+   - Hand interaction.
 ### 7. Dice
 
 1. Clicking a Die rolls it: generates a uniform random integer in [1, N] and displays it immediately.
@@ -212,7 +307,6 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 9. Ctrl+V pastes the copy list: into the hand if the cursor is over the hand, otherwise onto the table at the cursor position.
 
 ### 10. Hand Behavior
-
 1. The hand strip is fixed at the bottom of the viewport.
    - When neither the strip nor any card in it is hovered, the hand body slides down by ~90%, leaving only a thin edge visible.
    - Cards remain visible above the hand and are not clipped; approximately half of each card’s height remains visible.
@@ -238,6 +332,9 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - If the bottom of the dragged card leaves the hand area, the card visually transitions to table scale.
    - If any draggable component is hovered over the hand area during drag, it becomes eligible to enter the hand on drop.
 9. Releasing a dragged hand card outside the hand strip moves it onto the table at the drop position with table scale applied.
+10. Tile Pieces can be moved into the hand and back to the table:
+   - They behave identically to Cards in the hand.
+   - Scaling and layout rules apply the same way.
 
 ## Design Principles
 
@@ -249,3 +346,10 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 6. Serializing then deserializing any valid Game State produces a deeply equal Game State.
 7. Tile Pieces preserve their visual continuity when placed adjacent.
 8. Tile Image configuration must be fully reconstructible from saved state.
+9. Tile transformations (crop, shape, borders) must be deterministic and reproducible.
+10. Tile rendering must match saved state exactly after load.
+11. Shape-based tiles must preserve intuitive interaction and selection behavior.
+
+## Code Principles
+1. The code must be reliable, modular, without unnecessary repetition and functional.
+2. Follow the best functional code standards for clojour and clojour script.

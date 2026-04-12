@@ -79,29 +79,65 @@
 
 ;; ─── hand card ───────────────────────────────────────────────────────────────
 
+(defn- tile-piece-bg
+  "Inline style for rendering a tile piece fragment at hand scale."
+  [{:keys [src cols rows tile-idx tile-w tile-h outer-crop inner-crop]
+    :or   {outer-crop {:top 0 :bottom 0 :left 0 :right 0}
+           inner-crop {:top 0 :bottom 0 :left 0 :right 0}}}]
+  (let [idx0  (dec tile-idx)
+        col   (mod idx0 cols)
+        row   (quot idx0 cols)
+        oc-l  (:left outer-crop 0)
+        oc-t  (:top outer-crop 0)
+        ic-l  (:left inner-crop 0)
+        ic-t  (:top inner-crop 0)
+        bp-x  (- (+ oc-l (* col tile-w) ic-l))
+        bp-y  (- (+ oc-t (* row tile-h) ic-t))]
+    {:background-image    (str "url('" src "')")
+     :background-size     (str (* cols tile-w) "px " (* rows tile-h) "px")
+     :background-position (str bp-x "px " bp-y "px")
+     :background-repeat   "no-repeat"}))
+
+(defn- hand-item-content
+  "Renders the inner content of a hand item (card or tile piece)."
+  [{:keys [type suit rank suit-color text-color] :as item}]
+  (if (= type :tile-piece)
+    ;; tile piece: background image handles rendering, no inner content needed
+    nil
+    ;; card
+    [:div {:class "flex flex-col items-center justify-center w-full h-full pointer-events-none"}
+     [:span {:class "text-lg leading-none"} rank]
+     [:span {:class "text-xl leading-none"
+             :style {:color (or suit-color text-color "#111111")}} suit]]))
+
 (defn- hand-card
   [card idx hovered-idx strip-w n on-reorder]
   (let [dragging?      (r/atom false)
         drag-outside?  (r/atom false)]
-    (fn [{:keys [id suit rank face-color back-color text-color suit-color face-up?]} idx hovered-idx strip-w n on-reorder]
+    (fn [{:keys [id suit rank face-color back-color text-color suit-color face-up? type] :as item}
+         idx hovered-idx strip-w n on-reorder]
       (let [{:keys [tx z]} (nth (card-positions n @hovered-idx strip-w) idx {:tx 0 :z idx})
-            is-hovered     (= @hovered-idx idx)]
+            is-hovered     (= @hovered-idx idx)
+            tile?          (= type :tile-piece)
+            bg-style       (if tile?
+                             (tile-piece-bg item)
+                             {:background-color (or face-color "#ffffff")})]
         [:div
-         {:style         {:position         "absolute"
-                          :left             (str tx "px")
-                          :bottom           "0px"
-                          :width            (str card-w "px")
-                          :height           (str card-h "px")
-                          :z-index          z
-                          :background-color (or face-color "#ffffff")
-                          :border           "1px solid #d1d5db"
-                          :color            (or text-color "#111111")
-                          :transform        (cond @drag-outside?  "scale(1)"
-                                                  is-hovered      (str "scale(" hover-scale ")")
-                                                  :else           "scale(1)")
-                          :transform-origin "bottom center"
-                          :transition       "left 0.15s ease, transform 0.15s ease"
-                          :cursor           "grab"}
+         {:style         (merge bg-style
+                                {:position         "absolute"
+                                 :left             (str tx "px")
+                                 :bottom           "0px"
+                                 :width            (str card-w "px")
+                                 :height           (str card-h "px")
+                                 :z-index          z
+                                 :border           "1px solid #d1d5db"
+                                 :color            (or text-color "#111111")
+                                 :transform        (cond @drag-outside?  "scale(1)"
+                                                         is-hovered      (str "scale(" hover-scale ")")
+                                                         :else           "scale(1)")
+                                 :transform-origin "bottom center"
+                                 :transition       "left 0.15s ease, transform 0.15s ease"
+                                 :cursor           "grab"})
           :class         "select-none rounded-lg shadow-md flex items-center justify-center font-bold overflow-hidden"
           :on-mouse-enter #(when-not @dragging? (reset! hovered-idx idx))
           :on-mouse-leave #(when (= @hovered-idx idx) (reset! hovered-idx nil))
@@ -146,10 +182,7 @@
             (reset! drag-outside? false)
             (.releasePointerCapture (.-currentTarget e) (.-pointerId e)))}
 
-         [:div {:class "flex flex-col items-center justify-center w-full h-full pointer-events-none"}
-          [:span {:class "text-lg leading-none"} rank]
-          [:span {:class "text-xl leading-none"
-                  :style {:color (or suit-color text-color "#111111")}} suit]]]))))
+         [hand-item-content item]]))))
 
 
 ;; ─── hand area ───────────────────────────────────────────────────────────────
