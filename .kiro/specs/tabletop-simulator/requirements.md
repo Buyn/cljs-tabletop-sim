@@ -58,7 +58,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 1. The main menu includes a new section: "Add Tile Image".
 
-2. Selecting it opens a non-modal draggable panel:
+2. Selecting it opens a panel following the global panel rules (non-modal, draggable, closable).:
    - The panel can be dragged by its title bar.
    - It does not block interaction with the table.
    - A close ("×") button in the title bar closes the panel, cancel creation.
@@ -151,8 +151,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - The full image becomes a single tile.
 
 ### 4. Deck Customization
-
-1. The Deck Customizer opens as a modal overlay.
+1. The Deck Customizer opens as a non-modal draggable panel.
 2. It presents 4 suit fields (max 20 chars each) and 13 rank fields (max 10 chars each), pre-filled with standard values (♠ ♥ ♦ ♣ / A 2 … K).
 3. The player chooses:
    - a face-up card background color,
@@ -334,6 +333,140 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - They behave identically to Cards in the hand.
    - Scaling and layout rules apply the same way.
 
+## Input & Controls System
+
+### 11.1 General Principles
+
+1. All UI panels must be:
+   - Non-modal,
+   - Draggable by their title bar,
+   - Closable via a "×" button in the top-right corner.
+2. Panels must not block interaction with the table.
+3. All actions must work on:
+   - Selected components,
+   - Dragged component(s),
+   - Component under cursor (as if selected).
+
+---
+
+### 11.2 Keybinding System
+
+1. All keybindings must be:
+   - Defined in a separate configuration file,
+   - Not hardcoded in source code.
+
+2. Keybinding configuration must support:
+   - Editing,
+   - Saving to file,
+   - Loading from file.
+
+3. A new main menu section **"Settings"** must exist with:
+
+   - "Configure Keybindings"
+   - "Save Settings"
+   - "Load Settings"
+   - "General Settings"
+
+4. "General Settings" opens a separate:
+   - Non-modal,
+   - Draggable panel.
+
+---
+
+### 11.3 Core Controls
+
+#### Rotation
+
+- `W` — rotate clockwise
+- `R` — rotate counter-clockwise
+
+Rules:
+1. Applies to all components except Dice.
+2. Rotation step is configurable (default 45°).
+3. Rotation step is defined in General Settings.
+
+Dice behavior:
+- `W` — increment value by 1
+- `R` — decrement value by 1
+
+---
+
+#### Flip
+
+- `A` — flip component (card or deck)
+
+---
+
+#### Hand ↔ Table
+
+- `1–0` — move card from hand to table at cursor
+- `Q` — move component from table to hand
+
+---
+
+#### Actions
+
+- `T` — roll die / shuffle deck
+- `H` — lock / unlock component
+- `G` — group selected components
+- `Z` — scale up / down component
+
+---
+
+#### Clipboard
+
+- `C` — copy
+- `X` — cut
+- `V` — paste
+
+Rules:
+1. Works on:
+   - Selected components,
+   - Dragged component,
+   - Component under cursor.
+
+---
+
+#### Camera Movement
+
+- `Space` — enable fast camera pan
+
+Rules:
+1. Moves camera at 3× speed of middle mouse drag.
+2. Works even while:
+   - Dragging component(s),
+   - Having active selection.
+
+---
+
+### 11.4 Properties Editor
+
+- `M` — open Properties Editor
+
+Behavior:
+
+1. Opens a non-modal draggable panel.
+2. Displays selected component(s) state as raw serialized text.
+3. Format must match save file structure.
+
+4. The panel includes:
+   - A large editable text area,
+   - "Apply" button.
+
+5. On Apply:
+   - The edited data is deserialized,
+   - The component is replaced as if loaded from save.
+
+---
+
+### 11.5 Interaction Priority
+
+Input actions must resolve in the following priority:
+
+1. Dragged component(s)
+2. Selected components
+3. Component under cursor
+4. No target → no-op
 ## Design Principles
 
 1. All deck operations follow intuitive physical card behavior.
@@ -347,7 +480,13 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 9. Tile transformations (crop, shape, borders) must be deterministic and reproducible.
 10. Tile rendering must match saved state exactly after load.
 11. Shape-based tiles must preserve intuitive interaction and selection behavior.
+12. All user interaction must be configurable and externally defined where possible (e.g., keybindings).
+13. UI panels must follow consistent interaction rules (non-modal, draggable, closable).
+14. Input handling must prioritize fluid gameplay and minimal friction.
 
 ## Code Principles
 1. The code must be reliable, modular, without unnecessary repetition and functional.
 2. Follow the best functional code standards for clojour and clojour script.
+3. Input handling and keybindings must be decoupled from UI logic.
+4. Configuration (keybindings, general settings) must be externalizable and serializable.
+5. UI panels must be implemented as reusable composable components.
