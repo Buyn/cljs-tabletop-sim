@@ -4105,7 +4105,7 @@ It contains all important details from previous interactions.
 движение стола обратное движению мыши
 тесть когда мыш движется вверх влево. стол должен двигатся вниз вправо.
 ** DONE сломалось перетаскивание карт
-** TODO стоит ли переписать на re-frame?
+** DONE стоит ли переписать на re-frame?
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -6863,6 +6863,42 @@ State becomes deterministic.
 *** rewrite this to
 /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/design.md
 and change the code according to the new document.
+** fix it
+*** #### 5.4 Deck Drag Behavior
+1. Immediate drag (no hold delay):
+   - Instantly draws the top card from the deck.
+   - The top card is removed from the deck.
+   - That card immediately becomes the dragged object (face-down).
+
+2. Long press (≥ 1 second):
+   - Enables dragging of the entire deck.
+
+3. This behavior prioritizes card interaction and eliminates delay when drawing cards.
+*** #### Camera Movement
+- `Space` — enable fast camera pan
+
+Rules:
+1. Moves camera at 5× speed of mouse drag. In the opposite direction to mouse movement.
+
+2. Works even while:
+   - Dragging component(s),
+   - Having active selection.
+*** #### 5.3 Grouping Layout Behavior for not Cards and/or not Decks components
+1. When grouping not Cards and/or not Decks components:
+   - components do not stack
+   - All resulting components must be repositioned around a computed group center.
+   - The group center is defined as the average position of all grouped components.
+2. Layout rules:
+   - Components must not overlap.
+   - Components must be placed as compactly as possible.
+   - Minimal spacing between components must be preserved.
+3. Placement strategy:
+   - Components are arranged in a grid or radial layout around the group center.
+   - Layout must prioritize:
+     - No intersections,
+     - Visual compactness,
+     - Stable and predictable positioning.
+4. The resulting grouped structure must feel like a physically stacked or neatly arranged set.
 
 ** VERIFY меню комнады всех обектов
 *** залочить\разлочить
