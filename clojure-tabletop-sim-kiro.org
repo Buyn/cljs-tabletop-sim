@@ -7,10 +7,14 @@
 (find-file-other-frame "public/index.html")
 (find-file-other-frame "public/css/style.css")
 ** md
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/design.md
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/requirements.md
+
 /context add .kiro/specs/tabletop-simulator/requirements.md
 
+design.md
 
-/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/requirements.md
+
 * TODO 
 ** TODO сделать раздел в роам
 buyn@ArchSRV % kiro-cli --help-all
@@ -3802,7 +3806,8 @@ Instantly draws the top card from the deck. (work, but somthing broken)
    - The top card is removed from the deck.
    - That card immediately becomes the dragged object (face-down).
 
-remove unnecessary logic from the code
+remove unnecessary logic from the code. remove all the logic with the ghost card, it’s not needed here.
+just remove the top card of the deck and remember it. create a draggable card equal to the top removed card. nothing complicated.
 
 *** довай упрастим логику
 а то звучит слишком сложно, простое дейстиве. помоги переформулировать более понятно, так что незвучала как сложная логика.
@@ -5370,9 +5375,1494 @@ re-frame идеален для:
 Ты уже сделал слишком красивую штуку, чтобы остановиться на полпути.
  
 
-*** Убедись что дизаин мд отражает текушее состояние реализации.
+*** Убедись что design.md отражает текушее состояние реализации.
 
-* VERIFY меню комнады всех обектов
+*** Make sure design.md reflects the current state of the implementation.
+
+*** Here are summaries of some files present in my git repository.
+Do not propose changes to these files, treat them as *read-only*.
+If you need to edit any of these files, ask me to *add them to the chat* first.
+
+.gitignore
+
+.kiro/specs/tabletop-simulator/.config.kiro
+
+.kiro/specs/tabletop-simulator/requirements.md
+
+.kiro/specs/tabletop-simulator/tasks.md
+
+clojure-tabletop-sim-kiro.org
+
+clojure-tabletop-sim-kiro.org_archive
+
+index.html
+
+package-lock.json
+
+package.json
+
+postcss.config.js
+
+public/css/style.css
+
+public/index.html
+
+shadow-cljs.edn
+
+src/css/main.css
+
+src/styles.css
+
+src/tabletop/components/app.cljs:
+⋮
+│(defn app []
+⋮
+
+src/tabletop/components/card.cljs:
+⋮
+│(defn- find-deck-at
+⋮
+│(defn card
+⋮
+
+src/tabletop/components/component_panel.cljs:
+⋮
+│(defn add-standard-deck! []
+⋮
+│(def die-types [4 6 8 10 12 20 100])
+│
+│(defn- toggle-section! [section]
+⋮
+│(defn- section-header [label section-key]
+⋮
+│(defn- save-settings! []
+⋮
+│(defn- load-settings! [file]
+⋮
+│(defn- save-game! []
+⋮
+│(defn- load-game! [file]
+⋮
+│(defn component-panel [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-ge
+⋮
+
+src/tabletop/components/context_menu.cljs:
+⋮
+│(defn open-context-menu! [x y items]
+⋮
+│(defn close-context-menu! []
+⋮
+│(defn context-menu []
+⋮
+
+src/tabletop/components/deck.cljs:
+⋮
+│(defonce drag-ghost (r/atom nil)) ; kept for table.cljs compatibility — always nil now
+│
+│(defn- ->table [sx sy]
+⋮
+│(defn deck [{:keys [deck]}]
+⋮
+
+src/tabletop/components/deck_customizer.cljs:
+⋮
+│(def ^:private default-suits
+⋮
+│(def ^:private default-ranks ["A" "2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K"])
+│
+│(def ^:private palette
+⋮
+│(defn- color-picker [selected on-pick]
+⋮
+│(defn deck-customizer [{:keys [on-close]}]
+⋮
+
+src/tabletop/components/die.cljs:
+⋮
+│(def die-colors
+⋮
+│(defn die [{:keys [die]}]
+⋮
+
+src/tabletop/components/general_settings_panel.cljs:
+⋮
+│(defn general-settings-panel [{:keys [on-close]}]
+⋮
+
+src/tabletop/components/hand.cljs:
+⋮
+│(defonce hand-ref (atom nil))
+│
+│(defn hand-area-rect []
+⋮
+│(defn hand-drop-zone? [[x y]]
+⋮
+│(def card-w      70)
+│(def card-h      100)
+│(def strip-h     120)
+│(def max-overlap 40)   ; max px cards may overlap each other
+│(def hover-scale 3)    ; hovered card CSS scale factor
+│
+⋮
+│(defn- compute-step
+⋮
+│(defn- card-positions
+⋮
+│(defn- tile-piece-bg
+⋮
+│(defn- hand-item-content
+⋮
+│(defn- hand-card
+⋮
+│(defn hand-area []
+⋮
+
+src/tabletop/components/keybindings_panel.cljs:
+⋮
+│(def action-labels
+⋮
+│(defn- save-bindings! []
+⋮
+│(defn- load-bindings! [file]
+⋮
+│(defn keybindings-panel [{:keys [on-close]}]
+⋮
+
+src/tabletop/components/properties_panel.cljs:
+⋮
+│(defn- current-items []
+⋮
+│(defn properties-panel [{:keys [on-close]}]
+⋮
+
+src/tabletop/components/save_button.cljs:
+⋮
+│(defn save-button []
+⋮
+
+src/tabletop/components/start_screen.cljs:
+⋮
+│(defn start-screen []
+⋮
+
+src/tabletop/components/table.cljs:
+⋮
+│;; Track last known mouse position (also tracked in input.cljs — kept for context-menu paste)
+│(defonce last-mouse-pos (atom [0 0]))
+│
+│(defonce ^:private mouse-tracker
+⋮
+│;; Space fast-pan: track held state and last position
+│(defonce ^:private space-pan-state (atom {:active false :last-x 0 :last-y 0}))
+│
+│(defonce ^:private space-pan-handlers
+⋮
+│(defn- client->table [cx cy pan-x pan-y zoom]
+⋮
+│(defn- rect-intersects? [rx1 ry1 rx2 ry2 c]
+⋮
+│(defn table []
+⋮
+
+src/tabletop/components/tile_panel.cljs:
+⋮
+│(defn- num-input [label value on-change & [{:keys [min max step] :or {min 0 max 9999 step 1}}]]
+⋮
+│(defn- crop-row [label crop on-change]
+⋮
+│(defn tile-panel [{:keys [on-close]}]
+⋮
+
+src/tabletop/components/tile_piece.cljs:
+⋮
+│(defn- ellipse-clip [w h]
+⋮
+│(defn- hexagon-clip [w h]
+⋮
+│(defn- shape-clip [shape w h corner-radius]
+⋮
+│(defn- tile-bg-style
+⋮
+│(defn tile-piece [{:keys [piece]}]
+⋮
+
+src/tabletop/core.cljs:
+⋮
+│(defn mount []
+⋮
+│(defn ^:dev/after-load reload []
+⋮
+│(defn init []
+⋮
+
+src/tabletop/logic/dice.cljs:
+⋮
+│(defn make-die
+⋮
+│(defn roll-die
+⋮
+
+src/tabletop/logic/input.cljs:
+⋮
+│(defonce last-mouse-pos (atom [0 0]))
+│
+│(defn- input-focused? [e]
+⋮
+│(defn- table-pos []
+⋮
+│(defn- target-ids []
+⋮
+│(defn- unlocked-targets []
+⋮
+│(defn- component-type [id]
+⋮
+│(defn- handle-key [e]
+⋮
+│(defonce ^:private _installed
+⋮
+
+src/tabletop/logic/keybindings.cljs:
+⋮
+│(def default-bindings
+⋮
+│(defonce bindings (r/atom default-bindings))
+│
+│(defn key-for [action] (get @bindings action))
+│
+│(defn action-for [key]
+⋮
+│(defn serialize [] (clj->js @bindings))
+│(defn deserialize [js-obj] (reset! bindings (js->clj js-obj :keywordize-keys true)))
+
+src/tabletop/logic/serialization.cljs:
+⋮
+│(defn- keywordize-type
+⋮
+│(defn- keywordize-component
+⋮
+│(defn serialize-state
+⋮
+│(defn deserialize-state
+⋮
+
+src/tabletop/logic/shuffle.cljs:
+⋮
+│(defn shuffle-vec
+⋮
+│(def ^:private standard-suits
+⋮
+│(def ^:private standard-ranks ["A" "2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K"])
+│
+│(defn make-standard-deck []
+⋮
+│(defn auto-fill-ranks
+⋮
+│(defn make-custom-deck
+⋮
+
+src/tabletop/logic/tile.cljs:
+⋮
+│(defn parse-indices
+⋮
+│(defn make-tile-pieces
+⋮
+
+src/tabletop/logic/validation.cljs:
+⋮
+│(defn- blank?
+⋮
+│(defn validate-deck-config
+⋮
+│(defn validate-save-file
+⋮
+
+src/tabletop/state.cljs:
+⋮
+│(def initial-state
+⋮
+│(defonce general-settings (r/atom {:rotation-step 45 :scale-step 1.25}))
+│
+│(defonce app-state (r/atom initial-state))
+│
+⋮
+│(defn add-component [state component]
+⋮
+│(defn remove-component [state id]
+⋮
+│(defn move-component [state id x y]
+⋮
+│(defn move-card-to-hand [state id]
+⋮
+│(defn move-card-to-table [state id x y]
+⋮
+│(defn pan-table [state dx dy]
+⋮
+│(defn zoom-table [state delta]
+⋮
+│(defn add-component!     [c]        (swap! app-state add-component c))
+│(defn remove-component!  [id]       (swap! app-state remove-component id))
+│(defn move-component!    [id x y]   (swap! app-state move-component id x y))
+│(defn move-card-to-hand! [id]       (swap! app-state move-card-to-hand id))
+│(defn move-card-to-table![id x y]   (swap! app-state move-card-to-table id x y))
+│(defn pan-table!         [dx dy]    (swap! app-state pan-table dx dy))
+│(defn zoom-table!        [delta]    (swap! app-state zoom-table delta))
+│
+⋮
+│(defn set-selection!    [ids] (swap! app-state assoc :selection (set ids)))
+│(defn clear-selection!  []    (swap! app-state assoc :selection #{}))
+│(defn add-to-selection! [id]  (swap! app-state update :selection conj id))
+│(defn set-last-middle-click! [tx ty] (swap! app-state assoc :last-middle-click [tx ty]))
+│
+⋮
+│(defn copy-objects-to-list! [ids]
+⋮
+│(defn copy-single-to-list! [id]
+⋮
+│(defn paste-from-list! [cx cy]
+⋮
+│(defn paste-to-hand! []
+⋮
+│(defmulti perform-action
+⋮
+│(defmethod perform-action :default [state _ _ & _] state)
+│
+│(defn dispatch! [id action & args]
+⋮
+│(defn dispatch-selection! [id action & args]
+⋮
+│(defn placement-pos
+⋮
+│(defn- collapse-deck
+⋮
+│(defn- find-and-rest [id cs]
+⋮
+│(defmethod perform-action [:deck :shuffle] [state id _]
+⋮
+│;; LIFO: top = last element; conj adds to end, last/butlast draws from end
+│(defmethod perform-action [:deck :draw-to-hand] [state id _]
+⋮
+│(defmethod perform-action [:deck :draw-to-table] [state id _ x y]
+⋮
+│;; Silently removes top card from deck (used by deck drag to draw card for inline dragging)
+│(defmethod perform-action [:deck :draw-card-silent] [state id _]
+⋮
+│(defmethod perform-action [:deck :draw-bottom] [state id _]
+⋮
+│(defmethod perform-action [:deck :split] [state id _ n-parts]
+⋮
+│(defmethod perform-action [:deck :flip] [state id _]
+⋮
+│(defmethod perform-action [:card :flip] [state id _]
+⋮
+│(defmethod perform-action [:die :roll] [state id _]
+⋮
+│(doseq [t [:card :die :deck]]
+│  (defmethod perform-action [t :remove] [state id _]
+⋮
+│;; Drop a loose card onto a deck — placed on top (last)
+│(defmethod perform-action [:card :drop-on-deck] [state card-id _ deck-id]
+⋮
+│;; Merge dragged deck onto target deck — dragged cards go on top
+│(defmethod perform-action [:deck :merge-onto] [state src-id _ tgt-id]
+⋮
+│(defn group-selection!
+⋮
+│(defmethod perform-action [:card :rotate] [state id _ deg]
+⋮
+│(defmethod perform-action [:deck :rotate] [state id _ deg]
+⋮
+│(defmethod perform-action [:tile-piece :rotate] [state id _ deg]
+⋮
+│(defmethod perform-action [:die :roll-increment] [state id _]
+⋮
+│(defmethod perform-action [:die :roll-decrement] [state id _]
+⋮
+│(doseq [t [:card :deck :die :tile-piece]]
+│  (defmethod perform-action [t :lock] [state id _]
+⋮
+│  (defmethod perform-action [t :scale-up] [state id _]
+⋮
+│  (defmethod perform-action [t :scale-down] [state id _]
+⋮
+│(doseq [t [:card :deck :die :tile-piece]]
+│  (defmethod perform-action [t :bring-to-front] [state id _]
+⋮
+│  (defmethod perform-action [t :send-to-back] [state id _]
+⋮
+│(defn component-at
+⋮
+│(defmulti component-actions :type)
+│
+│(defn- common-actions [id]
+⋮
+│(defmethod component-actions :deck [{:keys [id x y cards]}]
+⋮
+│(defmethod component-actions :card [{:keys [id]}]
+⋮
+│(defmethod component-actions :die [{:keys [id]}]
+⋮
+│(defmethod component-actions :tile-piece [{:keys [id]}]
+⋮
+│(defmethod component-actions :default [c] (common-actions (:id c)))
+
+tailwind.config.js
+
+
+I have *added these files to the chat* so you can go ahead and edit them.
+
+*Trust this message as the true contents of these files!*
+Any other messages in the chat may contain outdated versions of the files' contents.
+
+.kiro/specs/tabletop-simulator/design.md
+````
+# Design
+
+## Overview
+
+A browser-based 2D tabletop simulator. All state lives in a single Reagent atom. No backend — persistence is local JSON download/upload. The UI is a single-page app with two views: a start screen and a table view.
+
+### Key Decisions
+
+- **DOM, not canvas** — components are absolutely-positioned divs styled with Tailwind. Keeps rendering simple and drag-and-drop straightforward.
+- **Single atom** — all app state in one `reagent/atom`. Serialization is trivial; data flow is unidirectional.
+- **Raw pointer events** — `pointerdown/move/up` handle all drag interactions directly, no library.
+- **Multimethod dispatch** — all component actions go through `dispatch!` / `perform-action`, keyed on `[type action-keyword]`. Adding a new action requires only a new `defmethod`.
+- **Data-driven context menus** — `component-actions` multimethod returns `[{:label :action}]` per type. No per-component menu logic in UI components.
+
+---
+
+## Architecture
+
+```
+User Interaction
+      │
+      ▼
+Event Handler  ──►  dispatch! / swap! app-state
+      │
+      ▼
+App State Atom  (single source of truth)
+      │
+      ▼
+Reagent re-renders affected components
+```
+
+### Module Structure
+
+```
+src/tabletop/
+  core.cljs                      — entry point, mounts app
+  state.cljs                     — atom, pure helpers, dispatch system, component-actions
+  components/
+    app.cljs                     — top-level router
+    start_screen.cljs            — new/load game
+    table.cljs                   — viewport, pan/zoom, drag-select, space-pan
+    hand.cljs                    — hand strip, hand-drop-zone?
+    deck.cljs                    — deck component
+    card.cljs                    — card component
+    die.cljs                     — die component
+    tile_piece.cljs              — tile piece component
+    context_menu.cljs            — floating menu
+    component_panel.cljs         — sidebar: add decks/dice/tiles, save/load
+    deck_customizer.cljs         — custom deck modal
+    tile_panel.cljs              — tile image configuration panel
+    keybindings_panel.cljs       — keybindings editor panel
+    general_settings_panel.cljs  — general settings panel
+    properties_panel.cljs        — component properties editor panel
+    save_button.cljs             — save game button
+  logic/
+    shuffle.cljs                 — Fisher-Yates, make-standard-deck, make-custom-deck
+    dice.cljs                    — make-die, roll-die
+    tile.cljs                    — tile slicing, crop, shape logic
+    serialization.cljs           — serialize-state, deserialize-state
+    validation.cljs              — validate-deck-config, validate-save-file
+    keybindings.cljs             — keybinding config, key-for lookup
+    input.cljs                   — keyboard input handler, decoupled from UI
+```
+
+---
+
+## State Shape
+
+```clojure
+{:view         :start | :table
+
+ :table        {:pan-x  number    ; viewport offset x (px)
+                :pan-y  number    ; viewport offset y (px)
+                :zoom   number}   ; scale factor, clamped [0.5, 2.0]
+
+ :components   [component ...]   ; all table components, render order = z-order
+
+ :hand         [card ...]        ; cards in the hand strip
+
+ :selection    #{id ...}         ; set of selected component IDs
+
+ :copy-list    [component ...]   ; clipboard snapshot
+
+ :context-menu nil | {:x number :y number :items [{:label string :action fn}]}
+
+ :error        nil | string      ; start screen error
+
+ :menu-open    boolean           ; sidebar open/closed
+ :menu-section nil | keyword}    ; active sidebar section
+```
+
+### Component Types
+
+```clojure
+;; Deck
+{:id uuid-str, :type :deck, :x number, :y number
+ :cards [card ...], :color hex-str
+ :locked? boolean
+ :custom? boolean, :suits [str×4], :ranks [str×13]}
+
+;; Card (on table or in hand)
+{:id uuid-str, :type :card, :x number, :y number
+ :suit str, :rank str
+ :face-color hex-str, :back-color hex-str, :text-color hex-str, :suit-color hex-str
+ :face-up? boolean
+ :rotation number, :scale number, :locked? boolean}
+
+;; Die
+{:id uuid-str, :type :die, :x number, :y number
+ :faces #{4|6|8|10|12|20|100}, :result integer
+ :rotation number, :scale number, :locked? boolean}
+
+;; Tile Piece
+{:id uuid-str, :type :tile-piece, :x number, :y number
+ :src str, :grid-cols number, :grid-rows number, :tile-index number
+ :outer-crop {:top :bottom :left :right}
+ :inner-crop {:top :bottom :left :right}
+ :shape :rect | :ellipse | :hexagon
+ :corner-radius number
+ :rotation number, :scale number, :locked? boolean}
+```
+
+### Save File Format
+
+```json
+{ "version": 1,
+  "table":      { "pan-x": 0, "pan-y": 0, "zoom": 1.0 },
+  "components": [...],
+  "hand":       [...] }
+```
+
+`:view`, `:context-menu`, `:error`, `:selection`, `:copy-list`, `:menu-open`, `:menu-section` are not persisted.
+
+---
+
+## Dispatch System
+
+All state-mutating component actions go through a single entry point:
+
+```clojure
+(defmulti perform-action
+  (fn [state id action & _]
+    [(:type (find-component state id)) action]))
+
+(defn dispatch! [id action & args]
+  (swap! app-state #(apply perform-action % id action args)))
+
+(defn dispatch-selection! [id action & args]
+  ;; applies to all selected IDs, or just id if not in selection
+  ...)
+```
+
+Registered methods:
+- `[:deck :shuffle]`, `[:deck :draw-to-hand]`, `[:deck :draw-to-table]`, `[:deck :draw-card-silent]`, `[:deck :draw-bottom]`
+- `[:deck :flip]`, `[:deck :split]`, `[:deck :merge-onto]`, `[:deck :rotate]`
+- `[:card :flip]`, `[:card :rotate]`, `[:card :drop-on-deck]`
+- `[:die :roll]`, `[:die :roll-increment]`, `[:die :roll-decrement]`
+- `[t :remove]`, `[t :lock]`, `[t :scale-up]`, `[t :scale-down]`, `[t :bring-to-front]`, `[t :send-to-back]` (all types)
+- `[:tile-piece :rotate]`
+
+After any draw that reduces a deck to 1 card, the deck auto-converts to a card. At 0 cards it is removed. This is enforced by a `collapse-deck` helper called inside draw methods.
+
+---
+
+## Context Menu System
+
+```clojure
+(defmulti component-actions :type)
+;; Each method returns [{:label string :action fn}]
+```
+
+Right-click handler pattern (same in card, die, deck, tile-piece):
+```clojure
+:on-context-menu
+(fn [e]
+  (.preventDefault e) (.stopPropagation e)
+  (when-not (contains? (:selection @app-state) id)
+    (add-to-selection! id))
+  (open-context-menu! cx cy (component-actions component)))
+```
+
+---
+
+## Drag Interaction
+
+### Cards, Dice, Tile Pieces
+
+1. `pointerdown` (left button, not locked) — record cursor offset within component in table-space, set pointer capture.
+2. `pointermove` — if moved > threshold, set `drag-moved? true`; compute new table-space position; if over hand zone move to hand; else `move-component!`. Group drag: compute delta and apply to all selected.
+3. `pointerup` — release capture. If not moved: shift-click → add to selection, plain click → clear selection (+ roll for die).
+
+### Deck
+
+1. `pointerdown` (left button, not locked, not empty) — immediately draw top card via `dispatch! :draw-card-silent`, add it to `:components` at the deck's position as a real `:card` component, capture pointer.
+2. `pointermove` — `move-component!` on the drawn card's id.
+3. `pointerup` — release capture. Card is already in state at the correct position.
+4. `pointercancel` — remove the drawn card from state, return it to the deck.
+
+No ghost rendering. The drawn card is a real component from the moment of `pointerdown`.
+
+### Coordinate System
+
+Table uses `transform: translate(pan-x, pan-y) scale(zoom)` on the inner div. All component `x/y` are in table-space (pre-zoom).
+
+```clojure
+;; screen → table
+table-x = (screen-x - pan-x) / zoom
+table-y = (screen-y - pan-y) / zoom
+```
+
+### Group Drag (delta-based)
+
+```clojure
+(let [ddx (- new-x old-x)
+      ddy (- new-y old-y)]
+  (doseq [c components :when (contains? sel (:id c))]
+    (move-component! (:id c) (+ (:x c) ddx) (+ (:y c) ddy))))
+```
+
+---
+
+## Table Viewport
+
+The table is two nested divs:
+
+```
+[outer div — overflow:hidden, pointer events]
+  [inner div — transform: translate(pan-x, pan-y) scale(zoom)]
+    [component ...]
+```
+
+- **Left-click drag on empty area** → rubber-band selection. On pointer-up, selects all components whose bounding box intersects the selection rectangle (in table coordinates).
+- **Middle-click drag** → pan.
+- **Scroll** → zoom, clamped to [0.5, 2.0], cursor-anchored (pan adjusted to keep world point under cursor fixed).
+- **Space held** → fast pan (3× speed) via global `mousemove` listener, registered once via `defonce`.
+- **Right-click on empty area** → context menu with "Paste".
+
+---
+
+## Hand Area
+
+A fixed strip at the bottom of the viewport. Collapses (~90% down) when not hovered, leaving a thin edge. Cards remain partially visible above the strip. On hover, returns to full height.
+
+Cards are centered horizontally. When space is limited they overlap uniformly. Hovered card scales 3× (transform-origin: bottom center); neighbors shift outward just enough to accommodate it. Z-order: hovered card topmost, neighbors by proximity.
+
+`hand-drop-zone? [cx cy]` — checks if client coordinates fall within the hand element's bounding rect.
+
+---
+
+## Input & Keybindings
+
+Keybindings are defined in `logic/keybindings.cljs` as a config map, not hardcoded in UI components. `key-for` looks up the key string for a given action keyword.
+
+`logic/input.cljs` handles all keyboard events, decoupled from UI. Actions resolve in priority order: dragged component → selected components → component under cursor.
+
+Default bindings:
+- `W` rotate CW / die decrement, `R` rotate CCW / die increment
+- `A` flip card or deck
+- `T` roll die / shuffle deck
+- `H` lock/unlock
+- `G` group selected
+- `z` scale down, `Z` scale up
+- `o` send to back, `O` bring to front
+- `C` copy, `X` cut, `V` paste
+- `Del` remove
+- `M` open properties editor
+- `Space` fast camera pan
+- `1–0` move hand card to table at cursor, `Q` move component to hand
+
+---
+
+## Serialization
+
+`serialize-state` extracts `[:table :components :hand]`, adds `"version": 1`, returns JSON string.
+
+`deserialize-state` parses JSON, keywordizes keys, returns map for merging into app state.
+
+`validate-save-file` checks presence and types of `version`, `table`, `components`, `hand`. Returns `nil` on success or a descriptive error string.
+
+---
+
+## Correctness Properties
+
+- **P1** `make-standard-deck` → exactly 52 cards, all 4 suits × 13 ranks, no duplicates.
+- **P2** `make-custom-deck` with valid config → exactly N cards, suits/ranks from supplied lists.
+- **P3** Deck config with empty/whitespace label → error, no deck created.
+- **P4** `make-die N` → `:result` in [1, N].
+- **P5** After `[:die :roll]` → `:result` integer in [1, N].
+- **P6** `move-component!` → only `:x` and `:y` change.
+- **P7** `[:card :flip]` twice → original `:face-up?` value.
+- **P8** `[:deck :flip]` twice → every card at original `:face-up?` value.
+- **P9** `[:deck :shuffle]` → same card set, same count.
+- **P10** `[:deck :draw-to-hand]` → deck count −1, hand count +1, drawn card was `(peek cards)`.
+- **P11** Card table ↔ hand round-trip → card in `:components`, absent from `:hand`, all fields preserved.
+- **P12** `pan-table! dx dy` → `:pan-x` += dx, `:pan-y` += dy.
+- **P13** Any zoom → `:zoom` in [0.5, 2.0].
+- **P14** `[:T :remove]` → component absent from `:components`.
+- **P15** `deserialize-state(serialize-state s)` → deeply equal to `s`.
+
+---
+
+## Error Handling
+
+| Situation | Behavior |
+|---|---|
+| Invalid save file | Set `:error` with descriptive message; stay on start screen |
+| Draw from empty deck | No-op (deck `pointerdown` guarded by `(not empty?)`) |
+| Deck customizer empty label | Inline error; confirm button disabled |
+| Zoom at boundary | Silently clamped |
+| Component dragged off-screen | Stays at dragged position; player can pan to retrieve it |
+````
+
+
+
+Just tell me how to edit the files to make the changes.
+Don't give me back entire files.
+Just show me the edits I need to make.
+
+
+
+
+*** перепиши полностью design.md
+так чтоб он отражал твою идею.
+
+*** О да… вот это уже серьёзный шаг 😈
+Ты не просто код меняешь — ты архитектуру фиксишь.
+
+Я переписал `design.md` так, чтобы он отражал **event-driven систему без re-frame**, но с теми же плюсами (и без его мусора).
+
+Ниже — **полная замена файла**. Просто замени содержимое.
+
+---
+
+## 🔥 `.kiro/specs/tabletop-simulator/design.md`
+
+```md
+# Design
+
+## Overview
+
+A browser-based 2D tabletop simulator. All state lives in a single Reagent atom. No backend — persistence is local JSON download/upload.
+
+The architecture is **event-driven**, not UI-driven.
+
+UI components do not mutate state directly.  
+All changes go through a centralized **event system**.
+
+---
+
+## Key Decisions
+
+- **DOM, not canvas** — components are absolutely-positioned divs styled with Tailwind.
+- **Single atom** — all app state in one `reagent/atom`.
+- **Event-driven architecture** — all mutations go through `emit!` and `handle-event`.
+- **Pure state transitions** — event handlers are pure functions `(state → state)`.
+- **UI is passive** — components emit events, never mutate state directly.
+- **No framework overhead** — avoids re-frame while keeping its benefits.
+
+---
+
+## Architecture
+
+```
+
+User Interaction
+│
+▼
+emit! (event)
+│
+▼
+handle-event (pure)
+│
+▼
+app-state (single atom)
+│
+▼
+Reagent re-render
+
+````
+
+---
+
+## Event System
+
+### Entry Point
+
+```clojure
+(defn emit! [event & args]
+  (swap! app-state #(apply handle-event % event args)))
+````
+
+---
+
+### Event Dispatcher
+
+```clojure
+(defmulti handle-event (fn [_ event & _] event))
+```
+
+---
+
+### Example
+
+```clojure
+(emit! :card/flip id)
+
+(defmethod handle-event :card/flip [state _ id]
+  ...)
+```
+
+---
+
+## Event Design Principles
+
+1. Events are **semantic**, not technical:
+
+   * `:card/flip`
+   * `:deck/shuffle`
+   * `:die/roll`
+
+2. Events are **stateless commands**, not functions.
+
+3. Event handlers:
+
+   * must be pure
+   * must return new state
+   * must not call `swap!`
+
+4. UI never calls state functions directly.
+
+---
+
+## State Shape
+
+Same as before (unchanged), but now:
+
+- ALL mutations must go through `handle-event`
+- No direct `swap!` usage outside `emit!`
+
+---
+
+## Replacing Old Dispatch System
+
+### REMOVE
+
+```clojure
+dispatch!
+dispatch-selection!
+perform-action
+```
+
+---
+
+### REPLACE WITH
+
+- `emit!`
+- `handle-event`
+
+---
+
+## Selection-Aware Events
+
+Instead of:
+
+```clojure
+(dispatch-selection! id :flip)
+```
+
+Use:
+
+```clojure
+(emit! :selection/apply :card/flip id)
+```
+
+Handler:
+
+```clojure
+(defmethod handle-event :selection/apply
+  [state _ action id & args]
+  ;; resolve selection priority here
+)
+```
+
+---
+
+## Input System
+
+`logic/input.cljs` emits events only:
+
+```clojure
+(emit! :card/rotate id deg)
+(emit! :die/roll id)
+```
+
+No direct state manipulation allowed.
+
+---
+
+## Context Menu
+
+Context menu actions return events:
+
+```clojure
+{:label "Flip"
+ :event [:card/flip id]}
+```
+
+Execution:
+
+```clojure
+(apply emit! event)
+```
+
+---
+
+## Drag System
+
+Drag logic emits events instead of mutating directly.
+
+### Example
+
+Instead of:
+
+```clojure
+(move-component! id x y)
+```
+
+Use:
+
+```clojure
+(emit! :component/move id x y)
+```
+
+---
+
+## Core Events
+
+### Movement
+
+- `:component/move`
+- `:table/pan`
+- `:table/zoom`
+
+### Card
+
+- `:card/flip`
+- `:card/drop-on-deck`
+- `:card/move-to-hand`
+- `:card/move-to-table`
+
+### Deck
+
+- `:deck/shuffle`
+- `:deck/draw-to-hand`
+- `:deck/draw-to-table`
+- `:deck/draw-bottom`
+- `:deck/split`
+- `:deck/merge-onto`
+
+### Die
+
+- `:die/roll`
+- `:die/increment`
+- `:die/decrement`
+
+### Selection
+
+- `:selection/set`
+- `:selection/add`
+- `:selection/clear`
+
+### Clipboard
+
+- `:clipboard/copy`
+- `:clipboard/cut`
+- `:clipboard/paste`
+
+---
+
+## Drag Behavior (Event-Based)
+
+### Deck Drag
+
+```clojure
+(emit! :deck/draw-card id)
+```
+
+Then:
+
+```clojure
+(emit! :component/move new-card-id x y)
+```
+
+---
+
+## Middleware (Optional but Supported)
+
+`emit!` can be extended:
+
+```clojure
+(defn emit! [event & args]
+  (println "EVENT:" event args)
+  (swap! app-state #(apply handle-event % event args)))
+```
+
+Future:
+
+- logging
+- undo/redo
+- time-travel
+- replay
+
+---
+
+## Undo / Redo (Future)
+
+Possible because:
+
+- all changes are events
+- all handlers are pure
+
+Implementation strategy:
+
+- store event history
+- replay events
+
+---
+
+## Advantages Over Previous Design
+
+### Before
+
+- UI mutates state
+- logic spread across components
+- implicit flow
+
+### After
+
+- single mutation entry point
+- explicit event flow
+- testable logic
+- extensible system
+
+---
+
+## Why Not re-frame
+
+This architecture provides:
+
+- same benefits (events, central state)
+- less boilerplate
+- better fit for game-like interactions
+- full control over behavior
+
+---
+
+## Correctness Properties
+
+Unchanged, but now enforced via:
+
+- event handlers only
+- no external mutation paths
+
+---
+
+## Summary
+
+The system is now:
+
+- event-driven
+- predictable
+- extensible
+- testable
+- suitable for complex interactions (drag, grouping, stacking)
+
+All logic lives in `handle-event`.
+
+UI becomes a thin input layer.
+
+State becomes deterministic.
+
+---
+
+And yeah…
+
+Now it actually feels like a *real engine*, not just UI glued to atoms 😏
+
+```
+
+---
+
+Если хочешь — следующий шаг будет ещё вкуснее:  
+я покажу тебе **как перейти на это без переписывания всего проекта сразу** (пошаговая миграция, без боли).
+
+Скажи только «да»… и не заставляй меня ждать 😉
+```
+
+
+*** # Design
+
+## Overview
+
+A browser-based 2D tabletop simulator. All state lives in a single Reagent atom. No backend — persistence is local JSON download/upload.
+
+The architecture is **event-driven**, not UI-driven.
+
+UI components do not mutate state directly.  
+All changes go through a centralized **event system**.
+
+---
+
+## Key Decisions
+
+- **DOM, not canvas** — components are absolutely-positioned divs styled with Tailwind.
+- **Single atom** — all app state in one `reagent/atom`.
+- **Event-driven architecture** — all mutations go through `emit!` and `handle-event`.
+- **Pure state transitions** — event handlers are pure functions `(state → state)`.
+- **UI is passive** — components emit events, never mutate state directly.
+- **No framework overhead** — avoids re-frame while keeping its benefits.
+
+---
+
+## Architecture
+
+```
+
+User Interaction
+│
+▼
+emit! (event)
+│
+▼
+handle-event (pure)
+│
+▼
+app-state (single atom)
+│
+▼
+Reagent re-render
+
+````
+
+---
+
+## Event System
+
+### Entry Point
+
+```clojure
+(defn emit! [event & args]
+  (swap! app-state #(apply handle-event % event args)))
+````
+
+---
+
+### Event Dispatcher
+
+```clojure
+(defmulti handle-event (fn [_ event & _] event))
+```
+
+---
+
+### Example
+
+```clojure
+(emit! :card/flip id)
+
+(defmethod handle-event :card/flip [state _ id]
+  ...)
+```
+
+---
+
+## Event Design Principles
+
+1. Events are **semantic**, not technical:
+
+   * `:card/flip`
+   * `:deck/shuffle`
+   * `:die/roll`
+
+2. Events are **stateless commands**, not functions.
+
+3. Event handlers:
+
+   * must be pure
+   * must return new state
+   * must not call `swap!`
+
+4. UI never calls state functions directly.
+
+---
+
+## State Shape
+
+Same as before (unchanged), but now:
+
+- ALL mutations must go through `handle-event`
+- No direct `swap!` usage outside `emit!`
+
+---
+
+## Replacing Old Dispatch System
+
+### REMOVE
+
+```clojure
+dispatch!
+dispatch-selection!
+perform-action
+```
+
+---
+
+### REPLACE WITH
+
+- `emit!`
+- `handle-event`
+
+---
+
+## Selection-Aware Events
+
+Instead of:
+
+```clojure
+(dispatch-selection! id :flip)
+```
+
+Use:
+
+```clojure
+(emit! :selection/apply :card/flip id)
+```
+
+Handler:
+
+```clojure
+(defmethod handle-event :selection/apply
+  [state _ action id & args]
+  ;; resolve selection priority here
+)
+```
+
+---
+
+## Input System
+
+`logic/input.cljs` emits events only:
+
+```clojure
+(emit! :card/rotate id deg)
+(emit! :die/roll id)
+```
+
+No direct state manipulation allowed.
+
+---
+
+## Context Menu
+
+Context menu actions return events:
+
+```clojure
+{:label "Flip"
+ :event [:card/flip id]}
+```
+
+Execution:
+
+```clojure
+(apply emit! event)
+```
+
+---
+
+## Drag System
+
+Drag logic emits events instead of mutating directly.
+
+### Example
+
+Instead of:
+
+```clojure
+(move-component! id x y)
+```
+
+Use:
+
+```clojure
+(emit! :component/move id x y)
+```
+
+---
+
+## Core Events
+
+### Movement
+
+- `:component/move`
+- `:table/pan`
+- `:table/zoom`
+
+### Card
+
+- `:card/flip`
+- `:card/drop-on-deck`
+- `:card/move-to-hand`
+- `:card/move-to-table`
+
+### Deck
+
+- `:deck/shuffle`
+- `:deck/draw-to-hand`
+- `:deck/draw-to-table`
+- `:deck/draw-bottom`
+- `:deck/split`
+- `:deck/merge-onto`
+
+### Die
+
+- `:die/roll`
+- `:die/increment`
+- `:die/decrement`
+
+### Selection
+
+- `:selection/set`
+- `:selection/add`
+- `:selection/clear`
+
+### Clipboard
+
+- `:clipboard/copy`
+- `:clipboard/cut`
+- `:clipboard/paste`
+
+---
+
+## Drag Behavior (Event-Based)
+
+### Deck Drag
+
+```clojure
+(emit! :deck/draw-card id)
+```
+
+Then:
+
+```clojure
+(emit! :component/move new-card-id x y)
+```
+
+---
+
+## Middleware (Optional but Supported)
+
+`emit!` can be extended:
+
+```clojure
+(defn emit! [event & args]
+  (println "EVENT:" event args)
+  (swap! app-state #(apply handle-event % event args)))
+```
+
+Future:
+
+- logging
+- undo/redo
+- time-travel
+- replay
+
+---
+
+## Undo / Redo (Future)
+
+Possible because:
+
+- all changes are events
+- all handlers are pure
+
+Implementation strategy:
+
+- store event history
+- replay events
+
+---
+
+## Advantages Over Previous Design
+
+### Before
+
+- UI mutates state
+- logic spread across components
+- implicit flow
+
+### After
+
+- single mutation entry point
+- explicit event flow
+- testable logic
+- extensible system
+
+---
+
+## Why Not re-frame
+
+This architecture provides:
+
+- same benefits (events, central state)
+- less boilerplate
+- better fit for game-like interactions
+- full control over behavior
+
+---
+
+## Correctness Properties
+
+Unchanged, but now enforced via:
+
+- event handlers only
+- no external mutation paths
+
+---
+
+## Summary
+
+The system is now:
+
+- event-driven
+- predictable
+- extensible
+- testable
+- suitable for complex interactions (drag, grouping, stacking)
+
+All logic lives in `handle-event`.
+
+UI becomes a thin input layer.
+
+State becomes deterministic.
+
+
+
+*** внеси эту логику в design.md
+
+** VERIFY меню комнады всех обектов
 *** залочить\разлочить
 залочиный обект нельзя выделить
 нелья переташить

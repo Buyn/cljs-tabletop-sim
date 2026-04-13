@@ -33,24 +33,33 @@ Reagent re-renders affected components
 
 ```
 src/tabletop/
-  core.cljs                    — entry point, mounts app
-  state.cljs                   — atom, pure helpers, dispatch system, component-actions
+  core.cljs                      — entry point, mounts app
+  state.cljs                     — atom, pure helpers, dispatch system, component-actions
   components/
-    app.cljs                   — top-level router
-    start_screen.cljs          — new/load game
-    table.cljs                 — viewport, pan/zoom, drag-select, paste
-    hand.cljs                  — hand strip, hand-drop-zone?
-    deck.cljs                  — deck component
-    card.cljs                  — card component
-    die.cljs                   — die component
-    context_menu.cljs          — floating menu
-    component_panel.cljs       — sidebar: add decks/dice, save/load
-    deck_customizer.cljs       — custom deck modal
+    app.cljs                     — top-level router
+    start_screen.cljs            — new/load game
+    table.cljs                   — viewport, pan/zoom, drag-select, space-pan
+    hand.cljs                    — hand strip, hand-drop-zone?
+    deck.cljs                    — deck component
+    card.cljs                    — card component
+    die.cljs                     — die component
+    tile_piece.cljs              — tile piece component
+    context_menu.cljs            — floating menu
+    component_panel.cljs         — sidebar: add decks/dice/tiles, save/load
+    deck_customizer.cljs         — custom deck modal
+    tile_panel.cljs              — tile image configuration panel
+    keybindings_panel.cljs       — keybindings editor panel
+    general_settings_panel.cljs  — general settings panel
+    properties_panel.cljs        — component properties editor panel
+    save_button.cljs             — save game button
   logic/
-    shuffle.cljs               — Fisher-Yates, make-standard-deck, make-custom-deck
-    dice.cljs                  — make-die, roll-die
-    serialization.cljs         — serialize-state, deserialize-state
-    validation.cljs            — validate-deck-config, validate-save-file
+    shuffle.cljs                 — Fisher-Yates, make-standard-deck, make-custom-deck
+    dice.cljs                    — make-die, roll-die
+    tile.cljs                    — tile slicing, crop, shape logic
+    serialization.cljs           — serialize-state, deserialize-state
+    validation.cljs              — validate-deck-config, validate-save-file
+    keybindings.cljs             — keybinding config, key-for lookup
+    input.cljs                   — keyboard input handler, decoupled from UI
 ```
 
 ---
@@ -86,15 +95,29 @@ src/tabletop/
 ;; Deck
 {:id uuid-str, :type :deck, :x number, :y number
  :cards [card ...], :color hex-str
+ :locked? boolean
  :custom? boolean, :suits [str×4], :ranks [str×13]}
 
-;; Card (on table)
+;; Card (on table or in hand)
 {:id uuid-str, :type :card, :x number, :y number
- :suit str, :rank str, :color str, :face-up? boolean}
+ :suit str, :rank str
+ :face-color hex-str, :back-color hex-str, :text-color hex-str, :suit-color hex-str
+ :face-up? boolean
+ :rotation number, :scale number, :locked? boolean}
 
 ;; Die
 {:id uuid-str, :type :die, :x number, :y number
- :faces #{4|6|8|10|12|20|100}, :result integer}  ; result always set on creation
+ :faces #{4|6|8|10|12|20|100}, :result integer
+ :rotation number, :scale number, :locked? boolean}
+
+;; Tile Piece
+{:id uuid-str, :type :tile-piece, :x number, :y number
+ :src str, :grid-cols number, :grid-rows number, :tile-index number
+ :outer-crop {:top :bottom :left :right}
+ :inner-crop {:top :bottom :left :right}
+ :shape :rect | :ellipse | :hexagon
+ :corner-radius number
+ :rotation number, :scale number, :locked? boolean}
 ```
 
 ### Save File Format
@@ -127,13 +150,15 @@ All state-mutating component actions go through a single entry point:
   ...)
 ```
 
-Registered methods: `[:deck :shuffle]`, `[:deck :draw-to-hand]`, `[:deck :draw-to-table]`, `[:deck :flip]`, `[:deck :remove]`, `[:card :flip]`, `[:card :remove]`, `[:die :roll]`, `[:die :remove]`.
+Registered methods:
+- `[:deck :shuffle]`, `[:deck :draw-to-hand]`, `[:deck :draw-to-table]`, `[:deck :draw-card-silent]`, `[:deck :draw-bottom]`
+- `[:deck :flip]`, `[:deck :split]`, `[:deck :merge-onto]`, `[:deck :rotate]`
+- `[:card :flip]`, `[:card :rotate]`, `[:card :drop-on-deck]`
+- `[:die :roll]`, `[:die :roll-increment]`, `[:die :roll-decrement]`
+- `[t :remove]`, `[t :lock]`, `[t :scale-up]`, `[t :scale-down]`, `[t :bring-to-front]`, `[t :send-to-back]` (all types)
+- `[:tile-piece :rotate]`
 
-Adding a new action:
-```clojure
-(defmethod perform-action [:token :rotate] [state id _ degrees]
-  (update-component state id assoc :rotation degrees))
-```
+After any draw that reduces a deck to 1 card, the deck auto-converts to a card. At 0 cards it is removed. This is enforced by a `collapse-deck` helper called inside draw methods.
 
 ---
 
@@ -142,23 +167,15 @@ Adding a new action:
 ```clojure
 (defmulti component-actions :type)
 ;; Each method returns [{:label string :action fn}]
-
-(defn- common-actions [id]
-  [{:label "Copy"   :action #(...)}
-   {:label "Remove" :action #(dispatch-selection! id :remove)}])
-
-(defmethod component-actions :card [{:keys [id]}]
-  (into [{:label "Flip" :action #(dispatch-selection! id :flip)}]
-        (common-actions id)))
 ```
 
-Right-click handler pattern (same in card, die, deck):
+Right-click handler pattern (same in card, die, deck, tile-piece):
 ```clojure
 :on-context-menu
 (fn [e]
   (.preventDefault e) (.stopPropagation e)
   (when-not (contains? (:selection @app-state) id)
-    (add-to-selection! id))          ; preserve highlight
+    (add-to-selection! id))
   (open-context-menu! cx cy (component-actions component)))
 ```
 
@@ -166,16 +183,34 @@ Right-click handler pattern (same in card, die, deck):
 
 ## Drag Interaction
 
-All draggable components use the same pointer-event pattern:
+### Cards, Dice, Tile Pieces
 
-1. `pointerdown` (left button only) — record offset, set pointer capture, register Ctrl+C/X keydown listener.
-2. `pointermove` — if moved > threshold, set `drag-moved? true`; compute new position accounting for zoom; if over hand zone, move to hand; else move on table. For group drag: compute delta from component's stored position and apply to all selected.
-3. `pointerup` — release capture, remove keydown listener. If not moved: shift-click → add to selection, plain click → clear selection (+ roll for die).
+1. `pointerdown` (left button, not locked) — record cursor offset within component in table-space, set pointer capture.
+2. `pointermove` — if moved > threshold, set `drag-moved? true`; compute new table-space position; if over hand zone move to hand; else `move-component!`. Group drag: compute delta and apply to all selected.
+3. `pointerup` — release capture. If not moved: shift-click → add to selection, plain click → clear selection (+ roll for die).
+
+### Deck
+
+1. `pointerdown` (left button, not locked, not empty) — immediately draw top card via `dispatch! :draw-card-silent`, add it to `:components` at the deck's position as a real `:card` component, capture pointer.
+2. `pointermove` — `move-component!` on the drawn card's id.
+3. `pointerup` — release capture. Card is already in state at the correct position.
+4. `pointercancel` — remove the drawn card from state, return it to the deck.
+
+No ghost rendering. The drawn card is a real component from the moment of `pointerdown`.
+
+### Coordinate System
+
+Table uses `transform: translate(pan-x, pan-y) scale(zoom)` on the inner div. All component `x/y` are in table-space (pre-zoom).
+
+```clojure
+;; screen → table
+table-x = (screen-x - pan-x) / zoom
+table-y = (screen-y - pan-y) / zoom
+```
 
 ### Group Drag (delta-based)
 
 ```clojure
-;; In pointermove, when dragging a selected component:
 (let [ddx (- new-x old-x)
       ddy (- new-y old-y)]
   (doseq [c components :when (contains? sel (:id c))]
@@ -196,25 +231,49 @@ The table is two nested divs:
 
 - **Left-click drag on empty area** → rubber-band selection. On pointer-up, selects all components whose bounding box intersects the selection rectangle (in table coordinates).
 - **Middle-click drag** → pan.
-- **Scroll** → zoom, clamped to [0.5, 2.0].
+- **Scroll** → zoom, clamped to [0.5, 2.0], cursor-anchored (pan adjusted to keep world point under cursor fixed).
+- **Space held** → fast pan (3× speed) via global `mousemove` listener, registered once via `defonce`.
 - **Right-click on empty area** → context menu with "Paste".
-- **Ctrl+V** → paste copy list at cursor (into hand if over hand zone, else onto table).
 
 ---
 
 ## Hand Area
 
-A fixed strip at the bottom of the viewport. Cards overlap with negative left margin; hovered card scales up 3× from bottom center. The strip collapses (slides down 90%) when not hovered.
+A fixed strip at the bottom of the viewport. Collapses (~90% down) when not hovered, leaving a thin edge. Cards remain partially visible above the strip. On hover, returns to full height.
 
-`hand-drop-zone? [cx cy]` — checks if client coordinates fall within the hand element's bounding rect. Used by all draggable components to detect a drop into the hand.
+Cards are centered horizontally. When space is limited they overlap uniformly. Hovered card scales 3× (transform-origin: bottom center); neighbors shift outward just enough to accommodate it. Z-order: hovered card topmost, neighbors by proximity.
+
+`hand-drop-zone? [cx cy]` — checks if client coordinates fall within the hand element's bounding rect.
+
+---
+
+## Input & Keybindings
+
+Keybindings are defined in `logic/keybindings.cljs` as a config map, not hardcoded in UI components. `key-for` looks up the key string for a given action keyword.
+
+`logic/input.cljs` handles all keyboard events, decoupled from UI. Actions resolve in priority order: dragged component → selected components → component under cursor.
+
+Default bindings:
+- `W` rotate CW / die decrement, `R` rotate CCW / die increment
+- `A` flip card or deck
+- `T` roll die / shuffle deck
+- `H` lock/unlock
+- `G` group selected
+- `z` scale down, `Z` scale up
+- `o` send to back, `O` bring to front
+- `C` copy, `X` cut, `V` paste
+- `Del` remove
+- `M` open properties editor
+- `Space` fast camera pan
+- `1–0` move hand card to table at cursor, `Q` move component to hand
 
 ---
 
 ## Serialization
 
-`serialize-state` extracts `[:table :components :hand]` from app state, adds `"version": 1`, and returns a JSON string.
+`serialize-state` extracts `[:table :components :hand]`, adds `"version": 1`, returns JSON string.
 
-`deserialize-state` parses JSON, keywordizes keys, and returns a map suitable for merging into app state.
+`deserialize-state` parses JSON, keywordizes keys, returns map for merging into app state.
 
 `validate-save-file` checks presence and types of `version`, `table`, `components`, `hand`. Returns `nil` on success or a descriptive error string.
 
@@ -222,50 +281,21 @@ A fixed strip at the bottom of the viewport. Cards overlap with negative left ma
 
 ## Correctness Properties
 
-### P1 — Standard deck completeness
-`make-standard-deck` produces exactly 52 cards covering all 4 suits × 13 ranks with no duplicates.
-
-### P2 — Custom deck completeness
-`make-custom-deck` with valid config produces exactly 52 cards where every card's suit and rank are from the supplied lists.
-
-### P3 — Deck config validation
-Any config with an empty or whitespace-only label returns an error and produces no deck.
-
-### P4 — Die initial result
-`make-die N` produces a die with `:faces N` and `:result` in [1, N].
-
-### P5 — Die roll range
-After `[:die :roll]`, `:result` is an integer in [1, N].
-
-### P6 — Move has no side effects
-After `move-component`, only `:x` and `:y` change; all other fields are unchanged.
-
-### P7 — Card face toggle is an involution
-Applying `[:card :flip]` twice returns the card to its original `:face-up?` value.
-
-### P8 — Flip deck is an involution
-Applying `[:deck :flip]` twice returns every card to its original `:face-up?` value.
-
-### P9 — Shuffle preserves card set
-After `[:deck :shuffle]`, the set of card IDs is identical to before; deck size is unchanged.
-
-### P10 — Draw top card
-After `[:deck :draw-to-hand]` on a non-empty deck: deck count decreases by 1, hand count increases by 1, drawn card was the first in `:cards`.
-
-### P11 — Card table ↔ hand round-trip
-Moving a card to hand then back to table: card is in `:components`, absent from `:hand`, all fields preserved.
-
-### P12 — Pan
-After `pan-table dx dy`: `:pan-x` increases by `dx`, `:pan-y` increases by `dy`.
-
-### P13 — Zoom bounds
-After any zoom operation, `:zoom` is in [0.5, 2.0].
-
-### P14 — Remove
-After `[:T :remove]`, the component is absent from `:components`.
-
-### P15 — Serialization round-trip
-`deserialize-state (serialize-state s)` produces a state deeply equal to `s` for all valid game states.
+- **P1** `make-standard-deck` → exactly 52 cards, all 4 suits × 13 ranks, no duplicates.
+- **P2** `make-custom-deck` with valid config → exactly N cards, suits/ranks from supplied lists.
+- **P3** Deck config with empty/whitespace label → error, no deck created.
+- **P4** `make-die N` → `:result` in [1, N].
+- **P5** After `[:die :roll]` → `:result` integer in [1, N].
+- **P6** `move-component!` → only `:x` and `:y` change.
+- **P7** `[:card :flip]` twice → original `:face-up?` value.
+- **P8** `[:deck :flip]` twice → every card at original `:face-up?` value.
+- **P9** `[:deck :shuffle]` → same card set, same count.
+- **P10** `[:deck :draw-to-hand]` → deck count −1, hand count +1, drawn card was `(peek cards)`.
+- **P11** Card table ↔ hand round-trip → card in `:components`, absent from `:hand`, all fields preserved.
+- **P12** `pan-table! dx dy` → `:pan-x` += dx, `:pan-y` += dy.
+- **P13** Any zoom → `:zoom` in [0.5, 2.0].
+- **P14** `[:T :remove]` → component absent from `:components`.
+- **P15** `deserialize-state(serialize-state s)` → deeply equal to `s`.
 
 ---
 
@@ -274,7 +304,7 @@ After `[:T :remove]`, the component is absent from `:components`.
 | Situation | Behavior |
 |---|---|
 | Invalid save file | Set `:error` with descriptive message; stay on start screen |
-| Draw from empty deck | No-op (UI disables the option when deck is empty) |
+| Draw from empty deck | No-op (deck `pointerdown` guarded by `(not empty?)`) |
 | Deck customizer empty label | Inline error; confirm button disabled |
-| Zoom at boundary | Silently clamped; no error shown |
+| Zoom at boundary | Silently clamped |
 | Component dragged off-screen | Stays at dragged position; player can pan to retrieve it |

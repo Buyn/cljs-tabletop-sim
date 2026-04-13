@@ -168,18 +168,7 @@
               ^{:key (:id component)} [:div {:class "absolute bg-red-500 text-white text-xs p-1 rounded"
                                              :style {:left (str (:x component 0) "px")
                                                      :top  (str (:y component 0) "px")}}
-                                       (str "Unknown type: " (:type component))]))
-          ;; Deck card-drag ghost (absolute in table space, escapes deck div)
-          (when-let [g @deck/drag-ghost]
-            [:div {:class "absolute rounded-lg border shadow-md w-[70px] h-[100px] pointer-events-none"
-                   :style {:left             (str (:x g) "px")
-                           :top              (str (:y g) "px")
-                           :background-color (or (:back-color g) "#1e3a5f")
-                           :border-color     "#4b5563"
-                           :z-index          1000}}
-             [:div {:class "w-full h-full rounded-lg"
-                    :style {:background "repeating-linear-gradient(45deg,#1e40af,#1e40af 2px,transparent 2px,transparent 8px)"
-                            :opacity    "0.6"}}]])]
+                                       (str "Unknown type: " (:type component))]))]
 
          ;; Drag-select rectangle overlay
          (when (and @selecting? @sel-start @sel-end (> screen-w 2) (> screen-h 2))
