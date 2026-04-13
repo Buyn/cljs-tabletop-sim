@@ -6860,7 +6860,9 @@ State becomes deterministic.
 
 
 
-*** внеси эту логику в design.md
+*** rewrite this to
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/design.md
+and change the code according to the new document.
 
 ** VERIFY меню комнады всех обектов
 *** залочить\разлочить

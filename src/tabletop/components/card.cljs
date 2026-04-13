@@ -1,8 +1,8 @@
 (ns tabletop.components.card
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
+            [tabletop.state :refer [app-state move-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    dispatch! dispatch-selection! component-actions]]
+                                    emit! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn- find-deck-at
@@ -103,7 +103,7 @@
                         card-ids    (if (contains? sel id) sel #{id})]
                     (doseq [cid card-ids]
                       (when (= :card (:type (some #(when (= (:id %) cid) %) (:components @app-state))))
-                        (dispatch! cid :drop-on-deck (:id target-deck)))))
+                        (emit! :card/drop-on-deck cid (:id target-deck)))))
                   ;; Normal drop
                   (do
                     (when-not @drag-moved?
@@ -115,7 +115,7 @@
           :on-double-click
           (fn [e]
             (.stopPropagation e)
-            (dispatch-selection! id :flip))
+            (emit! :selection/apply :card/flip id))
 
           :on-context-menu
           (fn [e]

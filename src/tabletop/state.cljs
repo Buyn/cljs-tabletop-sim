@@ -19,10 +19,8 @@
 
 (defonce app-state (r/atom initial-state))
 
-
-
 ;; ---------------------------------------------------------------------------
-;; Pure state helpers (used by action methods below)
+;; Pure state helpers
 ;; ---------------------------------------------------------------------------
 
 (defn add-component [state component]
@@ -60,81 +58,114 @@
   (update-in state [:table :zoom] (fn [z] (max 0.5 (min 2.0 (+ z delta))))))
 
 ;; ---------------------------------------------------------------------------
-;; Effectful wrappers
+;; Event system
 ;; ---------------------------------------------------------------------------
 
-(defn add-component!     [c]        (swap! app-state add-component c))
-(defn remove-component!  [id]       (swap! app-state remove-component id))
-(defn move-component!    [id x y]   (swap! app-state move-component id x y))
-(defn move-card-to-hand! [id]       (swap! app-state move-card-to-hand id))
-(defn move-card-to-table![id x y]   (swap! app-state move-card-to-table id x y))
-(defn pan-table!         [dx dy]    (swap! app-state pan-table dx dy))
-(defn zoom-table!        [delta]    (swap! app-state zoom-table delta))
+(defmulti handle-event (fn [_ event & _] event))
+
+(defmethod handle-event :default [state & _] state)
+
+(defn emit! [event & args]
+  (swap! app-state #(apply handle-event % event args)))
 
 ;; ---------------------------------------------------------------------------
 ;; Selection
 ;; ---------------------------------------------------------------------------
 
-(defn set-selection!    [ids] (swap! app-state assoc :selection (set ids)))
-(defn clear-selection!  []    (swap! app-state assoc :selection #{}))
-(defn add-to-selection! [id]  (swap! app-state update :selection conj id))
-(defn set-last-middle-click! [tx ty] (swap! app-state assoc :last-middle-click [tx ty]))
+(defmethod handle-event :selection/set   [state _ ids]  (assoc state :selection (set ids)))
+(defmethod handle-event :selection/add   [state _ id]   (update state :selection conj id))
+(defmethod handle-event :selection/clear [state _]      (assoc state :selection #{}))
+
+(defn set-selection!    [ids] (emit! :selection/set ids))
+(defn clear-selection!  []    (emit! :selection/clear))
+(defn add-to-selection! [id]  (emit! :selection/add id))
 
 ;; ---------------------------------------------------------------------------
-;; Copy list
+;; Selection-aware dispatch
 ;; ---------------------------------------------------------------------------
 
-(defn copy-objects-to-list! [ids]
+(defmethod handle-event :selection/apply
+  [state _ action id & args]
+  (let [sel (:selection state)
+        ids (if (contains? sel id) sel #{id})]
+    (reduce (fn [s sid] (apply handle-event s action sid args)) state ids)))
+
+;; ---------------------------------------------------------------------------
+;; Table
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :table/pan  [state _ dx dy]    (pan-table state dx dy))
+(defmethod handle-event :table/zoom [state _ delta]    (zoom-table state delta))
+(defmethod handle-event :table/set-last-middle-click [state _ tx ty]
+  (assoc state :last-middle-click [tx ty]))
+
+(defn pan-table!              [dx dy]  (emit! :table/pan dx dy))
+(defn zoom-table!             [delta]  (emit! :table/zoom delta))
+(defn set-last-middle-click!  [tx ty]  (emit! :table/set-last-middle-click tx ty))
+
+;; ---------------------------------------------------------------------------
+;; Component movement
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :component/move [state _ id x y] (move-component state id x y))
+(defmethod handle-event :component/add  [state _ c]      (add-component state c))
+(defmethod handle-event :component/remove [state _ id]   (remove-component state id))
+
+(defn add-component!    [c]      (emit! :component/add c))
+(defn remove-component! [id]     (emit! :component/remove id))
+(defn move-component!   [id x y] (emit! :component/move id x y))
+
+;; ---------------------------------------------------------------------------
+;; Hand
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :card/move-to-hand  [state _ id]     (move-card-to-hand state id))
+(defmethod handle-event :card/move-to-table [state _ id x y] (move-card-to-table state id x y))
+
+(defn move-card-to-hand!  [id]     (emit! :card/move-to-hand id))
+(defn move-card-to-table! [id x y] (emit! :card/move-to-table id x y))
+
+;; ---------------------------------------------------------------------------
+;; Clipboard
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :clipboard/copy [state _ ids]
   (let [id-set (set ids)]
-    (swap! app-state assoc :copy-list
-           (vec (filter #(id-set (:id %)) (:components @app-state))))))
+    (assoc state :copy-list (vec (filter #(id-set (:id %)) (:components state))))))
 
-(defn copy-single-to-list! [id]
-  (when-let [c (some #(when (= (:id %) id) %) (:components @app-state))]
-    (swap! app-state assoc :copy-list [c])))
+(defmethod handle-event :clipboard/copy-single [state _ id]
+  (if-let [c (some #(when (= (:id %) id) %) (:components state))]
+    (assoc state :copy-list [c])
+    state))
 
-(defn paste-from-list! [cx cy]
-  (let [items (:copy-list @app-state)]
-    (when (seq items)
+(defmethod handle-event :clipboard/paste [state _ cx cy]
+  (let [items (:copy-list state)]
+    (if (seq items)
       (let [base-x (:x (first items) 0)
             base-y (:y (first items) 0)]
-        (doseq [item items]
-          (add-component! (assoc item
-                                 :id (str (random-uuid))
-                                 :x (+ cx (- (:x item 0) base-x))
-                                 :y (+ cy (- (:y item 0) base-y)))))))))
+        (reduce (fn [s item]
+                  (add-component s (assoc item
+                                          :id (str (random-uuid))
+                                          :x (+ cx (- (:x item 0) base-x))
+                                          :y (+ cy (- (:y item 0) base-y)))))
+                state items))
+      state)))
 
-(defn paste-to-hand! []
-  (doseq [item (:copy-list @app-state)]
-    (swap! app-state update :hand conj (assoc item :id (str (random-uuid))))))
+(defmethod handle-event :clipboard/paste-to-hand [state _]
+  (reduce (fn [s item]
+            (update s :hand conj (assoc item :id (str (random-uuid)))))
+          state (:copy-list state)))
 
-;; ---------------------------------------------------------------------------
-;; Dispatch system
-;; ---------------------------------------------------------------------------
-
-(defmulti perform-action
-  (fn [state id action & _]
-    [(:type (some #(when (= (:id %) id) %) (:components state))) action]))
-
-(defmethod perform-action :default [state _ _ & _] state)
-
-(defn dispatch! [id action & args]
-  (swap! app-state #(apply perform-action % id action args)))
-
-(defn dispatch-selection! [id action & args]
-  (let [sel (:selection @app-state)
-        ids (if (contains? sel id) sel #{id})]
-    (doseq [sid ids]
-      (apply dispatch! sid action args))))
+(defn copy-objects-to-list! [ids]     (emit! :clipboard/copy ids))
+(defn copy-single-to-list!  [id]      (emit! :clipboard/copy-single id))
+(defn paste-from-list!      [cx cy]   (emit! :clipboard/paste cx cy))
+(defn paste-to-hand!        []        (emit! :clipboard/paste-to-hand))
 
 ;; ---------------------------------------------------------------------------
-;; Placement helpers
+;; Placement helper
 ;; ---------------------------------------------------------------------------
 
-(defn placement-pos
-  "Returns [tx ty] for placing a new component:
-   last middle-click position if available, otherwise viewport center."
-  []
+(defn placement-pos []
   (or (:last-middle-click @app-state)
       (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
             vw (.-innerWidth js/window)
@@ -143,12 +174,10 @@
          (/ (- (/ vh 2) pan-y) zoom)])))
 
 ;; ---------------------------------------------------------------------------
-;; Deck collapse helper — called after any draw/remove to enforce invariants
+;; Deck collapse helper
 ;; ---------------------------------------------------------------------------
 
-(defn- collapse-deck
-  "After a draw: deck with 1 card → card; 0 cards → removed."
-  [state id]
+(defn- collapse-deck [state id]
   (let [deck (some #(when (= (:id %) id) %) (:components state))]
     (if-not deck
       state
@@ -158,30 +187,27 @@
           (remove-component state id)
 
           (= 1 n)
-          (let [card (first (:cards deck))
-                new-card (assoc card
-                                :id   (str (random-uuid))
-                                :type :card
-                                :x    (:x deck 0)
-                                :y    (:y deck 0))]
-            (-> state
-                (remove-component id)
-                (add-component new-card)))
+          (let [card     (first (:cards deck))
+                new-card (assoc card :id (str (random-uuid)) :type :card
+                                     :x (:x deck 0) :y (:y deck 0))]
+            (-> state (remove-component id) (add-component new-card)))
 
           :else state)))))
-
 
 (defn- find-and-rest [id cs]
   (reduce (fn [[found others] c]
             (if (= (:id c) id) [c others] [found (conj others c)]))
           [nil []] cs))
 
-(defmethod perform-action [:deck :shuffle] [state id _]
+;; ---------------------------------------------------------------------------
+;; Deck events
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :deck/shuffle [state _ id]
   (update state :components
           (fn [cs] (mapv #(if (= (:id %) id) (update % :cards shuffle-vec) %) cs))))
 
-;; LIFO: top = last element; conj adds to end, last/butlast draws from end
-(defmethod perform-action [:deck :draw-to-hand] [state id _]
+(defmethod handle-event :deck/draw-to-hand [state _ id]
   (let [[deck others] (find-and-rest id (:components state))
         card (last (:cards deck))]
     (if card
@@ -191,7 +217,7 @@
           (collapse-deck id))
       state)))
 
-(defmethod perform-action [:deck :draw-to-table] [state id _ x y]
+(defmethod handle-event :deck/draw-to-table [state _ id x y]
   (let [[deck others] (find-and-rest id (:components state))
         card (last (:cards deck))]
     (if card
@@ -202,8 +228,7 @@
           (collapse-deck id))
       state)))
 
-;; Silently removes top card from deck (used by deck drag to draw card for inline dragging)
-(defmethod perform-action [:deck :draw-card-silent] [state id _]
+(defmethod handle-event :deck/draw-card-silent [state _ id]
   (let [[deck others] (find-and-rest id (:components state))]
     (if (seq (:cards deck))
       (-> state
@@ -211,7 +236,7 @@
           (collapse-deck id))
       state)))
 
-(defmethod perform-action [:deck :draw-bottom] [state id _]
+(defmethod handle-event :deck/draw-bottom [state _ id]
   (let [[deck others] (find-and-rest id (:components state))
         card (first (:cards deck))]
     (if card
@@ -221,7 +246,7 @@
           (collapse-deck id))
       state)))
 
-(defmethod perform-action [:deck :split] [state id _ n-parts]
+(defmethod handle-event :deck/split [state _ id n-parts]
   (let [[deck others] (find-and-rest id (:components state))
         cards  (:cards deck)
         total  (count cards)
@@ -244,40 +269,13 @@
                            :x     (+ (:x deck 0) (* i 80))))
                   parts)))))
 
-(defmethod perform-action [:deck :flip] [state id _]
+(defmethod handle-event :deck/flip [state _ id]
   (update state :components
           (fn [cs] (mapv #(if (= (:id %) id)
                             (update % :cards (fn [cards] (mapv (fn [c] (update c :face-up? not)) cards)))
                             %) cs))))
 
-(defmethod perform-action [:card :flip] [state id _]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id) (update % :face-up? not) %) cs))))
-
-(defmethod perform-action [:die :roll] [state id _]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id)
-                            (assoc % :result (inc (rand-int (:faces % 6))))
-                            %) cs))))
-
-(doseq [t [:card :die :deck]]
-  (defmethod perform-action [t :remove] [state id _]
-    (remove-component state id)))
-
-;; Drop a loose card onto a deck — placed on top (last)
-(defmethod perform-action [:card :drop-on-deck] [state card-id _ deck-id]
-  (let [card (some #(when (= (:id %) card-id) %) (:components state))]
-    (if card
-      (-> state
-          (remove-component card-id)
-          (update :components
-                  (fn [cs] (mapv #(if (= (:id %) deck-id)
-                                    (update % :cards conj (dissoc card :id :type :x :y))
-                                    %) cs))))
-      state)))
-
-;; Merge dragged deck onto target deck — dragged cards go on top
-(defmethod perform-action [:deck :merge-onto] [state src-id _ tgt-id]
+(defmethod handle-event :deck/merge-onto [state _ src-id tgt-id]
   (let [src (some #(when (= (:id %) src-id) %) (:components state))
         tgt (some #(when (= (:id %) tgt-id) %) (:components state))]
     (if (and src tgt)
@@ -290,103 +288,119 @@
       state)))
 
 ;; ---------------------------------------------------------------------------
-;; Grouping
+;; Card events
 ;; ---------------------------------------------------------------------------
 
-(defn group-selection!
-  "Merge all selected cards and decks into a single deck (last selected = top)."
-  []
-  (let [state    @app-state
-        sel      (:selection state)
-        selected (filter #(contains? sel (:id %)) (:components state))
-        cards    (filter #(= :card (:type %)) selected)
-        decks    (filter #(= :deck (:type %)) selected)]
-    (when (> (count selected) 1)
-      (let [anchor   (first (concat decks cards))
-            all-cards (vec (concat
-                            ;; existing deck cards (bottom first)
-                            (mapcat :cards decks)
-                            ;; loose cards on top
-                            (map #(dissoc % :id :type :x :y) cards)))
-            new-deck {:id    (str (random-uuid))
-                      :type  :deck
-                      :x     (:x anchor 0)
-                      :y     (:y anchor 0)
-                      :cards all-cards}]
-        (swap! app-state
-               (fn [s]
-                 (-> (reduce #(remove-component %1 (:id %2)) s selected)
-                     (add-component new-deck))))))))
+(defmethod handle-event :card/flip [state _ id]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :face-up? not) %) cs))))
+
+(defmethod handle-event :card/drop-on-deck [state _ card-id deck-id]
+  (let [card (some #(when (= (:id %) card-id) %) (:components state))]
+    (if card
+      (-> state
+          (remove-component card-id)
+          (update :components
+                  (fn [cs] (mapv #(if (= (:id %) deck-id)
+                                    (update % :cards conj (dissoc card :id :type :x :y))
+                                    %) cs))))
+      state)))
 
 ;; ---------------------------------------------------------------------------
-;; Rotation / Lock / Scale
+;; Die events
 ;; ---------------------------------------------------------------------------
 
-(defmethod perform-action [:card :rotate] [state id _ deg]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
-
-(defmethod perform-action [:deck :rotate] [state id _ deg]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
-
-(defmethod perform-action [:tile-piece :rotate] [state id _ deg]
-  (update state :components
-          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
-
-(defmethod perform-action [:die :roll-increment] [state id _]
+(defmethod handle-event :die/roll [state _ id]
   (update state :components
           (fn [cs] (mapv #(if (= (:id %) id)
-                            (let [faces (:faces % 6)
-                                  r     (or (:result %) 1)]
+                            (assoc % :result (inc (rand-int (:faces % 6))))
+                            %) cs))))
+
+(defmethod handle-event :die/increment [state _ id]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id)
+                            (let [faces (:faces % 6) r (or (:result %) 1)]
                               (assoc % :result (if (>= r faces) 1 (inc r))))
                             %) cs))))
 
-(defmethod perform-action [:die :roll-decrement] [state id _]
+(defmethod handle-event :die/decrement [state _ id]
   (update state :components
           (fn [cs] (mapv #(if (= (:id %) id)
-                            (let [faces (:faces % 6)
-                                  r     (or (:result %) 1)]
+                            (let [faces (:faces % 6) r (or (:result %) 1)]
                               (assoc % :result (if (<= r 1) faces (dec r))))
                             %) cs))))
 
-(doseq [t [:card :deck :die :tile-piece]]
-  (defmethod perform-action [t :lock] [state id _]
-    (update state :components
-            (fn [cs] (mapv #(if (= (:id %) id) (update % :locked? not) %) cs))))
-  (defmethod perform-action [t :scale-up] [state id _]
-    (update state :components
-            (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) 1.25) %) cs))))
-  (defmethod perform-action [t :scale-down] [state id _]
-    (update state :components
-            (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) (/ 1.0 1.25)) %) cs)))))
+;; ---------------------------------------------------------------------------
+;; Generic component events (all types)
+;; ---------------------------------------------------------------------------
 
-;; Z-order: move to front (last in render list) or back (first)
-(doseq [t [:card :deck :die :tile-piece]]
-  (defmethod perform-action [t :bring-to-front] [state id _]
-    (let [c (some #(when (= (:id %) id) %) (:components state))]
-      (if c
-        (update state :components (fn [cs] (conj (vec (remove #(= (:id %) id) cs)) c)))
-        state)))
-  (defmethod perform-action [t :send-to-back] [state id _]
-    (let [c (some #(when (= (:id %) id) %) (:components state))]
-      (if c
-        (update state :components (fn [cs] (into [c] (remove #(= (:id %) id) cs))))
-        state))))
+(defmethod handle-event :component/rotate [state _ id deg]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :rotation (fnil + 0) deg) %) cs))))
+
+(defmethod handle-event :component/lock [state _ id]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :locked? not) %) cs))))
+
+(defmethod handle-event :component/scale-up [state _ id]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) 1.25) %) cs))))
+
+(defmethod handle-event :component/scale-down [state _ id]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :scale (fnil * 1.0) (/ 1.0 1.25)) %) cs))))
+
+(defmethod handle-event :component/bring-to-front [state _ id]
+  (let [c (some #(when (= (:id %) id) %) (:components state))]
+    (if c
+      (update state :components (fn [cs] (conj (vec (remove #(= (:id %) id) cs)) c)))
+      state)))
+
+(defmethod handle-event :component/send-to-back [state _ id]
+  (let [c (some #(when (= (:id %) id) %) (:components state))]
+    (if c
+      (update state :components (fn [cs] (into [c] (remove #(= (:id %) id) cs))))
+      state)))
+
+;; ---------------------------------------------------------------------------
+;; Grouping
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :selection/group [state _]
+  (let [sel      (:selection state)
+        selected (filter #(contains? sel (:id %)) (:components state))
+        cards    (filter #(= :card (:type %)) selected)
+        decks    (filter #(= :deck (:type %)) selected)]
+    (if (<= (count selected) 1)
+      state
+      (let [anchor    (first (concat decks cards))
+            all-cards (vec (concat (mapcat :cards decks)
+                                   (map #(dissoc % :id :type :x :y) cards)))
+            new-deck  {:id    (str (random-uuid))
+                       :type  :deck
+                       :x     (:x anchor 0)
+                       :y     (:y anchor 0)
+                       :cards all-cards}]
+        (-> (reduce #(remove-component %1 (:id %2)) state selected)
+            (add-component new-deck))))))
+
+(defn group-selection! [] (emit! :selection/group))
 
 ;; ---------------------------------------------------------------------------
 ;; Component under cursor
 ;; ---------------------------------------------------------------------------
 
-(defn component-at
-  "Returns the topmost non-locked component whose bounding box contains table point [tx ty]."
-  [tx ty]
+(defn component-at [tx ty]
   (last (filter (fn [c]
                   (let [cw (if (= (:type c) :die) 37 70)
                         ch (if (= (:type c) :die) 37 100)]
                     (and (>= tx (:x c 0)) (<= tx (+ (:x c 0) cw))
                          (>= ty (:y c 0)) (<= ty (+ (:y c 0) ch)))))
                 (:components @app-state))))
+
+;; ---------------------------------------------------------------------------
+;; Context menu actions (data-driven, emit! based)
+;; ---------------------------------------------------------------------------
 
 (defmulti component-actions :type)
 
@@ -395,37 +409,37 @@
         ids     (if (contains? sel id) (vec sel) [id])
         locked? (:locked? (some #(when (= (:id %) id) %) (:components @app-state)))]
     (cond-> [{:label (if locked? "Unlock" "Lock")
-              :action #(doseq [i ids] (dispatch! i :lock))}
+              :action #(doseq [i ids] (emit! :component/lock i))}
              {:label "Bring to Front"
-              :action #(doseq [i ids] (dispatch! i :bring-to-front))}
+              :action #(doseq [i ids] (emit! :component/bring-to-front i))}
              {:label "Send to Back"
-              :action #(doseq [i ids] (dispatch! i :send-to-back))}
+              :action #(doseq [i ids] (emit! :component/send-to-back i))}
              {:label "Copy"
-              :action #(copy-objects-to-list! ids)}
+              :action #(emit! :clipboard/copy ids)}
              {:label "Remove"
-              :action #(doseq [i ids] (dispatch! i :remove))}]
+              :action #(doseq [i ids] (emit! :component/remove i))}]
       (> (count sel) 1)
-      (conj {:label "Group" :action group-selection!}))))
+      (conj {:label "Group" :action #(emit! :selection/group)}))))
 
 (defmethod component-actions :deck [{:keys [id x y cards]}]
   (let [empty? (empty? cards)
         n      (count cards)]
     (into (cond-> []
-            (not empty?) (conj {:label "Draw to Table"    :action #(dispatch! id :draw-to-table (+ x 80) y)})
-            (not empty?) (conj {:label "Draw to Hand"     :action #(dispatch! id :draw-to-hand)})
-            (not empty?) (conj {:label "Draw Bottom Card" :action #(dispatch! id :draw-bottom)})
-            true         (conj {:label "Shuffle"          :action #(dispatch! id :shuffle)})
-            true         (conj {:label "Flip Deck"        :action #(dispatch-selection! id :flip)})
-            (>= n 2)     (conj {:label "Split Deck (2)"   :action #(dispatch! id :split 2)})
-            (>= n 3)     (conj {:label "Split Deck (3)"   :action #(dispatch! id :split 3)}))
+            (not empty?) (conj {:label "Draw to Table"    :action #(emit! :deck/draw-to-table id (+ x 80) y)})
+            (not empty?) (conj {:label "Draw to Hand"     :action #(emit! :deck/draw-to-hand id)})
+            (not empty?) (conj {:label "Draw Bottom Card" :action #(emit! :deck/draw-bottom id)})
+            true         (conj {:label "Shuffle"          :action #(emit! :deck/shuffle id)})
+            true         (conj {:label "Flip Deck"        :action #(emit! :selection/apply :deck/flip id)})
+            (>= n 2)     (conj {:label "Split Deck (2)"   :action #(emit! :deck/split id 2)})
+            (>= n 3)     (conj {:label "Split Deck (3)"   :action #(emit! :deck/split id 3)}))
           (common-actions id))))
 
 (defmethod component-actions :card [{:keys [id]}]
-  (into [{:label "Flip" :action #(dispatch-selection! id :flip)}]
+  (into [{:label "Flip" :action #(emit! :selection/apply :card/flip id)}]
         (common-actions id)))
 
 (defmethod component-actions :die [{:keys [id]}]
-  (into [{:label "Roll" :action #(dispatch-selection! id :roll)}]
+  (into [{:label "Roll" :action #(emit! :selection/apply :die/roll id)}]
         (common-actions id)))
 
 (defmethod component-actions :tile-piece [{:keys [id]}]

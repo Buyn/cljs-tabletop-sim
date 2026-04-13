@@ -1,8 +1,8 @@
 (ns tabletop.components.die
   (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! remove-component! move-card-to-hand!
+            [tabletop.state :refer [app-state move-component! move-card-to-hand!
                                     add-to-selection! clear-selection!
-                                    dispatch! dispatch-selection! component-actions]]
+                                    emit! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (def die-colors
@@ -77,7 +77,7 @@
                 (if (.-shiftKey e)
                   (add-to-selection! id)
                   (do (clear-selection!)
-                      (dispatch! id :roll))))))
+                      (emit! :die/roll id))))))
 
           :on-context-menu
           (fn [e]

@@ -1,8 +1,7 @@
 (ns tabletop.logic.input
   "Global keyboard input handler. Reads keybindings from tabletop.logic.keybindings.
    Installed once at app startup."
-  (:require [tabletop.state :refer [app-state general-settings
-                                    dispatch! dispatch-selection!
+  (:require [tabletop.state :refer [app-state general-settings emit!
                                     copy-objects-to-list! paste-from-list! paste-to-hand!
                                     move-card-to-hand! group-selection! component-at]]
             [tabletop.logic.keybindings :as kb]
@@ -48,7 +47,7 @@
         (do (.preventDefault e)
             (when-let [ids (unlocked-targets)]
               (copy-objects-to-list! ids)
-              (doseq [id ids] (dispatch! id :remove))))
+              (doseq [id ids] (emit! :component/remove id))))
 
         (= act :paste)
         (do (.preventDefault e)
@@ -63,20 +62,20 @@
             (let [step (:rotation-step @general-settings 45)]
               (doseq [id (or (unlocked-targets) [])]
                 (if (= :die (component-type id))
-                  (dispatch! id :roll-decrement)
-                  (dispatch! id :rotate step)))))
+                  (emit! :die/decrement id)
+                  (emit! :component/rotate id step)))))
 
         (= act :rotate-ccw)
         (do (.preventDefault e)
             (let [step (:rotation-step @general-settings 45)]
               (doseq [id (or (unlocked-targets) [])]
                 (if (= :die (component-type id))
-                  (dispatch! id :roll-increment)
-                  (dispatch! id :rotate (- step))))))
+                  (emit! :die/increment id)
+                  (emit! :component/rotate id (- step))))))
 
         (= act :flip)
         (do (.preventDefault e)
-            (doseq [id (or (unlocked-targets) [])] (dispatch! id :flip)))
+            (doseq [id (or (unlocked-targets) [])] (emit! :card/flip id)))
 
         (= act :to-hand)
         (do (.preventDefault e)
@@ -86,36 +85,36 @@
         (do (.preventDefault e)
             (doseq [id (or (unlocked-targets) [])]
               (case (component-type id)
-                :die  (dispatch! id :roll)
-                :deck (dispatch! id :shuffle)
+                :die  (emit! :die/roll id)
+                :deck (emit! :deck/shuffle id)
                 nil)))
 
         (= act :lock)
         (do (.preventDefault e)
-            (doseq [id (or (target-ids) [])] (dispatch! id :lock)))
+            (doseq [id (or (target-ids) [])] (emit! :component/lock id)))
 
         (= act :group)
         (do (.preventDefault e) (group-selection!))
 
         (= act :scale-up)
         (do (.preventDefault e)
-            (doseq [id (or (unlocked-targets) [])] (dispatch! id :scale-up)))
+            (doseq [id (or (unlocked-targets) [])] (emit! :component/scale-up id)))
 
         (= act :scale-down)
         (do (.preventDefault e)
-            (doseq [id (or (unlocked-targets) [])] (dispatch! id :scale-down)))
+            (doseq [id (or (unlocked-targets) [])] (emit! :component/scale-down id)))
 
         (= act :bring-to-front)
         (do (.preventDefault e)
-            (doseq [id (or (target-ids) [])] (dispatch! id :bring-to-front)))
+            (doseq [id (or (target-ids) [])] (emit! :component/bring-to-front id)))
 
         (= act :send-to-back)
         (do (.preventDefault e)
-            (doseq [id (or (target-ids) [])] (dispatch! id :send-to-back)))
+            (doseq [id (or (target-ids) [])] (emit! :component/send-to-back id)))
 
         (= act :delete)
         (do (.preventDefault e)
-            (doseq [id (or (unlocked-targets) [])] (dispatch! id :remove)))
+            (doseq [id (or (unlocked-targets) [])] (emit! :component/remove id)))
 
         (= act :properties)
         (do (.preventDefault e)

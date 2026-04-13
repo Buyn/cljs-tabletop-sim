@@ -2,15 +2,21 @@
 
 ## Overview
 
-A browser-based 2D tabletop simulator. All state lives in a single Reagent atom. No backend — persistence is local JSON download/upload. The UI is a single-page app with two views: a start screen and a table view.
+A browser-based 2D tabletop simulator. All state lives in a single Reagent atom. No backend — persistence is local JSON download/upload.
 
-### Key Decisions
+The architecture is **event-driven**, not UI-driven.
 
-- **DOM, not canvas** — components are absolutely-positioned divs styled with Tailwind. Keeps rendering simple and drag-and-drop straightforward.
-- **Single atom** — all app state in one `reagent/atom`. Serialization is trivial; data flow is unidirectional.
-- **Raw pointer events** — `pointerdown/move/up` handle all drag interactions directly, no library.
-- **Multimethod dispatch** — all component actions go through `dispatch!` / `perform-action`, keyed on `[type action-keyword]`. Adding a new action requires only a new `defmethod`.
-- **Data-driven context menus** — `component-actions` multimethod returns `[{:label :action}]` per type. No per-component menu logic in UI components.
+UI components do not mutate state directly. All changes go through a centralized event system.
+
+---
+
+## Key Decisions
+
+- **DOM, not canvas** — components are absolutely-positioned divs styled with Tailwind.
+- **Single atom** — all app state in one `reagent/atom`.
+- **Event-driven architecture** — all mutations go through `emit!` and `handle-event`.
+- **Pure state transitions** — event handlers are pure functions `state → state`.
+- **UI is passive** — components emit events, never mutate state directly.
 
 ---
 
@@ -20,21 +26,26 @@ A browser-based 2D tabletop simulator. All state lives in a single Reagent atom.
 User Interaction
       │
       ▼
-Event Handler  ──►  dispatch! / swap! app-state
+   emit! (event)
       │
       ▼
-App State Atom  (single source of truth)
+handle-event (pure)
       │
       ▼
-Reagent re-renders affected components
+  app-state (single atom)
+      │
+      ▼
+Reagent re-render
 ```
 
-### Module Structure
+---
+
+## Module Structure
 
 ```
 src/tabletop/
   core.cljs                      — entry point, mounts app
-  state.cljs                     — atom, pure helpers, dispatch system, component-actions
+  state.cljs                     — atom, pure helpers, emit!, handle-event, component-actions
   components/
     app.cljs                     — top-level router
     start_screen.cljs            — new/load game
@@ -59,8 +70,138 @@ src/tabletop/
     serialization.cljs           — serialize-state, deserialize-state
     validation.cljs              — validate-deck-config, validate-save-file
     keybindings.cljs             — keybinding config, key-for lookup
-    input.cljs                   — keyboard input handler, decoupled from UI
+    input.cljs                   — keyboard input handler, emits events only
 ```
+
+---
+
+## Event System
+
+### Entry Point
+
+```clojure
+(defn emit! [event & args]
+  (swap! app-state #(apply handle-event % event args)))
+```
+
+### Dispatcher
+
+```clojure
+(defmulti handle-event (fn [_ event & _] event))
+(defmethod handle-event :default [state & _] state)
+```
+
+### Example
+
+```clojure
+(emit! :card/flip id)
+
+(defmethod handle-event :card/flip [state _ id]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (update % :face-up? not) %) cs))))
+```
+
+---
+
+## Event Design Principles
+
+1. Events are **semantic**: `:card/flip`, `:deck/shuffle`, `:die/roll`
+2. Event handlers must be **pure** — return new state, never call `swap!`
+3. UI never calls state functions directly — only `emit!`
+
+---
+
+## Registered Events
+
+### Selection
+- `:selection/set ids` — replace selection
+- `:selection/add id` — add to selection
+- `:selection/clear` — clear selection
+- `:selection/apply action id & args` — apply event to all selected (or just `id`)
+- `:selection/group` — merge selected cards/decks into one deck
+
+### Table
+- `:table/pan dx dy`
+- `:table/zoom delta`
+- `:table/set-last-middle-click tx ty`
+
+### Component (all types)
+- `:component/add c`
+- `:component/remove id`
+- `:component/move id x y`
+- `:component/rotate id deg`
+- `:component/lock id`
+- `:component/scale-up id`
+- `:component/scale-down id`
+- `:component/bring-to-front id`
+- `:component/send-to-back id`
+
+### Card
+- `:card/flip id`
+- `:card/drop-on-deck card-id deck-id`
+- `:card/move-to-hand id`
+- `:card/move-to-table id x y`
+
+### Deck
+- `:deck/shuffle id`
+- `:deck/draw-to-hand id`
+- `:deck/draw-to-table id x y`
+- `:deck/draw-card-silent id`
+- `:deck/draw-bottom id`
+- `:deck/split id n-parts`
+- `:deck/flip id`
+- `:deck/merge-onto src-id tgt-id`
+
+### Die
+- `:die/roll id`
+- `:die/increment id`
+- `:die/decrement id`
+
+### Clipboard
+- `:clipboard/copy ids`
+- `:clipboard/copy-single id`
+- `:clipboard/paste cx cy`
+- `:clipboard/paste-to-hand`
+
+---
+
+## Selection-Aware Events
+
+```clojure
+;; Apply an event to all selected components, or just id if not in selection:
+(emit! :selection/apply :card/flip id)
+
+(defmethod handle-event :selection/apply [state _ action id & args]
+  (let [sel (:selection state)
+        ids (if (contains? sel id) sel #{id})]
+    (reduce (fn [s sid] (apply handle-event s action sid args)) state ids)))
+```
+
+---
+
+## Convenience Wrappers
+
+`state.cljs` exposes thin `!` wrappers for common operations so call sites stay readable:
+
+```clojure
+(defn emit!             [event & args] (swap! app-state #(apply handle-event % event args)))
+(defn add-component!    [c]            (emit! :component/add c))
+(defn remove-component! [id]           (emit! :component/remove id))
+(defn move-component!   [id x y]       (emit! :component/move id x y))
+(defn move-card-to-hand!  [id]         (emit! :card/move-to-hand id))
+(defn move-card-to-table! [id x y]     (emit! :card/move-to-table id x y))
+(defn pan-table!          [dx dy]      (emit! :table/pan dx dy))
+(defn zoom-table!         [delta]      (emit! :table/zoom delta))
+(defn set-selection!      [ids]        (emit! :selection/set ids))
+(defn clear-selection!    []           (emit! :selection/clear))
+(defn add-to-selection!   [id]         (emit! :selection/add id))
+(defn group-selection!    []           (emit! :selection/group))
+(defn paste-from-list!    [cx cy]      (emit! :clipboard/paste cx cy))
+(defn paste-to-hand!      []           (emit! :clipboard/paste-to-hand))
+(defn copy-objects-to-list! [ids]      (emit! :clipboard/copy ids))
+```
+
+These wrappers call `emit!` — they are not direct `swap!` calls.
 
 ---
 
@@ -85,8 +226,8 @@ src/tabletop/
 
  :error        nil | string      ; start screen error
 
- :menu-open    boolean           ; sidebar open/closed
- :menu-section nil | keyword}    ; active sidebar section
+ :menu-open    boolean
+ :menu-section nil | keyword}
 ```
 
 ### Component Types
@@ -94,16 +235,14 @@ src/tabletop/
 ```clojure
 ;; Deck
 {:id uuid-str, :type :deck, :x number, :y number
- :cards [card ...], :color hex-str
- :locked? boolean
+ :cards [card ...], :locked? boolean
  :custom? boolean, :suits [str×4], :ranks [str×13]}
 
 ;; Card (on table or in hand)
 {:id uuid-str, :type :card, :x number, :y number
  :suit str, :rank str
  :face-color hex-str, :back-color hex-str, :text-color hex-str, :suit-color hex-str
- :face-up? boolean
- :rotation number, :scale number, :locked? boolean}
+ :face-up? boolean, :rotation number, :scale number, :locked? boolean}
 
 ;; Die
 {:id uuid-str, :type :die, :x number, :y number
@@ -115,8 +254,7 @@ src/tabletop/
  :src str, :grid-cols number, :grid-rows number, :tile-index number
  :outer-crop {:top :bottom :left :right}
  :inner-crop {:top :bottom :left :right}
- :shape :rect | :ellipse | :hexagon
- :corner-radius number
+ :shape :rect | :ellipse | :hexagon, :corner-radius number
  :rotation number, :scale number, :locked? boolean}
 ```
 
@@ -133,50 +271,16 @@ src/tabletop/
 
 ---
 
-## Dispatch System
-
-All state-mutating component actions go through a single entry point:
-
-```clojure
-(defmulti perform-action
-  (fn [state id action & _]
-    [(:type (find-component state id)) action]))
-
-(defn dispatch! [id action & args]
-  (swap! app-state #(apply perform-action % id action args)))
-
-(defn dispatch-selection! [id action & args]
-  ;; applies to all selected IDs, or just id if not in selection
-  ...)
-```
-
-Registered methods:
-- `[:deck :shuffle]`, `[:deck :draw-to-hand]`, `[:deck :draw-to-table]`, `[:deck :draw-card-silent]`, `[:deck :draw-bottom]`
-- `[:deck :flip]`, `[:deck :split]`, `[:deck :merge-onto]`, `[:deck :rotate]`
-- `[:card :flip]`, `[:card :rotate]`, `[:card :drop-on-deck]`
-- `[:die :roll]`, `[:die :roll-increment]`, `[:die :roll-decrement]`
-- `[t :remove]`, `[t :lock]`, `[t :scale-up]`, `[t :scale-down]`, `[t :bring-to-front]`, `[t :send-to-back]` (all types)
-- `[:tile-piece :rotate]`
-
-After any draw that reduces a deck to 1 card, the deck auto-converts to a card. At 0 cards it is removed. This is enforced by a `collapse-deck` helper called inside draw methods.
-
----
-
 ## Context Menu System
 
 ```clojure
 (defmulti component-actions :type)
-;; Each method returns [{:label string :action fn}]
+;; Returns [{:label string :action fn}] where action calls emit!
 ```
 
-Right-click handler pattern (same in card, die, deck, tile-piece):
+Example:
 ```clojure
-:on-context-menu
-(fn [e]
-  (.preventDefault e) (.stopPropagation e)
-  (when-not (contains? (:selection @app-state) id)
-    (add-to-selection! id))
-  (open-context-menu! cx cy (component-actions component)))
+{:label "Flip" :action #(emit! :selection/apply :card/flip id)}
 ```
 
 ---
@@ -185,22 +289,20 @@ Right-click handler pattern (same in card, die, deck, tile-piece):
 
 ### Cards, Dice, Tile Pieces
 
-1. `pointerdown` (left button, not locked) — record cursor offset within component in table-space, set pointer capture.
-2. `pointermove` — if moved > threshold, set `drag-moved? true`; compute new table-space position; if over hand zone move to hand; else `move-component!`. Group drag: compute delta and apply to all selected.
-3. `pointerup` — release capture. If not moved: shift-click → add to selection, plain click → clear selection (+ roll for die).
+1. `pointerdown` — record cursor offset in table-space, set pointer capture.
+2. `pointermove` — if moved > threshold, `move-component!` (→ `emit! :component/move`). Group drag: delta applied to all selected. If over hand zone: `move-card-to-hand!`.
+3. `pointerup` — release capture. If not moved: shift → add to selection, plain → clear selection (+ roll for die).
 
 ### Deck
 
-1. `pointerdown` (left button, not locked, not empty) — immediately draw top card via `dispatch! :draw-card-silent`, add it to `:components` at the deck's position as a real `:card` component, capture pointer.
-2. `pointermove` — `move-component!` on the drawn card's id.
-3. `pointerup` — release capture. Card is already in state at the correct position.
-4. `pointercancel` — remove the drawn card from state, return it to the deck.
+1. `pointerdown` (not locked, not empty) — `emit! :deck/draw-card-silent`, add drawn card to `:components` at deck position, capture pointer.
+2. `pointermove` — `move-component!` on drawn card id.
+3. `pointerup` — release capture. Card is already in state at correct position.
+4. `pointercancel` — remove drawn card, return it to deck.
 
 No ghost rendering. The drawn card is a real component from the moment of `pointerdown`.
 
 ### Coordinate System
-
-Table uses `transform: translate(pan-x, pan-y) scale(zoom)` on the inner div. All component `x/y` are in table-space (pre-zoom).
 
 ```clojure
 ;; screen → table
@@ -208,20 +310,9 @@ table-x = (screen-x - pan-x) / zoom
 table-y = (screen-y - pan-y) / zoom
 ```
 
-### Group Drag (delta-based)
-
-```clojure
-(let [ddx (- new-x old-x)
-      ddy (- new-y old-y)]
-  (doseq [c components :when (contains? sel (:id c))]
-    (move-component! (:id c) (+ (:x c) ddx) (+ (:y c) ddy))))
-```
-
 ---
 
 ## Table Viewport
-
-The table is two nested divs:
 
 ```
 [outer div — overflow:hidden, pointer events]
@@ -229,73 +320,62 @@ The table is two nested divs:
     [component ...]
 ```
 
-- **Left-click drag on empty area** → rubber-band selection. On pointer-up, selects all components whose bounding box intersects the selection rectangle (in table coordinates).
+- **Left-click drag on empty area** → rubber-band selection.
 - **Middle-click drag** → pan.
-- **Scroll** → zoom, clamped to [0.5, 2.0], cursor-anchored (pan adjusted to keep world point under cursor fixed).
-- **Space held** → fast pan (3× speed) via global `mousemove` listener, registered once via `defonce`.
+- **Scroll** → zoom, clamped [0.5, 2.0], cursor-anchored.
+- **Space held** → fast pan (3×) via global `mousemove` listener.
 - **Right-click on empty area** → context menu with "Paste".
 
 ---
 
 ## Hand Area
 
-A fixed strip at the bottom of the viewport. Collapses (~90% down) when not hovered, leaving a thin edge. Cards remain partially visible above the strip. On hover, returns to full height.
-
-Cards are centered horizontally. When space is limited they overlap uniformly. Hovered card scales 3× (transform-origin: bottom center); neighbors shift outward just enough to accommodate it. Z-order: hovered card topmost, neighbors by proximity.
-
-`hand-drop-zone? [cx cy]` — checks if client coordinates fall within the hand element's bounding rect.
+Fixed strip at the bottom. Collapses when not hovered. Cards centered; overlap when space is limited. Hovered card scales 3× (transform-origin: bottom center); neighbors shift outward. `hand-drop-zone? [cx cy]` checks if client coords fall within the hand element.
 
 ---
 
 ## Input & Keybindings
 
-Keybindings are defined in `logic/keybindings.cljs` as a config map, not hardcoded in UI components. `key-for` looks up the key string for a given action keyword.
-
-`logic/input.cljs` handles all keyboard events, decoupled from UI. Actions resolve in priority order: dragged component → selected components → component under cursor.
+`logic/input.cljs` handles all keyboard events and calls `emit!` only — no direct state mutation.
 
 Default bindings:
 - `W` rotate CW / die decrement, `R` rotate CCW / die increment
-- `A` flip card or deck
-- `T` roll die / shuffle deck
-- `H` lock/unlock
-- `G` group selected
-- `z` scale down, `Z` scale up
-- `o` send to back, `O` bring to front
-- `C` copy, `X` cut, `V` paste
-- `Del` remove
-- `M` open properties editor
-- `Space` fast camera pan
-- `1–0` move hand card to table at cursor, `Q` move component to hand
+- `A` flip, `T` roll / shuffle, `H` lock, `G` group
+- `z` scale down, `Z` scale up, `o` send to back, `O` bring to front
+- `C` copy, `X` cut, `V` paste, `Del` remove
+- `M` open properties, `Space` fast pan
+- `1–0` move hand card to table, `Q` move component to hand
 
 ---
 
 ## Serialization
 
 `serialize-state` extracts `[:table :components :hand]`, adds `"version": 1`, returns JSON string.
-
-`deserialize-state` parses JSON, keywordizes keys, returns map for merging into app state.
-
-`validate-save-file` checks presence and types of `version`, `table`, `components`, `hand`. Returns `nil` on success or a descriptive error string.
+`deserialize-state` parses JSON, keywordizes keys.
+`validate-save-file` returns `nil` on success or a descriptive error string.
 
 ---
 
-## Correctness Properties
+## Deck Collapse Invariant
 
-- **P1** `make-standard-deck` → exactly 52 cards, all 4 suits × 13 ranks, no duplicates.
-- **P2** `make-custom-deck` with valid config → exactly N cards, suits/ranks from supplied lists.
-- **P3** Deck config with empty/whitespace label → error, no deck created.
-- **P4** `make-die N` → `:result` in [1, N].
-- **P5** After `[:die :roll]` → `:result` integer in [1, N].
-- **P6** `move-component!` → only `:x` and `:y` change.
-- **P7** `[:card :flip]` twice → original `:face-up?` value.
-- **P8** `[:deck :flip]` twice → every card at original `:face-up?` value.
-- **P9** `[:deck :shuffle]` → same card set, same count.
-- **P10** `[:deck :draw-to-hand]` → deck count −1, hand count +1, drawn card was `(peek cards)`.
-- **P11** Card table ↔ hand round-trip → card in `:components`, absent from `:hand`, all fields preserved.
-- **P12** `pan-table! dx dy` → `:pan-x` += dx, `:pan-y` += dy.
-- **P13** Any zoom → `:zoom` in [0.5, 2.0].
-- **P14** `[:T :remove]` → component absent from `:components`.
-- **P15** `deserialize-state(serialize-state s)` → deeply equal to `s`.
+After any draw that reduces a deck to 1 card, it auto-converts to a `:card`. At 0 cards it is removed. Enforced by `collapse-deck` called inside draw handlers.
+
+---
+
+## Extensibility
+
+Adding a new event requires only a new `defmethod`:
+
+```clojure
+(defmethod handle-event :token/rotate [state _ id degrees]
+  (update state :components
+          (fn [cs] (mapv #(if (= (:id %) id) (assoc % :rotation degrees) %) cs))))
+```
+
+Future capabilities enabled by the event log:
+- **Logging** — wrap `emit!` with `println`
+- **Undo/redo** — store event history, replay
+- **Time-travel** — replay from initial state
 
 ---
 
@@ -303,8 +383,8 @@ Default bindings:
 
 | Situation | Behavior |
 |---|---|
-| Invalid save file | Set `:error` with descriptive message; stay on start screen |
-| Draw from empty deck | No-op (deck `pointerdown` guarded by `(not empty?)`) |
-| Deck customizer empty label | Inline error; confirm button disabled |
+| Invalid save file | Set `:error`; stay on start screen |
+| Draw from empty deck | No-op (guarded by `(not empty?)`) |
+| Deck customizer empty label | Inline error; confirm disabled |
 | Zoom at boundary | Silently clamped |
-| Component dragged off-screen | Stays at dragged position; player can pan to retrieve it |
+| Component dragged off-screen | Stays at position; player pans to retrieve |

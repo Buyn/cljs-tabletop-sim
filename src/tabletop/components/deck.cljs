@@ -1,7 +1,7 @@
 (ns tabletop.components.deck
   (:require [reagent.core :as r]
             [tabletop.state :refer [app-state move-component! add-to-selection!
-                                    dispatch! component-actions]]
+                                    emit! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defonce drag-ghost (r/atom nil)) ; kept for table.cljs compatibility — always nil now
@@ -35,7 +35,7 @@
                     new-id   (str (random-uuid))
                     card     (assoc top-card :type :card :face-up? false
                                              :id new-id :x x :y y)]
-                (dispatch! id :draw-card-silent)
+                (emit! :deck/draw-card-silent id)
                 (swap! app-state update :components conj card)
                 (reset! drawn-id new-id)
                 (reset! off-x (- tx x))
