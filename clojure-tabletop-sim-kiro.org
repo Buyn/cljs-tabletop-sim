@@ -3791,7 +3791,31 @@ Instantly draws the top card from the deck. (work, but somthing broken)
 
 ** TODO fix Instantly draws
 *** 
-Instantly draws the top card from the deck. (work, but somthing broken)
+1. Immediate drag (no hold delay):
+   - Instantly draws the top card from the deck.
+   - The top card is removed from the deck.
+   - That card immediately becomes the dragged object (face-down).
+*** 
+
+1. Immediate drag (no hold delay):
+   - Instantly draws the top card from the deck.
+   - The top card is removed from the deck.
+   - That card immediately becomes the dragged object (face-down).
+
+remove unnecessary logic from the code
+
+*** довай упрастим логику
+а то звучит слишком сложно, простое дейстиве. помоги переформулировать более понятно, так что незвучала как сложная логика.
+фиксурется событие.
+верхня карта убирает из колоды.
+появлется карта перетягиваемая - та которую убрали свержу.
+
+*** довай упрастим логику
+а то звучит слишком сложно, простое дейстиве. помоги переформулировать более понятно, так что незвучала как сложная логика.
+фиксурется событие.
+верхня карта убирает из колоды.
+появлется карта перетягиваемая - та которую убрали свержу.
+*** Instantly draws the top card from the deck. (work, but somthing broken)
 after drawing the first card and dropping it on the table.
 the second card drawn cannot leave the deck areas and moves within the deck.
 but if user release it, do not leave the mouse deck, it will appear normally.
@@ -3800,18 +3824,283 @@ error remains
 but something has changed.
 If before the ghost of a card disappeared after clicking on the deck, now it doesn’t.
 if there is another deck on the table, then he jumps to another deck if the mouse move on the second deck.
-*** полностью исправило прошлую ошику.
-всё работает как надо, но появился новый баг, он не влияет функционально на роботу, но его нужно убрать.
-при новедении курсора мыши на колоду карт, появляется призрак карты, и следует за курсором.
-Он не мешает производить действия, но его недолжно быть.
+*** completely corrected the previous error.
+everything works as it should, but a new bug has appeared, it does not functionally affect, but it needs to be removed.
+When you hover your mouse over a deck of cards, a ghost card appears and follows the cursor, within a deck.
+It doesn't interfere with actions, but it shouldn't exist.
+*** 8% > *** completely corrected the previous error.
+everything works as it should, but a new bug has appeared, it does not functionally affect, but it needs to be removed.
+When you hover your mouse over a deck of cards, a ghost card appears and follows the cursor, within a deck.
+It doesn't interfere with actions, but it shouldn't exist.
 
-** VERIFY карты не перетягиваются
+
+> The ghost appears on hover because drag-ghost is a defonce atom — on hot-reload it retains 
+its last value (non-nil from a previous drag session). Also, the pointer-move handler has no 
+guard for dragging state — it runs even without a pointer-down.
+Searching: /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/src/tabletop/components/deck.cljs for pattern: on-pointer-move (using tool: read)
+ ✓ Found 1 matches for pattern 'on-pointer-move' in /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/src/tabletop/components/deck.cljs
+ - Completed in 0.0s
+
+Reading file: /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/src/tabletop/components/deck.cljs, from line 60 to 90 (using tool: read)
+ ✓ Successfully read 1491 bytes from /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/src/tabletop/components/deck.cljs
+ - Completed in 0.0s
+
+> Confirmed — pointer-move has no (when (not= @mode :idle) ...) guard at the top, so the 
+:idle default branch runs on every hover. The (when (and @drag-moved? ...) check prevents 
+drawing, but drag-moved? is computed from start-cx/start-cy which are 0 initially — so any 
+mouse movement from (0,0) could exceed 4px and set drag-moved? to true even without a pointer
+-down.
+
+Two fixes: guard the entire pointer-move body with a "pointer is captured" check, and clear 
+drag-ghost on mount.
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+  60, 60:           :on-pointer-move
+  61, 61:           (fn [e]
+- 62    :             (let [dx (- (.-clientX e) @start-cx)
+- 63    :                   dy (- (.-clientY e) @start-cy)]
+- 64    :               (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 4)
+- 65    :                 (reset! drag-moved? true)))
+- 66    :             (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
+- 67    :               (case @mode
++     62:             (when (not= @mode :idle)
++     63:               (let [dx (- (.-clientX e) @start-cx)
++     64:                     dy (- (.-clientY e) @start-cy)]
++     65:                 (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 4)
++     66:                   (reset! drag-moved? true)))
++     67:               (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
++     68:                 (case @mode
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.1s
+
+> Now the closing parens are off by one — need to add a closing paren for the new when 
+wrapper. Find the end of the pointer-move handler:
+Reading file: /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/src/tabletop/components/deck.cljs, from line 85 to 105 (using tool: read)
+ ✓ Successfully read 1046 bytes from /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/src/tabletop/components/deck.cljs
+ - Completed in 0.0s
+
+> The case ends with ))) — that's case + let + fn. With the new when wrapper I need one more 
+):
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+-  98     :                       (reset! mode :card-drag)))))))
++       98:                       (reset! mode :card-drag))))))))
+   99,  99: 
+  100, 100:           :on-pointer-up
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.0s
+
+> Also set mode to :pending on pointer-down (not :idle) so the move guard works, and 
+transition to :idle only after pointer-up. Actually simpler — the pointer-down already sets 
+mode to :idle and the timer sets it to :deck-drag. The move guard (not= @mode :idle) blocks 
+hover. But during a real drag, mode starts as :idle until either the timer fires (:deck-drag)
+or movement triggers the draw (:card-drag). So the guard blocks the draw branch too.
+
+Need a different approach: use a separate captured? atom set on pointer-down:
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+  22, 22:   (let [mode        (r/atom :idle)   ; :idle | :card-drag | :deck-drag
+  23, 23:         press-timer (r/atom nil)
++     24:         captured?   (r/atom false)
+  24, 25:         start-cx    (r/atom 0)
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.1s
+
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+  45, 45:               (reset! drag-ghost nil)
+  46, 46:               (reset! drag-moved? false)
+  47, 47:               (reset! mode :idle)
+- 48    :               (reset! card-data nil)
++     48:               (reset! card-data nil)
++     49:               (reset! captured? true)
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.1s
+
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+  62, 62:           :on-pointer-move
+  63, 63:           (fn [e]
+- 64    :             (when (not= @mode :idle)
++     64:             (when @captured?
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.1s
+
+> Reset captured? on pointer-up and pointer-cancel:
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+  132, 132:             (reset! mode :idle)
+  133, 133:             (reset! drag-moved? false)
+- 134     :             (reset! card-data nil))
++      134:             (reset! card-data nil)
++      135:             (reset! captured? false))
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.1s
+
+I'll modify the following file: src/tabletop/components/deck.cljs (using tool: write)
+
+  144, 144:             (reset! drag-ghost nil)
+  145, 145:             (reset! mode :idle)
+  146, 146:             (reset! drag-moved? false)
+  147, 147:             (reset! card-data nil)
++      148:             (reset! captured? false)
+  148, 149:             (.releasePointerCapture (.-currentTarget e) (.-pointerId e)))
+
+Updating: src/tabletop/components/deck.cljs
+ - Completed in 0.1s
+
+I will run the following command: cd /home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro && npx shadow-cljs compile app 2>&1 | tail -4 (using tool: shell)
+
+[:app] Compiling ...
+[:app] Build completed. (89 files, 2 compiled, 0 warnings, 0.81s)
+
+
+ - Completed in 1.345s
+
+> Clean. The fix: added a captured? atom that is true only between pointer-down and 
+pointer-up/pointer-cancel. The entire pointer-move body is gated on @captured?, so hover 
+events (no pointer-down) are completely ignored. The ghost can only appear during an active 
+drag.
+
+ ▸ Credits: 2.01 • Time: 1m 2s
+
+8% > /compact 
+
+✔ Conversation compacted. The last 49 messages were not summarized — they're preserved as-is. Original session preserved — use /chat resume to access it.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                       CONVERSATION SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+## OBJECTIVE
+Fix broken deck immediate-drag: drawn card appears correctly but the **second card drawn cannot leave the deck area** during drag (ghost is constrained). First card works after the fix adding `:type :card`. Second card drag is still broken.
+
+## USER GUIDANCE
+- Absolute minimal code — no verbose implementations
+- Keybindings in separate config, support edit/save/load
+- All actions work on: selection → dragged component → component under cursor
+- Input decoupled from UI logic
+- Bare keys: C=copy, X=cut, V=paste, Space=fast pan, M=properties, W=rotate CW, R=rotate CCW, H=lock, z=scale down, Z=scale up, Del=remove
+
+## COMPLETED
+
+### Prior sessions
+- Full tile system, keybindings/input/panels created
+- `input.cljs` rewritten with `cond` (was broken due to duplicate `nil` arms in `case`)
+- `tile_piece.cljs`, `die.cljs`, `card.cljs`: drag coordinate fix — replaced `getBoundingClientRect(offsetParent)` with `pan-x/pan-y/zoom` from state (root cause: table uses CSS transform, offsetParent rect is always 0,0)
+- `deck.cljs`: immediate-drag redesign — short drag draws top card as ghost, long-press (≥1s) drags whole deck
+- `state.cljs`: added `:draw-card-silent` multimethod (removes top card from deck without placing it)
+- Fix: placed card now gets `:type :card` (was showing "Unknown type" red rectangle)
+- Fix: `offset-x/y` reset to `35/50` when card-drag starts (was causing ghost to be offset wrong)
+- Last build: `89 files, 2 compiled, 0 warnings`
+
+### Current bug (unresolved, session interrupted)
+After drawing and dropping the first card, the **second card's ghost stays within the deck area** during drag. On release it places correctly. Root cause analysis was in progress — the exact cause not yet confirmed.
+
+## TECHNICAL CONTEXT
+
+### Coordinate system (critical invariant)
+Table uses `transform: translate(pan-x, pan-y) scale(zoom)` on an inner div. All component `x/y` are in table-space (pre-zoom). Correct screen→table conversion:
+```clojure
+table-x = (screen-x - pan-x) / zoom
+table-y = (screen-y - pan-y) / zoom
+```
+`getBoundingClientRect(offsetParent)` is WRONG — always returns 0,0 for the outer container.
+
+### Deck ghost card rendering
+Ghost is a child of the deck's outer `div` which is `absolute` at `left: x, top: y` in table-space. Ghost position:
+```clojure
+:left (str (- @card-x x) "px")   ;; card-x is table-space absolute
+:top  (str (- @card-y y) "px")
+```
+`card-x = cursor-table - offset-x` where `offset-x = 35` (card center).
+
+### Suspected root cause of second-card bug
+`offset-x/y` is reset to `35/50` when card-drag starts. On the **second** `pointer-down`, `offset-x/y` is recalculated as `cursor-table - deck-x`. Then in the draw branch it's reset to `35/50` again. The ghost formula `card-x - x` should be correct. **Possible actual cause**: `drag-moved?` or `card-drag?` not fully reset between drags, OR the `(not empty?)` check using stale `cards` from closure, OR the ghost div being clipped by a parent with `overflow: hidden`.
+
+### Key atoms in deck component
+```clojure
+dragging? drag-moved? long-press? press-timer
+start-cx start-cy offset-x offset-y
+card-drag? card-x card-y card-data
+```
+Reset sequence in `pointer-down`:
+```clojure
+(reset! drag-moved? false)
+(reset! long-press? false)
+(reset! card-drag? false)
+(reset! card-data nil)
+```
+`offset-x/y` computed fresh from `pan-x/pan-y/zoom` on each `pointer-down`.
+
+### State shape
+```clojure
+{:view :start | :table
+ :table {:pan-x 0 :pan-y 0 :zoom 1.0}
+ :components [{:id :type :x :y :rotation :scale :locked? ...}]
+ :hand [] :selection #{} :copy-list []
+ :context-menu nil :show-properties? false}
+```
+
+### File structure
+```
+src/tabletop/
+  state.cljs
+  components/
+    table.cljs card.cljs deck.cljs die.cljs
+    tile_piece.cljs hand.cljs context_menu.cljs app.cljs
+    keybindings_panel.cljs general_settings_panel.cljs properties_panel.cljs
+  logic/
+    keybindings.cljs input.cljs tile.cljs shuffle.cljs
+    dice.cljs validation.cljs serialization.cljs
+```
+
+### Multimethod dispatch
+```clojure
+(defmulti perform-action (fn [state id action & _] [(:type (component-by-id state id)) action]))
+```
+
+## TOOLS EXECUTED
+- All coordinate fixes written and compiled successfully (0 warnings)
+- `:type :card` fix applied to deck `pointer-up` — confirmed working
+- `offset-x/y` reset to `35/50` on card-drag start — partially fixes ghost position
+
+## NEXT STEPS
+
+1. **Diagnose second-card ghost bug** — Read `deck.cljs` fully, trace the exact state of `offset-x/y`, `card-x/y`, `x` (deck position) through a second drag cycle. The ghost renders at `card-x - x`; verify this is non-zero and moves with cursor.
+
+2. **Likely fix**: The ghost div is a child of the outer deck `div`. That outer div has no explicit `width/height` — its size collapses to the inner card stack (70×100px). The ghost at `left: 200px` is outside the deck div's natural bounds. Check if any ancestor has `overflow: hidden`. If so, move the ghost rendering to be absolutely positioned relative to the table instead (render it in `table.cljs` via a portal or a top-level atom).
+
+3. **Alternative fix**: Instead of rendering the ghost inside the deck div, store `card-drag` state in `app-state` and render the ghost at the table level in `table.cljs`.
+
+4. **After fix**: verify build `npx shadow-cljs compile app 2>&1 | tail -5` — 0 errors, 0 warnings.
+
+5. **Check remaining requirements**: Req 5A.7 (deck collapse), Req 10 (hand behavior), Req 6 (card face-down), Req 4.8–4.11 (deck customizer).
+
+## TODO LIST
+ID if loaded: none
+
+The conversation history has been replaced with this summary.
+It contains all important details from previous interactions.
+════════════════════════════════════════════════════════════════════════════════
+
+
+
+** DONE карты не перетягиваются
 с костями и колодоами всё работает как ожидается
 ** VERIFY пермешени чере спйс перевернуть
 и увеличить скорость до 7
 движение стола обратное движению мыши
 тесть когда мыш движется вверх влево. стол должен двигатся вниз вправо.
-** VERIFY сломалось перетаскивание карт
+** DONE сломалось перетаскивание карт
+** TODO стоит ли переписать на re-frame?
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.

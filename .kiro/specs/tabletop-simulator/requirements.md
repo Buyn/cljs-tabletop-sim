@@ -245,9 +245,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 #### 5.4 Deck Drag Behavior
 1. Immediate drag (no hold delay):
    - Instantly draws the top card from the deck.
-   - The drawn card becomes the dragged object.
-   - The card is drawn face-down (back side up).
-   - Drag continues with this card.
+   - The top card is removed from the deck.
+   - That card immediately becomes the dragged object (face-down).
 
 2. Long press (≥ 1 second):
    - Enables dragging of the entire deck.

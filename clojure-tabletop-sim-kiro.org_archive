@@ -4700,3 +4700,27 @@ make sure the 5x3 implementation is correct
 ---
 ** I changed requirements.md
 let's make changes in accordance with the new requirements.
+
+* TODO fix Instantly draws
+:PROPERTIES:
+:ARCHIVE_TIME: 2026-04-13 Пн 04:42
+:ARCHIVE_FILE: ~/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/clojure-tabletop-sim-kiro.org
+:ARCHIVE_CATEGORY: clojure-tabletop-sim-kiro
+:ARCHIVE_TODO: TODO
+:END:
+** 
+Instantly draws the top card from the deck. (work, but somthing broken)
+after drawing the first card and dropping it on the table.
+the second card drawn cannot leave the deck areas and moves within the deck.
+but if user release it, do not leave the mouse deck, it will appear normally.
+and then it can be retightened normally.
+error remains
+but something has changed.
+If before the ghost of a card disappeared after clicking on the deck, now it doesn’t.
+if there is another deck on the table, then he jumps to another deck if the mouse move on the second deck.
+** полностью исправило прошлую ошику.
+всё работает как надо, но появился новый баг, он не влияет функционально на роботу, но его нужно убрать.
+при новедении курсора мыши на колоду карт, появляется призрак карты, и следует за курсором.
+Он не мешает производить действия, но его недолжно быть.
+
+
