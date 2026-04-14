@@ -13,7 +13,8 @@
    :menu-section      nil
    :selection         #{}
    :copy-list         []
-   :last-middle-click nil})
+   :last-middle-click nil
+   :interaction       nil})
 
 (defonce general-settings (r/atom {:rotation-step 45 :scale-step 1.25}))
 
@@ -102,6 +103,8 @@
 (defn pan-table!              [dx dy]  (emit! :table/pan dx dy))
 (defn zoom-table!             [delta]  (emit! :table/zoom delta))
 (defn set-last-middle-click!  [tx ty]  (emit! :table/set-last-middle-click tx ty))
+
+(def move-threshold 6) ; px in table-space
 
 ;; ---------------------------------------------------------------------------
 ;; Component movement
@@ -198,6 +201,50 @@
   (reduce (fn [[found others] c]
             (if (= (:id c) id) [c others] [found (conj others c)]))
           [nil []] cs))
+
+;; ---------------------------------------------------------------------------
+;; Interaction state machine (deck gesture resolution)
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :interaction/start-deck-press
+  [state _ deck-id tx ty t]
+  (assoc state :interaction {:deck-id    deck-id
+                              :start-time t
+                              :start-pos  [tx ty]
+                              :mode       :pending
+                              :card-id    nil}))
+
+(defmethod handle-event :interaction/start-card-drag
+  [state _]
+  (let [{:keys [deck-id start-pos]} (:interaction state)
+        deck     (some #(when (= (:id %) deck-id) %) (:components state))
+        top-card (peek (:cards deck))
+        [sx sy]  start-pos
+        new-id   (str (random-uuid))
+        card     (assoc top-card :type :card :face-up? false :id new-id :x sx :y sy)]
+    (-> state
+        (update :components #(mapv (fn [c] (if (= (:id c) deck-id)
+                                             (update c :cards (comp vec butlast)) c)) %))
+        (update :components conj card)
+        (collapse-deck deck-id)
+        (assoc-in [:interaction :mode] :card-drag)
+        (assoc-in [:interaction :card-id] new-id))))
+
+(defmethod handle-event :interaction/start-deck-drag
+  [state _]
+  (assoc-in state [:interaction :mode] :deck-drag))
+
+(defmethod handle-event :interaction/update-pointer
+  [state _ tx ty]
+  (let [{:keys [mode card-id deck-id]} (:interaction state)]
+    (case mode
+      :card-drag (move-component state card-id tx ty)
+      :deck-drag (move-component state deck-id tx ty)
+      state)))
+
+(defmethod handle-event :interaction/end
+  [state _]
+  (assoc state :interaction nil))
 
 ;; ---------------------------------------------------------------------------
 ;; Deck events

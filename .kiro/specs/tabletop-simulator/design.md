@@ -356,7 +356,45 @@ Default bindings:
 
 ---
 
-## Deck Collapse Invariant
+## Interaction State (Transient Gesture Resolution)
+
+Gesture recognition for deck interactions is handled entirely in state via events — no UI timers, no local component atoms.
+
+```clojure
+:interaction nil | {:deck-id    id
+                    :start-time ms
+                    :start-pos  [tx ty]
+                    :mode       :pending | :card-drag | :deck-drag
+                    :card-id    nil | id}
+```
+
+### Events
+
+- `:interaction/start-deck-press deck-id tx ty t` — record press intent, no mutation
+- `:interaction/start-card-drag` — draw top card, create component, set mode `:card-drag`
+- `:interaction/start-deck-drag` — set mode `:deck-drag`
+- `:interaction/update-pointer tx ty` — move card or deck depending on mode
+- `:interaction/end` — clear interaction
+
+### Resolution Rules (evaluated on `pointermove`)
+
+| Condition | Action |
+|---|---|
+| `dist > move-threshold` (6px) | `:interaction/start-card-drag` |
+| `dt > 1000ms` | `:interaction/start-deck-drag` |
+| neither | no-op (still `:pending`) |
+
+### On `pointerup` while `:pending`
+
+Single click → `:deck/draw-to-table` (places card face-up next to deck).
+
+### Rule
+
+> Gesture resolution must be handled in state via events, not via UI timers or component-local atoms.
+
+---
+
+
 
 After any draw that reduces a deck to 1 card, it auto-converts to a `:card`. At 0 cards it is removed. Enforced by `collapse-deck` called inside draw handlers.
 
