@@ -203,16 +203,41 @@
           [nil []] cs))
 
 ;; ---------------------------------------------------------------------------
-;; Interaction state machine (deck gesture resolution)
+;; Interaction state machine
 ;; ---------------------------------------------------------------------------
+;;
+;; :interaction shape:
+;;   {:type       :deck-press | :component-press
+;;    :id         component-id being interacted with
+;;    :start-time ms
+;;    :start-pos  [tx ty]   — table-space coords at press
+;;    :offset     [ox oy]   — cursor offset from component origin
+;;    :mode       :pending | :drag | :card-drag | :deck-drag
+;;    ;; deck-only:
+;;    :deck-id    id
+;;    :card-id    nil | id}
 
 (defmethod handle-event :interaction/start-deck-press
   [state _ deck-id tx ty t]
-  (assoc state :interaction {:deck-id    deck-id
-                              :start-time t
-                              :start-pos  [tx ty]
-                              :mode       :pending
-                              :card-id    nil}))
+  (let [deck (some #(when (= (:id %) deck-id) %) (:components state))]
+    (assoc state :interaction {:type       :deck-press
+                                :id         deck-id
+                                :deck-id    deck-id
+                                :start-time t
+                                :start-pos  [tx ty]
+                                :offset     [(- tx (:x deck 0)) (- ty (:y deck 0))]
+                                :mode       :pending
+                                :card-id    nil})))
+
+(defmethod handle-event :interaction/start-component-press
+  [state _ id tx ty t]
+  (let [c (some #(when (= (:id %) id) %) (:components state))]
+    (assoc state :interaction {:type       :component-press
+                                :id         id
+                                :start-time t
+                                :start-pos  [tx ty]
+                                :offset     [(- tx (:x c 0)) (- ty (:y c 0))]
+                                :mode       :pending})))
 
 (defmethod handle-event :interaction/start-card-drag
   [state _]
@@ -234,12 +259,60 @@
   [state _]
   (assoc-in state [:interaction :mode] :deck-drag))
 
+(defn- apply-group-drag
+  "Move all selected components by the same delta as the dragged component."
+  [state id tx ty]
+  (let [c   (some #(when (= (:id %) id) %) (:components state))
+        sel (:selection state)
+        ddx (- tx (:x c 0))
+        ddy (- ty (:y c 0))]
+    (if (contains? sel id)
+      (reduce (fn [s c2]
+                (if (contains? sel (:id c2))
+                  (move-component s (:id c2) (+ (:x c2 0) ddx) (+ (:y c2 0) ddy))
+                  s))
+              state (:components state))
+      (move-component state id tx ty))))
+
 (defmethod handle-event :interaction/update-pointer
-  [state _ tx ty]
-  (let [{:keys [mode card-id deck-id]} (:interaction state)]
-    (case mode
-      :card-drag (move-component state card-id tx ty)
-      :deck-drag (move-component state deck-id tx ty)
+  [state _ tx ty now]
+  (let [{:keys [type mode start-pos start-time id deck-id card-id offset]} (:interaction state)
+        [sx sy] start-pos
+        [ox oy] (or offset [0 0])
+        dt      (- now start-time)
+        dist    (Math/hypot (- tx sx) (- ty sy))
+        ;; target position = pointer minus cursor offset
+        cx      (- tx ox)
+        cy      (- ty oy)]
+    (case type
+      :deck-press
+      (cond
+        (and (= mode :pending) (> dist move-threshold))
+        (handle-event state :interaction/start-card-drag)
+
+        (and (= mode :pending) (> dt 1000))
+        (handle-event state :interaction/start-deck-drag)
+
+        (= mode :card-drag)
+        (move-component state card-id cx cy)
+
+        (= mode :deck-drag)
+        (move-component state deck-id cx cy)
+
+        :else state)
+
+      :component-press
+      (cond
+        (and (= mode :pending) (> dist move-threshold))
+        (-> state
+            (assoc-in [:interaction :mode] :drag)
+            (apply-group-drag id cx cy))
+
+        (= mode :drag)
+        (apply-group-drag id cx cy)
+
+        :else state)
+
       state)))
 
 (defmethod handle-event :interaction/end

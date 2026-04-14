@@ -4053,6 +4053,8 @@ Now system is:
  
 
 ** Попросить переписать все компонеты под требование
+*** Rewrite all other components following this logic.
+if necessary, change /home/buy/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/.kiro/specs/tabletop-simulator/design.md to reflect this.
 
 ** все обекты должны лочитсят
 таил имедж не лочится

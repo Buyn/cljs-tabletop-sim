@@ -1,6 +1,5 @@
 (ns tabletop.components.deck
-  (:require [tabletop.state :refer [app-state add-to-selection! emit!
-                                    component-actions move-threshold]]
+  (:require [tabletop.state :refer [app-state add-to-selection! emit! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn- ->table [sx sy]
@@ -28,19 +27,8 @@
         (fn [e]
           (let [iact (:interaction @app-state)]
             (when (and iact (= (:deck-id iact) id))
-              (let [[tx ty]   (->table (.-clientX e) (.-clientY e))
-                    [sx sy]   (:start-pos iact)
-                    mode      (:mode iact)
-                    dt        (- (.now js/Date) (:start-time iact))
-                    dist      (Math/hypot (- tx sx) (- ty sy))]
-                (case mode
-                  :pending
-                  (cond
-                    (> dt 1000)             (emit! :interaction/start-deck-drag)
-                    (> dist move-threshold) (emit! :interaction/start-card-drag)
-                    :else nil)
-                  (:card-drag :deck-drag)
-                  (emit! :interaction/update-pointer tx ty))))))
+              (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
+                (emit! :interaction/update-pointer tx ty (.now js/Date))))))
 
         :on-pointer-up
         (fn [e]
