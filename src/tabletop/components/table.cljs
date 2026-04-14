@@ -42,8 +42,8 @@
                          (when (:active @space-pan-state)
                            (let [cx  (.-clientX e)
                                  cy  (.-clientY e)
-                                 dx  (* 3 (- cx (:last-x @space-pan-state)))
-                                 dy  (* 3 (- cy (:last-y @space-pan-state)))]
+                                 dx  (* -5 (- cx (:last-x @space-pan-state)))
+                                 dy  (* -5 (- cy (:last-y @space-pan-state)))]
                              (pan-table! dx dy)
                              (swap! space-pan-state assoc :last-x cx :last-y cy)))))
     true))

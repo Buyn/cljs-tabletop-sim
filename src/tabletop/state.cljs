@@ -366,23 +366,57 @@
 ;; Grouping
 ;; ---------------------------------------------------------------------------
 
+(defn- grid-layout
+  "Arrange `items` (each with :x :y) in a compact grid around their centroid.
+   Returns items with updated :x :y."
+  [items w h gap]
+  (let [n    (count items)
+        cols (max 1 (int (Math/ceil (Math/sqrt n))))
+        rows (int (Math/ceil (/ n cols)))
+        cx   (/ (reduce + (map :x items)) n)
+        cy   (/ (reduce + (map :y items)) n)
+        ;; top-left of grid so it's centered on centroid
+        ox   (- cx (* 0.5 (- (* cols (+ w gap)) gap)))
+        oy   (- cy (* 0.5 (- (* rows (+ h gap)) gap)))]
+    (map-indexed
+     (fn [i item]
+       (let [col (mod i cols)
+             row (quot i cols)]
+         (assoc item :x (+ ox (* col (+ w gap)))
+                     :y (+ oy (* row (+ h gap))))))
+     items)))
+
 (defmethod handle-event :selection/group [state _]
   (let [sel      (:selection state)
-        selected (filter #(contains? sel (:id %)) (:components state))
-        cards    (filter #(= :card (:type %)) selected)
-        decks    (filter #(= :deck (:type %)) selected)]
+        selected (filter #(contains? sel (:id %)) (:components state))]
     (if (<= (count selected) 1)
       state
-      (let [anchor    (first (concat decks cards))
-            all-cards (vec (concat (mapcat :cards decks)
-                                   (map #(dissoc % :id :type :x :y) cards)))
-            new-deck  {:id    (str (random-uuid))
-                       :type  :deck
-                       :x     (:x anchor 0)
-                       :y     (:y anchor 0)
-                       :cards all-cards}]
-        (-> (reduce #(remove-component %1 (:id %2)) state selected)
-            (add-component new-deck))))))
+      (let [cards    (filter #(= :card (:type %)) selected)
+            decks    (filter #(= :deck (:type %)) selected)
+            others   (filter #(not (#{:card :deck} (:type %))) selected)
+            ;; Cards + decks → merge into one deck
+            card-deck-state
+            (if (seq (concat cards decks))
+              (let [anchor    (first (concat decks cards))
+                    all-cards (vec (concat (mapcat :cards decks)
+                                           (map #(dissoc % :id :type :x :y) cards)))
+                    new-deck  {:id    (str (random-uuid))
+                               :type  :deck
+                               :x     (:x anchor 0)
+                               :y     (:y anchor 0)
+                               :cards all-cards}]
+                (-> (reduce #(remove-component %1 (:id %2)) state (concat cards decks))
+                    (add-component new-deck)))
+              state)
+            ;; Others → grid layout, no stacking
+            final-state
+            (if (seq others)
+              (let [laid-out (grid-layout others 70 100 8)]
+                (reduce (fn [s {:keys [id x y]}]
+                          (move-component s id x y))
+                        card-deck-state laid-out))
+              card-deck-state)]
+        final-state))))
 
 (defn group-selection! [] (emit! :selection/group))
 

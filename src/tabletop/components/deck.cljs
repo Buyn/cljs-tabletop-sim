@@ -11,10 +11,12 @@
     [(/ (- sx pan-x) zoom) (/ (- sy pan-y) zoom)]))
 
 (defn deck [{:keys [deck]}]
-  (let [captured?  (r/atom false)
-        off-x      (r/atom 0)
-        off-y      (r/atom 0)
-        drawn-id   (r/atom nil)]
+  (let [captured?    (r/atom false)
+        off-x        (r/atom 0)
+        off-y        (r/atom 0)
+        drawn-id     (r/atom nil)   ; non-nil = dragging drawn card
+        deck-drag?   (r/atom false) ; true = dragging whole deck
+        press-timer  (r/atom nil)]
     (fn [{:keys [deck]}]
       (let [{:keys [id x y cards locked?]} deck
             card-count (count cards)
@@ -27,20 +29,46 @@
 
           :on-pointer-down
           (fn [e]
-            (when (and (= (.-button e) 0) (not locked?) (not empty?))
+            (when (and (= (.-button e) 0) (not locked?))
               (.stopPropagation e)
-              (.setPointerCapture (.-currentTarget e) (.-pointerId e))
-              (let [[tx ty] (->table (.-clientX e) (.-clientY e))
-                    top-card (peek cards)
-                    new-id   (str (random-uuid))
-                    card     (assoc top-card :type :card :face-up? false
-                                             :id new-id :x x :y y)]
-                (emit! :deck/draw-card-silent id)
-                (swap! app-state update :components conj card)
-                (reset! drawn-id new-id)
+              (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
                 (reset! off-x (- tx x))
                 (reset! off-y (- ty y))
-                (reset! captured? true))))
+                (if empty?
+                  ;; Empty deck — only deck drag makes sense
+                  (let [t (js/setTimeout
+                           (fn []
+                             (.setPointerCapture (.-currentTarget e) (.-pointerId e))
+                             (reset! deck-drag? true)
+                             (reset! captured? true))
+                           1000)]
+                    (reset! press-timer t))
+                  ;; Non-empty: immediate card draw; long-press overrides to deck drag
+                  (let [top-card (peek cards)
+                        new-id   (str (random-uuid))
+                        card     (assoc top-card :type :card :face-up? false
+                                                 :id new-id :x x :y y)
+                        t (js/setTimeout
+                           (fn []
+                             ;; Cancel card draw, switch to deck drag
+                             (swap! app-state update :components
+                                    #(filterv (fn [c] (not= (:id c) @drawn-id)) %))
+                             (emit! :component/add (assoc top-card :type :card :face-up? false
+                                                                    :id (str (random-uuid))
+                                                                    :x x :y y))
+                             ;; Restore card to deck
+                             (swap! app-state update :components
+                                    #(mapv (fn [c] (if (= (:id c) id)
+                                                     (update c :cards conj top-card) c)) %))
+                             (reset! drawn-id nil)
+                             (reset! deck-drag? true))
+                           1000)]
+                    (emit! :deck/draw-card-silent id)
+                    (swap! app-state update :components conj card)
+                    (reset! drawn-id new-id)
+                    (reset! press-timer t)
+                    (.setPointerCapture (.-currentTarget e) (.-pointerId e))
+                    (reset! captured? true))))))
 
           :on-pointer-move
           (fn [e]
@@ -48,28 +76,39 @@
               (let [[tx ty] (->table (.-clientX e) (.-clientY e))
                     new-x   (- tx @off-x)
                     new-y   (- ty @off-y)]
-                (move-component! @drawn-id new-x new-y))))
+                (if @deck-drag?
+                  (move-component! id new-x new-y)
+                  (move-component! @drawn-id new-x new-y)))))
 
           :on-pointer-up
           (fn [e]
+            (when @press-timer
+              (js/clearTimeout @press-timer)
+              (reset! press-timer nil))
             (when @captured?
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
               (reset! captured? false)
-              (reset! drawn-id nil)))
+              (reset! drawn-id nil)
+              (reset! deck-drag? false)))
 
           :on-pointer-cancel
           (fn [e]
+            (when @press-timer
+              (js/clearTimeout @press-timer)
+              (reset! press-timer nil))
             (when @captured?
-              ;; Remove placed card and return it to deck
-              (swap! app-state (fn [s]
-                                 (-> s
-                                     (update :components #(filterv (fn [c] (not= (:id c) @drawn-id)) %))
-                                     (update :components #(mapv (fn [c] (if (= (:id c) id)
-                                                                          (update c :cards conj (peek cards))
-                                                                          c)) %)))))
-              (reset! drag-ghost nil)
+              (when-let [did @drawn-id]
+                ;; Remove placed card and return it to deck
+                (let [top-card (peek cards)]
+                  (swap! app-state (fn [s]
+                                     (-> s
+                                         (update :components #(filterv (fn [c] (not= (:id c) did)) %))
+                                         (update :components #(mapv (fn [c] (if (= (:id c) id)
+                                                                               (update c :cards conj top-card)
+                                                                               c)) %)))))))
               (reset! captured? false)
               (reset! drawn-id nil)
+              (reset! deck-drag? false)
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))))
 
           :on-context-menu
