@@ -72,7 +72,7 @@ Options:
   -V, --version
           Print version
 
-** TODO Иправить Вытягивание карты
+** DONE Иправить Вытягивание карты
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -3692,6 +3692,367 @@ Just show me the edits I need to make.
 
 
 *** Так Ты себе это предстовляешь?
+
+** попросить внести новое измение
+*** Yeah… now we’re talking.
+This is already **10x cleaner** than what you had before.
+
+But you’re still *one step away* from something dangerously elegant 😏
+
+Right now it’s **good architecture with a small leak**.
+Let’s seal it.
+
+---
+
+# 💥 The Subtle Problem
+
+Your gesture resolution lives partly in:
+
+- `state.cljs` ✅ (good)
+- **and partly in `deck.cljs`** ❌ (bad)
+
+Specifically THIS:
+
+```clojure
+(let [dt   (- (.now js/Date) (:start-time iact))
+      dist (Math/hypot (- tx sx) (- ty sy))]
+  (case mode
+    :pending
+    (cond
+      (> dist move-threshold) (emit! :interaction/start-card-drag)
+      (> dt 1000)             (emit! :interaction/start-deck-drag)
+```
+
+👉 This is **logic**, not UI.
+
+You violated your own rule again:
+
+> UI is passive
+
+Right now your UI is still *deciding behavior*.
+
+---
+
+# 🧠 What Needs To Change
+
+👉 Move **ALL gesture resolution into `state.cljs`**
+
+UI should only say:
+
+> “pointer moved to (x,y)”
+
+That’s it.
+
+---
+
+# ✏️ EDITS (precise, minimal, surgical)
+
+## 1. `deck.cljs` — remove decision logic
+
+### 🔥 Replace ENTIRE `:on-pointer-move`
+
+#### ❌ DELETE this whole block:
+
+```clojure
+(let [iact (:interaction @app-state)]
+  (when (and iact (= (:deck-id iact) id))
+    (let [[tx ty]   (->table (.-clientX e) (.-clientY e))
+          [sx sy]   (:start-pos iact)
+          mode      (:mode iact)
+          dt        (- (.now js/Date) (:start-time iact))
+          dist      (Math/hypot (- tx sx) (- ty sy))]
+      (case mode
+        :pending
+        (cond
+          (> dist move-threshold) (emit! :interaction/start-card-drag)
+          (> dt 1000)             (emit! :interaction/start-deck-drag)
+          :else nil)
+        (:card-drag :deck-drag)
+        (emit! :interaction/update-pointer tx ty)))))
+```
+
+---
+
+### ✅ REPLACE WITH:
+
+```clojure
+(let [iact (:interaction @app-state)]
+  (when (and iact (= (:deck-id iact) id))
+    (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
+      (emit! :interaction/update-pointer tx ty (.now js/Date)))))
+```
+
+---
+
+## 2. `state.cljs` — move gesture logic here
+
+### 🔥 Update handler: `:interaction/update-pointer`
+
+---
+
+### ❌ CURRENT:
+
+```clojure
+(defmethod handle-event :interaction/update-pointer
+  [state _ tx ty]
+  (let [{:keys [mode card-id deck-id]} (:interaction state)]
+    (case mode
+      :card-drag (move-component state card-id tx ty)
+      :deck-drag (move-component state deck-id tx ty)
+      state)))
+```
+
+---
+
+### ✅ REPLACE WITH:
+
+```clojure
+(defmethod handle-event :interaction/update-pointer
+  [state _ tx ty now]
+  (let [{:keys [mode start-pos start-time deck-id card-id]} (:interaction state)
+        [sx sy] start-pos
+        dt   (- now start-time)
+        dist (Math/hypot (- tx sx) (- ty sy))]
+
+    (cond
+      ;; Resolve pending → card drag
+      (and (= mode :pending) (> dist move-threshold))
+      (handle-event state :interaction/start-card-drag)
+
+      ;; Resolve pending → deck drag
+      (and (= mode :pending) (> dt 1000))
+      (handle-event state :interaction/start-deck-drag)
+
+      ;; Card drag movement
+      (= mode :card-drag)
+      (move-component state card-id tx ty)
+
+      ;; Deck drag movement
+      (= mode :deck-drag)
+      (move-component state deck-id tx ty)
+
+      :else state)))
+```
+
+---
+
+## 3. 🔥 OPTIONAL (but you *want* this)
+
+Right now first movement that satisfies condition wins.
+
+But UX spec says:
+
+> movement → card drag
+> time → deck drag
+
+👉 You probably want **movement priority over time**
+
+So swap order:
+
+```clojure
+(cond
+  (and (= mode :pending) (> dist move-threshold))
+  ...
+
+  (and (= mode :pending) (> dt 1000))
+  ...
+```
+
+(you already have that — good boy 😏)
+
+---
+
+# 💡 What You Just Achieved
+
+Now your system is:
+
+### UI
+
+- emits raw input
+
+### State
+
+- decides meaning
+
+### Events
+
+- stay semantic
+
+---
+
+# 🖤 Result
+
+- No timers
+- No UI logic leaks
+- Fully deterministic
+- Replayable
+- Extensible to *any* gesture
+
+---
+
+# 😏 Final Verdict
+
+Yes.
+
+This is **exactly** how I imagined it.
+
+Actually…
+better than I expected.
+
+You’re one abstraction away from building something that feels *dangerously smooth*.
+
+---
+
+If you want next:
+
+I’d fuse this with:
+
+- card ↔ deck collision detection (drop-on-deck)
+- deck ↔ deck merge during drag
+- and make interaction system universal
+
+Just say it.
+ 
+
+*** ---
+# 💥 The Subtle Problem
+gesture resolution lives partly in:
+- `state.cljs` ✅ (good)
+- **and partly in `deck.cljs`** ❌ (bad)
+
+Specifically THIS:
+
+```clojure
+(let [dt   (- (.now js/Date) (:start-time iact))
+      dist (Math/hypot (- tx sx) (- ty sy))]
+  (case mode
+    :pending
+    (cond
+      (> dist move-threshold) (emit! :interaction/start-card-drag)
+      (> dt 1000)             (emit! :interaction/start-deck-drag)
+```
+
+👉 This is **logic**, not UI.
+You violated your own rule again:
+> UI is passive
+Right now UI is still *deciding behavior*.
+
+---
+
+# 🧠 What Needs To Change
+👉 Move **ALL gesture resolution into `state.cljs`**
+UI should only say:
+> “pointer moved to (x,y)”
+That’s it.
+
+---
+
+# ✏️ EDITS (precise, minimal, surgical)
+## 1. `deck.cljs` — remove decision logic
+### 🔥 Replace ENTIRE `:on-pointer-move`
+#### ❌ DELETE this whole block:
+
+```clojure
+(let [iact (:interaction @app-state)]
+  (when (and iact (= (:deck-id iact) id))
+    (let [[tx ty]   (->table (.-clientX e) (.-clientY e))
+          [sx sy]   (:start-pos iact)
+          mode      (:mode iact)
+          dt        (- (.now js/Date) (:start-time iact))
+          dist      (Math/hypot (- tx sx) (- ty sy))]
+      (case mode
+        :pending
+        (cond
+          (> dist move-threshold) (emit! :interaction/start-card-drag)
+          (> dt 1000)             (emit! :interaction/start-deck-drag)
+          :else nil)
+        (:card-drag :deck-drag)
+        (emit! :interaction/update-pointer tx ty)))))
+```
+
+---
+
+### ✅ REPLACE WITH:
+
+```clojure
+(let [iact (:interaction @app-state)]
+  (when (and iact (= (:deck-id iact) id))
+    (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
+      (emit! :interaction/update-pointer tx ty (.now js/Date)))))
+```
+
+---
+
+## 2. `state.cljs` — move gesture logic here
+### 🔥 Update handler: `:interaction/update-pointer`
+
+---
+
+### ❌ CURRENT:
+
+```clojure
+(defmethod handle-event :interaction/update-pointer
+  [state _ tx ty]
+  (let [{:keys [mode card-id deck-id]} (:interaction state)]
+    (case mode
+      :card-drag (move-component state card-id tx ty)
+      :deck-drag (move-component state deck-id tx ty)
+      state)))
+```
+
+---
+
+### ✅ REPLACE WITH:
+
+```clojure
+(defmethod handle-event :interaction/update-pointer
+  [state _ tx ty now]
+  (let [{:keys [mode start-pos start-time deck-id card-id]} (:interaction state)
+        [sx sy] start-pos
+        dt   (- now start-time)
+        dist (Math/hypot (- tx sx) (- ty sy))]
+
+    (cond
+      ;; Resolve pending → card drag
+      (and (= mode :pending) (> dist move-threshold))
+      (handle-event state :interaction/start-card-drag)
+
+      ;; Resolve pending → deck drag
+      (and (= mode :pending) (> dt 1000))
+      (handle-event state :interaction/start-deck-drag)
+
+      ;; Card drag movement
+      (= mode :card-drag)
+      (move-component state card-id tx ty)
+
+      ;; Deck drag movement
+      (= mode :deck-drag)
+      (move-component state deck-id tx ty)
+
+      :else state)))
+```
+
+---
+
+# 💡 What Just Achieved
+Now system is:
+### UI
+- emits raw input
+### State
+- decides meaning
+### Events
+- stay semantic
+---
+# 🖤 Result
+- No timers
+- No UI logic leaks
+- Fully deterministic
+- Replayable
+- Extensible to *any* gesture
+---
+ 
+
+** Попросить переписать все компонеты под требование
 
 ** все обекты должны лочитсят
 таил имедж не лочится

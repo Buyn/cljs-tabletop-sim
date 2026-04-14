@@ -36,8 +36,8 @@
                 (case mode
                   :pending
                   (cond
-                    (> dist move-threshold) (emit! :interaction/start-card-drag)
                     (> dt 1000)             (emit! :interaction/start-deck-drag)
+                    (> dist move-threshold) (emit! :interaction/start-card-drag)
                     :else nil)
                   (:card-drag :deck-drag)
                   (emit! :interaction/update-pointer tx ty))))))
