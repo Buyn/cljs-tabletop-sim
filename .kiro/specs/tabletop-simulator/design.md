@@ -358,39 +358,57 @@ Default bindings:
 
 ## Interaction State (Transient Gesture Resolution)
 
-Gesture recognition for deck interactions is handled entirely in state via events — no UI timers, no local component atoms.
+All gesture recognition is handled entirely in state via events. UI components hold no gesture atoms — no `dragging?`, `moved?`, `offset-x/y`, `start-cx/cy`.
 
 ```clojure
-:interaction nil | {:deck-id    id
+:interaction nil | {:type       :deck-press | :component-press
+                    :id         component-id
                     :start-time ms
-                    :start-pos  [tx ty]
-                    :mode       :pending | :card-drag | :deck-drag
+                    :start-pos  [tx ty]   ; table-space coords at press
+                    :offset     [ox oy]   ; cursor offset from component origin
+                    :mode       :pending | :drag | :card-drag | :deck-drag
+                    ; deck-only:
+                    :deck-id    id
                     :card-id    nil | id}
 ```
 
 ### Events
 
-- `:interaction/start-deck-press deck-id tx ty t` — record press intent, no mutation
-- `:interaction/start-card-drag` — draw top card, create component, set mode `:card-drag`
+- `:interaction/start-deck-press deck-id tx ty t` — record deck press, no card mutation
+- `:interaction/start-component-press id tx ty t` — record generic component press
+- `:interaction/start-card-drag` — draw top card from deck, create component, set mode `:card-drag`
 - `:interaction/start-deck-drag` — set mode `:deck-drag`
-- `:interaction/update-pointer tx ty` — move card or deck depending on mode
+- `:interaction/update-pointer tx ty now` — resolve gesture and/or move component
 - `:interaction/end` — clear interaction
 
-### Resolution Rules (evaluated on `pointermove`)
+### Resolution Rules (inside `:interaction/update-pointer`)
 
-| Condition | Action |
+**Deck press:**
+
+| Condition | Transition |
 |---|---|
-| `dist > move-threshold` (6px) | `:interaction/start-card-drag` |
-| `dt > 1000ms` | `:interaction/start-deck-drag` |
-| neither | no-op (still `:pending`) |
+| `dist > 6px` (move threshold) | → `:card-drag` (draw top card) |
+| `dt > 1000ms` | → `:deck-drag` |
+| `:card-drag` | move drawn card |
+| `:deck-drag` | move deck |
+
+**Component press (card, die, tile-piece):**
+
+| Condition | Transition |
+|---|---|
+| `dist > 6px` | → `:drag` |
+| `:drag` | move component (or group if selected) |
 
 ### On `pointerup` while `:pending`
 
-Single click → `:deck/draw-to-table` (places card face-up next to deck).
+- **Deck**: single click → `:deck/draw-to-table`
+- **Card**: shift → add to selection; plain → clear selection
+- **Die**: shift → add to selection; plain → clear selection + roll
+- **Tile-piece**: shift → add to selection; plain → clear selection
 
 ### Rule
 
-> Gesture resolution must be handled in state via events, not via UI timers or component-local atoms.
+> Gesture resolution must be handled in state via events, not via UI timers or component-local atoms. UI components emit raw pointer coordinates only.
 
 ---
 

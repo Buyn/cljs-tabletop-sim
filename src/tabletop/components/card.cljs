@@ -1,13 +1,13 @@
 (ns tabletop.components.card
-  (:require [reagent.core :as r]
-            [tabletop.state :refer [app-state move-component! move-card-to-hand!
-                                    add-to-selection! clear-selection!
+  (:require [tabletop.state :refer [app-state add-to-selection! clear-selection!
                                     emit! component-actions]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
-(defn- find-deck-at
-  "Return the first deck whose bounding box contains table point [tx ty]."
-  [tx ty exclude-id]
+(defn- ->table [sx sy]
+  (let [{:keys [pan-x pan-y zoom]} (:table @app-state)]
+    [(/ (- sx pan-x) zoom) (/ (- sy pan-y) zoom)]))
+
+(defn- find-deck-at [tx ty exclude-id]
   (some (fn [c]
           (when (and (= :deck (:type c))
                      (not= (:id c) exclude-id)
@@ -16,122 +16,100 @@
             c))
         (:components @app-state)))
 
-(defn card
-  [{:keys [card on-drag-end]}]
-  (let [dragging?   (r/atom false)
-        over-hand?  (r/atom false)
-        offset-x    (r/atom 0)
-        offset-y    (r/atom 0)
-        drag-moved? (r/atom false)
-        start-cx    (r/atom 0)
-        start-cy    (r/atom 0)]
-    (fn [{:keys [card on-drag-end]}]
-      (let [{:keys [id suit rank face-color back-color text-color suit-color face-up? x y rotation scale locked?]} card
-            face-up?  (boolean face-up?)
-            zoom      (get-in @app-state [:table :zoom] 1.0)
-            selected? (contains? (:selection @app-state) id)
-            transform (str (when rotation (str "rotate(" rotation "deg) "))
-                           (when (and scale (not= scale 1.0)) (str "scale(" scale ")")))]
-        [:div
-         {:class (str "absolute select-none rounded-lg border shadow-md "
-                      "w-[70px] h-[100px] flex items-center justify-center "
-                      "text-sm font-bold overflow-hidden"
-                      (if locked? " cursor-not-allowed opacity-80" " cursor-grab")
-                      (when selected? " ring-2 ring-cyan-400"))
-          :style {:left             (str x "px")
-                  :top              (str y "px")
-                  :background-color (if face-up? (or face-color "#ffffff") (or back-color "#1e3a5f"))
-                  :border-color     (if face-up? "#d1d5db" "#4b5563")
-                  :color            (if face-up? (or text-color "#111111") "transparent")
-                  :transform        (str (when @over-hand? "scale(0.33) ") transform)
-                  :transform-origin "center center"}
+(defn card [{:keys [card on-drag-end]}]
+  (fn [{:keys [card on-drag-end]}]
+    (let [{:keys [id face-color back-color text-color suit-color
+                  suit rank face-up? x y rotation scale locked?]} card
+          face-up?  (boolean face-up?)
+          selected? (contains? (:selection @app-state) id)
+          iact      (:interaction @app-state)
+          over-hand? (and iact (= (:id iact) id)
+                          (= :hand-hover (:mode iact)))
+          transform (str (when rotation (str "rotate(" rotation "deg) "))
+                         (when (and scale (not= scale 1.0)) (str "scale(" scale ")")))]
+      [:div
+       {:class (str "absolute select-none rounded-lg border shadow-md "
+                    "w-[70px] h-[100px] flex items-center justify-center "
+                    "text-sm font-bold overflow-hidden"
+                    (if locked? " cursor-not-allowed opacity-80" " cursor-grab")
+                    (when selected? " ring-2 ring-cyan-400"))
+        :style {:left             (str x "px")
+                :top              (str y "px")
+                :background-color (if face-up? (or face-color "#ffffff") (or back-color "#1e3a5f"))
+                :border-color     (if face-up? "#d1d5db" "#4b5563")
+                :color            (if face-up? (or text-color "#111111") "transparent")
+                :transform        (str (when over-hand? "scale(0.33) ") transform)
+                :transform-origin "center center"}
 
-          :on-pointer-down
-          (fn [e]
-            (when (and (= (.-button e) 0) (not locked?))
-              (.stopPropagation e)
-              (reset! drag-moved? false)
-              (reset! start-cx (.-clientX e))
-              (reset! start-cy (.-clientY e))
-              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)]
-                (reset! offset-x (- (/ (- (.-clientX e) pan-x) zoom) x))
-                (reset! offset-y (- (/ (- (.-clientY e) pan-y) zoom) y)))
-              (reset! dragging? true)
-              (.setPointerCapture (.-currentTarget e) (.-pointerId e))))
+        :on-pointer-down
+        (fn [e]
+          (when (and (= (.-button e) 0) (not locked?))
+            (.stopPropagation e)
+            (.setPointerCapture (.-currentTarget e) (.-pointerId e))
+            (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
+              (emit! :interaction/start-component-press id tx ty (.now js/Date)))))
 
-          :on-pointer-move
-          (fn [e]
-            (when @dragging?
-              (let [dx (- (.-clientX e) @start-cx)
-                    dy (- (.-clientY e) @start-cy)]
-                (when (> (js/Math.sqrt (+ (* dx dx) (* dy dy))) 4)
-                  (reset! drag-moved? true)))
-              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
-                    new-x       (- (/ (- (.-clientX e) pan-x) zoom) @offset-x)
-                    new-y       (- (/ (- (.-clientY e) pan-y) zoom) @offset-y)
-                    card-bottom (+ (.-clientY e) (* (- 100 (* @offset-y zoom)) zoom))
-                    in-hand?    (tabletop.components.hand/hand-drop-zone? [(.-clientX e) card-bottom])]
-                (reset! over-hand? in-hand?)
-                (if in-hand?
-                  (let [sel (:selection @app-state)]
-                    (if (contains? sel id)
-                      (doseq [sid sel] (move-card-to-hand! sid))
-                      (move-card-to-hand! id)))
-                  (let [sel   (:selection @app-state)
-                        old-x (:x card x)
-                        old-y (:y card y)
-                        ddx   (- new-x old-x)
-                        ddy   (- new-y old-y)]
-                    (if (contains? sel id)
-                      (doseq [c (:components @app-state) :when (contains? sel (:id c))]
-                        (move-component! (:id c) (+ (:x c 0) ddx) (+ (:y c 0) ddy)))
-                      (move-component! id new-x new-y)))))))
+        :on-pointer-move
+        (fn [e]
+          (let [iact (:interaction @app-state)]
+            (when (and iact (= (:id iact) id))
+              (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
+                ;; Hand drop check — move to hand if over hand zone
+                (if (tabletop.components.hand/hand-drop-zone? [(.-clientX e) (.-clientY e)])
+                  (let [sel (:selection @app-state)
+                        ids (if (contains? sel id) sel #{id})]
+                    (doseq [sid ids] (emit! :card/move-to-hand sid))
+                    (emit! :interaction/end))
+                  (emit! :interaction/update-pointer tx ty (.now js/Date)))))))
 
-          :on-pointer-up
-          (fn [e]
-            (when @dragging?
-              (reset! dragging? false)
-              (reset! over-hand? false)
+        :on-pointer-up
+        (fn [e]
+          (let [iact (:interaction @app-state)]
+            (when (and iact (= (:id iact) id))
               (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
-              (let [{:keys [pan-x pan-y zoom]} (:table @app-state)
-                    final-x (- (/ (- (.-clientX e) pan-x) zoom) @offset-x)
-                    final-y (- (/ (- (.-clientY e) pan-y) zoom) @offset-y)]
-                (if (and @drag-moved? (find-deck-at final-x final-y id))
-                  ;; Dropped onto a deck — add card to it
-                  (let [target-deck (find-deck-at final-x final-y id)
-                        sel         (:selection @app-state)
-                        card-ids    (if (contains? sel id) sel #{id})]
-                    (doseq [cid card-ids]
-                      (when (= :card (:type (some #(when (= (:id %) cid) %) (:components @app-state))))
-                        (emit! :card/drop-on-deck cid (:id target-deck)))))
-                  ;; Normal drop
-                  (do
-                    (when-not @drag-moved?
-                      (if (.-shiftKey e)
-                        (add-to-selection! id)
-                        (clear-selection!)))
-                    (when on-drag-end (on-drag-end [final-x final-y])))))))
+              (let [[tx ty] (->table (.-clientX e) (.-clientY e))
+                    mode    (:mode iact)]
+                (if (= mode :pending)
+                  ;; Click
+                  (if (.-shiftKey e)
+                    (add-to-selection! id)
+                    (clear-selection!))
+                  ;; Drag ended — check deck drop
+                  (when-let [deck (find-deck-at tx ty id)]
+                    (let [sel  (:selection @app-state)
+                          ids  (if (contains? sel id) sel #{id})]
+                      (doseq [cid ids]
+                        (when (= :card (:type (some #(when (= (:id %) cid) %) (:components @app-state))))
+                          (emit! :card/drop-on-deck cid (:id deck)))))))
+                (when on-drag-end (on-drag-end [tx ty]))
+                (emit! :interaction/end)))))
 
-          :on-double-click
-          (fn [e]
-            (.stopPropagation e)
-            (emit! :selection/apply :card/flip id))
+        :on-pointer-cancel
+        (fn [e]
+          (let [iact (:interaction @app-state)]
+            (when (and iact (= (:id iact) id))
+              (.releasePointerCapture (.-currentTarget e) (.-pointerId e))
+              (emit! :interaction/end))))
 
-          :on-context-menu
-          (fn [e]
-            (.preventDefault e)
-            (.stopPropagation e)
-            ;; Ensure right-clicked object is in selection
-            (when-not (contains? (:selection @app-state) id)
-              (add-to-selection! id))
-            (open-context-menu! (.-clientX e) (.-clientY e) (component-actions card)))}
+        :on-double-click
+        (fn [e]
+          (.stopPropagation e)
+          (emit! :selection/apply :card/flip id))
 
-         (if face-up?
-           [:div {:class "flex flex-col items-center justify-center w-full h-full"}
-            [:span {:class "text-lg leading-none"} rank]
-            [:span {:class "text-xl leading-none"
-                    :style {:color (or suit-color text-color "#111111")}} suit]]
-           [:div {:class "w-full h-full flex items-center justify-center"}
-            [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40"
-                   :style {:background (str "repeating-linear-gradient(45deg,"
-                                            "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])]))))
+        :on-context-menu
+        (fn [e]
+          (.preventDefault e)
+          (.stopPropagation e)
+          (when-not (contains? (:selection @app-state) id)
+            (add-to-selection! id))
+          (open-context-menu! (.-clientX e) (.-clientY e) (component-actions card)))}
+
+       (if face-up?
+         [:div {:class "flex flex-col items-center justify-center w-full h-full"}
+          [:span {:class "text-lg leading-none"} rank]
+          [:span {:class "text-xl leading-none"
+                  :style {:color (or suit-color text-color "#111111")}} suit]]
+         [:div {:class "w-full h-full flex items-center justify-center"}
+          [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40"
+                 :style {:background (str "repeating-linear-gradient(45deg,"
+                                          "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])])))

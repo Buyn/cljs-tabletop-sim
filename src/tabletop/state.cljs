@@ -309,7 +309,7 @@
             (apply-group-drag id cx cy))
 
         (= mode :drag)
-        (apply-group-drag id cx cy)
+        (apply-group-drag state id cx cy)
 
         :else state)
 
