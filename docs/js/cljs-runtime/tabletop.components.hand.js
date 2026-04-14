@@ -12,10 +12,10 @@ return el.getBoundingClientRect();
 return null;
 }
 });
-tabletop.components.hand.hand_drop_zone_QMARK_ = (function tabletop$components$hand$hand_drop_zone_QMARK_(p__33153){
-var vec__33155 = p__33153;
-var x = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(vec__33155,(0),null);
-var y = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(vec__33155,(1),null);
+tabletop.components.hand.hand_drop_zone_QMARK_ = (function tabletop$components$hand$hand_drop_zone_QMARK_(p__56827){
+var vec__56829 = p__56827;
+var x = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(vec__56829,(0),null);
+var y = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(vec__56829,(1),null);
 var temp__5804__auto__ = tabletop.components.hand.hand_area_rect();
 if(cljs.core.truth_(temp__5804__auto__)){
 var r = temp__5804__auto__;
@@ -59,25 +59,25 @@ var step = tabletop.components.hand.compute_step(n,strip_w);
 var total_w = (tabletop.components.hand.card_w + ((n - (1)) * step));
 var origin_x = ((strip_w - total_w) / (2));
 if((hovered_idx == null)){
-return cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__33179(s__33180){
+return cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__56870(s__56871){
 return (new cljs.core.LazySeq(null,(function (){
-var s__33180__$1 = s__33180;
+var s__56871__$1 = s__56871;
 while(true){
-var temp__5804__auto__ = cljs.core.seq(s__33180__$1);
+var temp__5804__auto__ = cljs.core.seq(s__56871__$1);
 if(temp__5804__auto__){
-var s__33180__$2 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(s__33180__$2)){
-var c__5478__auto__ = cljs.core.chunk_first(s__33180__$2);
+var s__56871__$2 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(s__56871__$2)){
+var c__5478__auto__ = cljs.core.chunk_first(s__56871__$2);
 var size__5479__auto__ = cljs.core.count(c__5478__auto__);
-var b__33182 = cljs.core.chunk_buffer(size__5479__auto__);
-if((function (){var i__33181 = (0);
+var b__56873 = cljs.core.chunk_buffer(size__5479__auto__);
+if((function (){var i__56872 = (0);
 while(true){
-if((i__33181 < size__5479__auto__)){
-var i = cljs.core._nth(c__5478__auto__,i__33181);
-cljs.core.chunk_append(b__33182,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),(origin_x + (i * step)),new cljs.core.Keyword(null,"z","z",-789527183),i], null));
+if((i__56872 < size__5479__auto__)){
+var i = cljs.core._nth(c__5478__auto__,i__56872);
+cljs.core.chunk_append(b__56873,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),(origin_x + (i * step)),new cljs.core.Keyword(null,"z","z",-789527183),i], null));
 
-var G__33353 = (i__33181 + (1));
-i__33181 = G__33353;
+var G__57180 = (i__56872 + (1));
+i__56872 = G__57180;
 continue;
 } else {
 return true;
@@ -85,13 +85,13 @@ return true;
 break;
 }
 })()){
-return cljs.core.chunk_cons(cljs.core.chunk(b__33182),tabletop$components$hand$card_positions_$_iter__33179(cljs.core.chunk_rest(s__33180__$2)));
+return cljs.core.chunk_cons(cljs.core.chunk(b__56873),tabletop$components$hand$card_positions_$_iter__56870(cljs.core.chunk_rest(s__56871__$2)));
 } else {
-return cljs.core.chunk_cons(cljs.core.chunk(b__33182),null);
+return cljs.core.chunk_cons(cljs.core.chunk(b__56873),null);
 }
 } else {
-var i = cljs.core.first(s__33180__$2);
-return cljs.core.cons(new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),(origin_x + (i * step)),new cljs.core.Keyword(null,"z","z",-789527183),i], null),tabletop$components$hand$card_positions_$_iter__33179(cljs.core.rest(s__33180__$2)));
+var i = cljs.core.first(s__56871__$2);
+return cljs.core.cons(new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),(origin_x + (i * step)),new cljs.core.Keyword(null,"z","z",-789527183),i], null),tabletop$components$hand$card_positions_$_iter__56870(cljs.core.rest(s__56871__$2)));
 }
 } else {
 return null;
@@ -107,28 +107,28 @@ var base_hovered = (origin_x + (hovered_idx * step));
 var hov_right = ((base_hovered + tabletop.components.hand.card_w) + ((tabletop.components.hand.card_w * (tabletop.components.hand.hover_scale - (1))) / (2)));
 var hov_left = (base_hovered - ((tabletop.components.hand.card_w * (tabletop.components.hand.hover_scale - (1))) / (2)));
 var right_count = ((n - hovered_idx) - (1));
-var right_txs = cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__33199(s__33200){
+var right_txs = cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__56925(s__56926){
 return (new cljs.core.LazySeq(null,(function (){
-var s__33200__$1 = s__33200;
+var s__56926__$1 = s__56926;
 while(true){
-var temp__5804__auto__ = cljs.core.seq(s__33200__$1);
+var temp__5804__auto__ = cljs.core.seq(s__56926__$1);
 if(temp__5804__auto__){
-var s__33200__$2 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(s__33200__$2)){
-var c__5478__auto__ = cljs.core.chunk_first(s__33200__$2);
+var s__56926__$2 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(s__56926__$2)){
+var c__5478__auto__ = cljs.core.chunk_first(s__56926__$2);
 var size__5479__auto__ = cljs.core.count(c__5478__auto__);
-var b__33202 = cljs.core.chunk_buffer(size__5479__auto__);
-if((function (){var i__33201 = (0);
+var b__56928 = cljs.core.chunk_buffer(size__5479__auto__);
+if((function (){var i__56927 = (0);
 while(true){
-if((i__33201 < size__5479__auto__)){
-var k = cljs.core._nth(c__5478__auto__,i__33201);
-cljs.core.chunk_append(b__33202,(function (){var x__5090__auto__ = (strip_w - tabletop.components.hand.card_w);
+if((i__56927 < size__5479__auto__)){
+var k = cljs.core._nth(c__5478__auto__,i__56927);
+cljs.core.chunk_append(b__56928,(function (){var x__5090__auto__ = (strip_w - tabletop.components.hand.card_w);
 var y__5091__auto__ = (hov_right + ((k - (1)) * step));
 return ((x__5090__auto__ < y__5091__auto__) ? x__5090__auto__ : y__5091__auto__);
 })());
 
-var G__33354 = (i__33201 + (1));
-i__33201 = G__33354;
+var G__57190 = (i__56927 + (1));
+i__56927 = G__57190;
 continue;
 } else {
 return true;
@@ -136,16 +136,16 @@ return true;
 break;
 }
 })()){
-return cljs.core.chunk_cons(cljs.core.chunk(b__33202),tabletop$components$hand$card_positions_$_iter__33199(cljs.core.chunk_rest(s__33200__$2)));
+return cljs.core.chunk_cons(cljs.core.chunk(b__56928),tabletop$components$hand$card_positions_$_iter__56925(cljs.core.chunk_rest(s__56926__$2)));
 } else {
-return cljs.core.chunk_cons(cljs.core.chunk(b__33202),null);
+return cljs.core.chunk_cons(cljs.core.chunk(b__56928),null);
 }
 } else {
-var k = cljs.core.first(s__33200__$2);
+var k = cljs.core.first(s__56926__$2);
 return cljs.core.cons((function (){var x__5090__auto__ = (strip_w - tabletop.components.hand.card_w);
 var y__5091__auto__ = (hov_right + ((k - (1)) * step));
 return ((x__5090__auto__ < y__5091__auto__) ? x__5090__auto__ : y__5091__auto__);
-})(),tabletop$components$hand$card_positions_$_iter__33199(cljs.core.rest(s__33200__$2)));
+})(),tabletop$components$hand$card_positions_$_iter__56925(cljs.core.rest(s__56926__$2)));
 }
 } else {
 return null;
@@ -157,28 +157,28 @@ break;
 return iter__5480__auto__(cljs.core.range.cljs$core$IFn$_invoke$arity$2((1),(right_count + (1))));
 })());
 var left_count = hovered_idx;
-var left_txs = cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__33213(s__33214){
+var left_txs = cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__56955(s__56956){
 return (new cljs.core.LazySeq(null,(function (){
-var s__33214__$1 = s__33214;
+var s__56956__$1 = s__56956;
 while(true){
-var temp__5804__auto__ = cljs.core.seq(s__33214__$1);
+var temp__5804__auto__ = cljs.core.seq(s__56956__$1);
 if(temp__5804__auto__){
-var s__33214__$2 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(s__33214__$2)){
-var c__5478__auto__ = cljs.core.chunk_first(s__33214__$2);
+var s__56956__$2 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(s__56956__$2)){
+var c__5478__auto__ = cljs.core.chunk_first(s__56956__$2);
 var size__5479__auto__ = cljs.core.count(c__5478__auto__);
-var b__33216 = cljs.core.chunk_buffer(size__5479__auto__);
-if((function (){var i__33215 = (0);
+var b__56958 = cljs.core.chunk_buffer(size__5479__auto__);
+if((function (){var i__56957 = (0);
 while(true){
-if((i__33215 < size__5479__auto__)){
-var k = cljs.core._nth(c__5478__auto__,i__33215);
-cljs.core.chunk_append(b__33216,(function (){var x__5087__auto__ = (0);
+if((i__56957 < size__5479__auto__)){
+var k = cljs.core._nth(c__5478__auto__,i__56957);
+cljs.core.chunk_append(b__56958,(function (){var x__5087__auto__ = (0);
 var y__5088__auto__ = ((hov_left - tabletop.components.hand.card_w) - ((k - (1)) * step));
 return ((x__5087__auto__ > y__5088__auto__) ? x__5087__auto__ : y__5088__auto__);
 })());
 
-var G__33355 = (i__33215 + (1));
-i__33215 = G__33355;
+var G__57192 = (i__56957 + (1));
+i__56957 = G__57192;
 continue;
 } else {
 return true;
@@ -186,16 +186,16 @@ return true;
 break;
 }
 })()){
-return cljs.core.chunk_cons(cljs.core.chunk(b__33216),tabletop$components$hand$card_positions_$_iter__33213(cljs.core.chunk_rest(s__33214__$2)));
+return cljs.core.chunk_cons(cljs.core.chunk(b__56958),tabletop$components$hand$card_positions_$_iter__56955(cljs.core.chunk_rest(s__56956__$2)));
 } else {
-return cljs.core.chunk_cons(cljs.core.chunk(b__33216),null);
+return cljs.core.chunk_cons(cljs.core.chunk(b__56958),null);
 }
 } else {
-var k = cljs.core.first(s__33214__$2);
+var k = cljs.core.first(s__56956__$2);
 return cljs.core.cons((function (){var x__5087__auto__ = (0);
 var y__5088__auto__ = ((hov_left - tabletop.components.hand.card_w) - ((k - (1)) * step));
 return ((x__5087__auto__ > y__5088__auto__) ? x__5087__auto__ : y__5088__auto__);
-})(),tabletop$components$hand$card_positions_$_iter__33213(cljs.core.rest(s__33214__$2)));
+})(),tabletop$components$hand$card_positions_$_iter__56955(cljs.core.rest(s__56956__$2)));
 }
 } else {
 return null;
@@ -206,22 +206,22 @@ break;
 });
 return iter__5480__auto__(cljs.core.range.cljs$core$IFn$_invoke$arity$2((1),(left_count + (1))));
 })());
-return cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__33217(s__33218){
+return cljs.core.vec((function (){var iter__5480__auto__ = (function tabletop$components$hand$card_positions_$_iter__56979(s__56980){
 return (new cljs.core.LazySeq(null,(function (){
-var s__33218__$1 = s__33218;
+var s__56980__$1 = s__56980;
 while(true){
-var temp__5804__auto__ = cljs.core.seq(s__33218__$1);
+var temp__5804__auto__ = cljs.core.seq(s__56980__$1);
 if(temp__5804__auto__){
-var s__33218__$2 = temp__5804__auto__;
-if(cljs.core.chunked_seq_QMARK_(s__33218__$2)){
-var c__5478__auto__ = cljs.core.chunk_first(s__33218__$2);
+var s__56980__$2 = temp__5804__auto__;
+if(cljs.core.chunked_seq_QMARK_(s__56980__$2)){
+var c__5478__auto__ = cljs.core.chunk_first(s__56980__$2);
 var size__5479__auto__ = cljs.core.count(c__5478__auto__);
-var b__33220 = cljs.core.chunk_buffer(size__5479__auto__);
-if((function (){var i__33219 = (0);
+var b__56982 = cljs.core.chunk_buffer(size__5479__auto__);
+if((function (){var i__56981 = (0);
 while(true){
-if((i__33219 < size__5479__auto__)){
-var i = cljs.core._nth(c__5478__auto__,i__33219);
-cljs.core.chunk_append(b__33220,((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(i,hovered_idx))?new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),base_hovered,new cljs.core.Keyword(null,"z","z",-789527183),(1000)], null):(((i > hovered_idx))?(function (){var k = (i - hovered_idx);
+if((i__56981 < size__5479__auto__)){
+var i = cljs.core._nth(c__5478__auto__,i__56981);
+cljs.core.chunk_append(b__56982,((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(i,hovered_idx))?new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),base_hovered,new cljs.core.Keyword(null,"z","z",-789527183),(1000)], null):(((i > hovered_idx))?(function (){var k = (i - hovered_idx);
 var dist = k;
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),cljs.core.nth.cljs$core$IFn$_invoke$arity$2(right_txs,(k - (1))),new cljs.core.Keyword(null,"z","z",-789527183),((500) - dist)], null);
 })():(function (){var k = (hovered_idx - i);
@@ -230,8 +230,8 @@ return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx
 })()
 )));
 
-var G__33360 = (i__33219 + (1));
-i__33219 = G__33360;
+var G__57208 = (i__56981 + (1));
+i__56981 = G__57208;
 continue;
 } else {
 return true;
@@ -239,12 +239,12 @@ return true;
 break;
 }
 })()){
-return cljs.core.chunk_cons(cljs.core.chunk(b__33220),tabletop$components$hand$card_positions_$_iter__33217(cljs.core.chunk_rest(s__33218__$2)));
+return cljs.core.chunk_cons(cljs.core.chunk(b__56982),tabletop$components$hand$card_positions_$_iter__56979(cljs.core.chunk_rest(s__56980__$2)));
 } else {
-return cljs.core.chunk_cons(cljs.core.chunk(b__33220),null);
+return cljs.core.chunk_cons(cljs.core.chunk(b__56982),null);
 }
 } else {
-var i = cljs.core.first(s__33218__$2);
+var i = cljs.core.first(s__56980__$2);
 return cljs.core.cons(((cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(i,hovered_idx))?new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),base_hovered,new cljs.core.Keyword(null,"z","z",-789527183),(1000)], null):(((i > hovered_idx))?(function (){var k = (i - hovered_idx);
 var dist = k;
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),cljs.core.nth.cljs$core$IFn$_invoke$arity$2(right_txs,(k - (1))),new cljs.core.Keyword(null,"z","z",-789527183),((500) - dist)], null);
@@ -252,7 +252,7 @@ return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx
 var dist = k;
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),cljs.core.nth.cljs$core$IFn$_invoke$arity$2(left_txs,(k - (1))),new cljs.core.Keyword(null,"z","z",-789527183),((500) - dist)], null);
 })()
-)),tabletop$components$hand$card_positions_$_iter__33217(cljs.core.rest(s__33218__$2)));
+)),tabletop$components$hand$card_positions_$_iter__56979(cljs.core.rest(s__56980__$2)));
 }
 } else {
 return null;
@@ -268,17 +268,17 @@ return iter__5480__auto__(cljs.core.range.cljs$core$IFn$_invoke$arity$1(n));
 /**
  * Inline style for rendering a tile piece fragment at hand scale.
  */
-tabletop.components.hand.tile_piece_bg = (function tabletop$components$hand$tile_piece_bg(p__33249){
-var map__33254 = p__33249;
-var map__33254__$1 = cljs.core.__destructure_map(map__33254);
-var src = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33254__$1,new cljs.core.Keyword(null,"src","src",-1651076051));
-var cols = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33254__$1,new cljs.core.Keyword(null,"cols","cols",-1914801295));
-var rows = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33254__$1,new cljs.core.Keyword(null,"rows","rows",850049680));
-var tile_idx = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33254__$1,new cljs.core.Keyword(null,"tile-idx","tile-idx",-422120350));
-var tile_w = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33254__$1,new cljs.core.Keyword(null,"tile-w","tile-w",2051289999));
-var tile_h = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33254__$1,new cljs.core.Keyword(null,"tile-h","tile-h",356807408));
-var outer_crop = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__33254__$1,new cljs.core.Keyword(null,"outer-crop","outer-crop",1407432483),new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"top","top",-1856271961),(0),new cljs.core.Keyword(null,"bottom","bottom",-1550509018),(0),new cljs.core.Keyword(null,"left","left",-399115937),(0),new cljs.core.Keyword(null,"right","right",-452581833),(0)], null));
-var inner_crop = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__33254__$1,new cljs.core.Keyword(null,"inner-crop","inner-crop",1917857473),new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"top","top",-1856271961),(0),new cljs.core.Keyword(null,"bottom","bottom",-1550509018),(0),new cljs.core.Keyword(null,"left","left",-399115937),(0),new cljs.core.Keyword(null,"right","right",-452581833),(0)], null));
+tabletop.components.hand.tile_piece_bg = (function tabletop$components$hand$tile_piece_bg(p__57033){
+var map__57034 = p__57033;
+var map__57034__$1 = cljs.core.__destructure_map(map__57034);
+var src = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57034__$1,new cljs.core.Keyword(null,"src","src",-1651076051));
+var cols = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57034__$1,new cljs.core.Keyword(null,"cols","cols",-1914801295));
+var rows = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57034__$1,new cljs.core.Keyword(null,"rows","rows",850049680));
+var tile_idx = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57034__$1,new cljs.core.Keyword(null,"tile-idx","tile-idx",-422120350));
+var tile_w = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57034__$1,new cljs.core.Keyword(null,"tile-w","tile-w",2051289999));
+var tile_h = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57034__$1,new cljs.core.Keyword(null,"tile-h","tile-h",356807408));
+var outer_crop = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__57034__$1,new cljs.core.Keyword(null,"outer-crop","outer-crop",1407432483),new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"top","top",-1856271961),(0),new cljs.core.Keyword(null,"bottom","bottom",-1550509018),(0),new cljs.core.Keyword(null,"left","left",-399115937),(0),new cljs.core.Keyword(null,"right","right",-452581833),(0)], null));
+var inner_crop = cljs.core.get.cljs$core$IFn$_invoke$arity$3(map__57034__$1,new cljs.core.Keyword(null,"inner-crop","inner-crop",1917857473),new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"top","top",-1856271961),(0),new cljs.core.Keyword(null,"bottom","bottom",-1550509018),(0),new cljs.core.Keyword(null,"left","left",-399115937),(0),new cljs.core.Keyword(null,"right","right",-452581833),(0)], null));
 var idx0 = (tile_idx - (1));
 var col = cljs.core.mod(idx0,cols);
 var row = cljs.core.quot(idx0,cols);
@@ -293,15 +293,15 @@ return new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"ba
 /**
  * Renders the inner content of a hand item (card or tile piece).
  */
-tabletop.components.hand.hand_item_content = (function tabletop$components$hand$hand_item_content(p__33303){
-var map__33304 = p__33303;
-var map__33304__$1 = cljs.core.__destructure_map(map__33304);
-var item = map__33304__$1;
-var type = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33304__$1,new cljs.core.Keyword(null,"type","type",1174270348));
-var suit = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33304__$1,new cljs.core.Keyword(null,"suit","suit",-869827520));
-var rank = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33304__$1,new cljs.core.Keyword(null,"rank","rank",-1706728502));
-var suit_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33304__$1,new cljs.core.Keyword(null,"suit-color","suit-color",1331901960));
-var text_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33304__$1,new cljs.core.Keyword(null,"text-color","text-color",1728708298));
+tabletop.components.hand.hand_item_content = (function tabletop$components$hand$hand_item_content(p__57060){
+var map__57065 = p__57060;
+var map__57065__$1 = cljs.core.__destructure_map(map__57065);
+var item = map__57065__$1;
+var type = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57065__$1,new cljs.core.Keyword(null,"type","type",1174270348));
+var suit = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57065__$1,new cljs.core.Keyword(null,"suit","suit",-869827520));
+var rank = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57065__$1,new cljs.core.Keyword(null,"rank","rank",-1706728502));
+var suit_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57065__$1,new cljs.core.Keyword(null,"suit-color","suit-color",1331901960));
+var text_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57065__$1,new cljs.core.Keyword(null,"text-color","text-color",1728708298));
 if(cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(type,new cljs.core.Keyword(null,"tile-piece","tile-piece",1225101561))){
 return null;
 } else {
@@ -322,23 +322,23 @@ return "#111111";
 tabletop.components.hand.hand_card = (function tabletop$components$hand$hand_card(card,idx,hovered_idx,strip_w,n,on_reorder){
 var dragging_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
 var drag_outside_QMARK_ = reagent.core.atom.cljs$core$IFn$_invoke$arity$1(false);
-return (function (p__33337,idx__$1,hovered_idx__$1,strip_w__$1,n__$1,on_reorder__$1){
-var map__33338 = p__33337;
-var map__33338__$1 = cljs.core.__destructure_map(map__33338);
-var item = map__33338__$1;
-var suit = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"suit","suit",-869827520));
-var suit_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"suit-color","suit-color",1331901960));
-var face_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"face-color","face-color",-919913463));
-var text_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"text-color","text-color",1728708298));
-var rank = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"rank","rank",-1706728502));
-var type = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"type","type",1174270348));
-var face_up_QMARK_ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"face-up?","face-up?",-1866751117));
-var id = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"id","id",-1388402092));
-var back_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33338__$1,new cljs.core.Keyword(null,"back-color","back-color",-672417547));
-var map__33339 = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(tabletop.components.hand.card_positions(n__$1,cljs.core.deref(hovered_idx__$1),strip_w__$1),idx__$1,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),(0),new cljs.core.Keyword(null,"z","z",-789527183),idx__$1], null));
-var map__33339__$1 = cljs.core.__destructure_map(map__33339);
-var tx = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33339__$1,new cljs.core.Keyword(null,"tx","tx",466630418));
-var z = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33339__$1,new cljs.core.Keyword(null,"z","z",-789527183));
+return (function (p__57107,idx__$1,hovered_idx__$1,strip_w__$1,n__$1,on_reorder__$1){
+var map__57109 = p__57107;
+var map__57109__$1 = cljs.core.__destructure_map(map__57109);
+var item = map__57109__$1;
+var suit = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"suit","suit",-869827520));
+var suit_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"suit-color","suit-color",1331901960));
+var face_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"face-color","face-color",-919913463));
+var text_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"text-color","text-color",1728708298));
+var rank = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"rank","rank",-1706728502));
+var type = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"type","type",1174270348));
+var face_up_QMARK_ = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"face-up?","face-up?",-1866751117));
+var id = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"id","id",-1388402092));
+var back_color = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57109__$1,new cljs.core.Keyword(null,"back-color","back-color",-672417547));
+var map__57122 = cljs.core.nth.cljs$core$IFn$_invoke$arity$3(tabletop.components.hand.card_positions(n__$1,cljs.core.deref(hovered_idx__$1),strip_w__$1),idx__$1,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"tx","tx",466630418),(0),new cljs.core.Keyword(null,"z","z",-789527183),idx__$1], null));
+var map__57122__$1 = cljs.core.__destructure_map(map__57122);
+var tx = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57122__$1,new cljs.core.Keyword(null,"tx","tx",466630418));
+var z = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57122__$1,new cljs.core.Keyword(null,"z","z",-789527183));
 var is_hovered = cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(cljs.core.deref(hovered_idx__$1),idx__$1);
 var tile_QMARK_ = cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2(type,new cljs.core.Keyword(null,"tile-piece","tile-piece",1225101561));
 var bg_style = ((tile_QMARK_)?tabletop.components.hand.tile_piece_bg(item):new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"background-color","background-color",570434026),(function (){var or__5002__auto__ = face_color;
@@ -415,11 +415,11 @@ e.currentTarget.releasePointerCapture(e.pointerId);
 if(cljs.core.truth_(tabletop.components.hand.hand_drop_zone_QMARK_(new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [e.clientX,e.clientY], null)))){
 return null;
 } else {
-var map__33352 = new cljs.core.Keyword(null,"table","table",-564943036).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state));
-var map__33352__$1 = cljs.core.__destructure_map(map__33352);
-var pan_x = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33352__$1,new cljs.core.Keyword(null,"pan-x","pan-x",-1761589747));
-var pan_y = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33352__$1,new cljs.core.Keyword(null,"pan-y","pan-y",915543213));
-var zoom = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__33352__$1,new cljs.core.Keyword(null,"zoom","zoom",-1827487038));
+var map__57151 = new cljs.core.Keyword(null,"table","table",-564943036).cljs$core$IFn$_invoke$arity$1(cljs.core.deref(tabletop.state.app_state));
+var map__57151__$1 = cljs.core.__destructure_map(map__57151);
+var pan_x = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57151__$1,new cljs.core.Keyword(null,"pan-x","pan-x",-1761589747));
+var pan_y = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57151__$1,new cljs.core.Keyword(null,"pan-y","pan-y",915543213));
+var zoom = cljs.core.get.cljs$core$IFn$_invoke$arity$2(map__57151__$1,new cljs.core.Keyword(null,"zoom","zoom",-1827487038));
 var tx__$1 = ((e.clientX - pan_x) / zoom);
 var ty = ((e.clientY - pan_y) / zoom);
 return tabletop.state.move_card_to_table_BANG_(id,tx__$1,ty);

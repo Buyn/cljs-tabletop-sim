@@ -3,12 +3,12 @@ goog.provide('tabletop.logic.serialization');
  * Convert string :type fields back to keywords after JSON round-trip.
  */
 tabletop.logic.serialization.keywordize_type = (function tabletop$logic$serialization$keywordize_type(m){
-var G__12198 = m;
-var G__12198__$1 = ((typeof new cljs.core.Keyword(null,"type","type",1174270348).cljs$core$IFn$_invoke$arity$1(m) === 'string')?cljs.core.update.cljs$core$IFn$_invoke$arity$3(G__12198,new cljs.core.Keyword(null,"type","type",1174270348),cljs.core.keyword):G__12198);
+var G__40935 = m;
+var G__40935__$1 = ((typeof new cljs.core.Keyword(null,"type","type",1174270348).cljs$core$IFn$_invoke$arity$1(m) === 'string')?cljs.core.update.cljs$core$IFn$_invoke$arity$3(G__40935,new cljs.core.Keyword(null,"type","type",1174270348),cljs.core.keyword):G__40935);
 if(typeof new cljs.core.Keyword(null,"view","view",1247994814).cljs$core$IFn$_invoke$arity$1(m) === 'string'){
-return cljs.core.update.cljs$core$IFn$_invoke$arity$3(G__12198__$1,new cljs.core.Keyword(null,"view","view",1247994814),cljs.core.keyword);
+return cljs.core.update.cljs$core$IFn$_invoke$arity$3(G__40935__$1,new cljs.core.Keyword(null,"view","view",1247994814),cljs.core.keyword);
 } else {
-return G__12198__$1;
+return G__40935__$1;
 }
 });
 /**
@@ -16,13 +16,13 @@ return G__12198__$1;
  * Also recurse into :cards if present (deck components).
  */
 tabletop.logic.serialization.keywordize_component = (function tabletop$logic$serialization$keywordize_component(component){
-var G__12199 = tabletop.logic.serialization.keywordize_type(component);
+var G__40936 = tabletop.logic.serialization.keywordize_type(component);
 if(cljs.core.vector_QMARK_(new cljs.core.Keyword(null,"cards","cards",169174038).cljs$core$IFn$_invoke$arity$1(component))){
-return cljs.core.update.cljs$core$IFn$_invoke$arity$3(G__12199,new cljs.core.Keyword(null,"cards","cards",169174038),(function (cards){
+return cljs.core.update.cljs$core$IFn$_invoke$arity$3(G__40936,new cljs.core.Keyword(null,"cards","cards",169174038),(function (cards){
 return cljs.core.mapv.cljs$core$IFn$_invoke$arity$2(tabletop.logic.serialization.keywordize_type,cards);
 }));
 } else {
-return G__12199;
+return G__40936;
 }
 });
 /**

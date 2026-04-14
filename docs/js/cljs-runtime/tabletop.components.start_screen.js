@@ -11,8 +11,8 @@ return cljs.core.deref(file_input_ref).click();
 } else {
 return null;
 }
-})], null),"Load Game"], null),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"input","input",556931961),new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null,"type","type",1174270348),"file",new cljs.core.Keyword(null,"accept","accept",1874130431),".json",new cljs.core.Keyword(null,"class","class",-2030961996),"hidden",new cljs.core.Keyword(null,"ref","ref",1289896967),(function (p1__31041_SHARP_){
-return cljs.core.reset_BANG_(file_input_ref,p1__31041_SHARP_);
+})], null),"Load Game"], null),new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"input","input",556931961),new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword(null,"type","type",1174270348),"file",new cljs.core.Keyword(null,"accept","accept",1874130431),".json",new cljs.core.Keyword(null,"class","class",-2030961996),"hidden",new cljs.core.Keyword(null,"ref","ref",1289896967),(function (p1__56791_SHARP_){
+return cljs.core.reset_BANG_(file_input_ref,p1__56791_SHARP_);
 }),new cljs.core.Keyword(null,"on-change","on-change",-732046149),(function (e){
 var file = (e.target.files[(0)]);
 if(cljs.core.truth_(file)){
@@ -25,11 +25,11 @@ if(cljs.core.truth_(err_msg)){
 return cljs.core.swap_BANG_.cljs$core$IFn$_invoke$arity$4(tabletop.state.app_state,cljs.core.assoc,new cljs.core.Keyword(null,"error","error",-978969032),err_msg);
 } else {
 var deserialized = tabletop.logic.serialization.deserialize_state(text);
-return cljs.core.swap_BANG_.cljs$core$IFn$_invoke$arity$2(tabletop.state.app_state,(function (p1__31042_SHARP_){
-return cljs.core.assoc.cljs$core$IFn$_invoke$arity$variadic(cljs.core.merge.cljs$core$IFn$_invoke$arity$variadic(cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([p1__31042_SHARP_,deserialized], 0)),new cljs.core.Keyword(null,"view","view",1247994814),new cljs.core.Keyword(null,"table","table",-564943036),cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([new cljs.core.Keyword(null,"error","error",-978969032),null], 0));
+return cljs.core.swap_BANG_.cljs$core$IFn$_invoke$arity$2(tabletop.state.app_state,(function (p1__56792_SHARP_){
+return cljs.core.assoc.cljs$core$IFn$_invoke$arity$variadic(cljs.core.merge.cljs$core$IFn$_invoke$arity$variadic(cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([p1__56792_SHARP_,deserialized], 0)),new cljs.core.Keyword(null,"view","view",1247994814),new cljs.core.Keyword(null,"table","table",-564943036),cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2([new cljs.core.Keyword(null,"error","error",-978969032),null], 0));
 }));
 }
-}catch (e31054){var ex = e31054;
+}catch (e56805){var ex = e56805;
 return cljs.core.swap_BANG_.cljs$core$IFn$_invoke$arity$4(tabletop.state.app_state,cljs.core.assoc,new cljs.core.Keyword(null,"error","error",-978969032),["Failed to parse file: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(ex.message)].join(''));
 }}));
 
