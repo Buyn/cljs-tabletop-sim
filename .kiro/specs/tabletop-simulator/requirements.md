@@ -224,6 +224,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 10. Single-click on a Deck places card  onto the table:
    - The card becomes a table component immediately.
+   - the card appears to the right of the deck.
 
 #### 5.3 Grouping Layout Behavior for not Cards and/or not Decks components
 1. When grouping not Cards and/or not Decks components:

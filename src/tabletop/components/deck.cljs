@@ -46,13 +46,15 @@
                   ;; Non-empty: immediate card draw; long-press overrides to deck drag
                   (let [top-card (peek cards)
                         new-id   (str (random-uuid))
+                        captured-id new-id
                         card     (assoc top-card :type :card :face-up? false
                                                  :id new-id :x x :y y)
                         t (js/setTimeout
                            (fn []
                              ;; Cancel card draw, switch to deck drag
                              (swap! app-state update :components
-                                    #(filterv (fn [c] (not= (:id c) @drawn-id)) %))
+                                    ;; #(filterv (fn [c] (not= (:id c) @drawn-id)) %))
+                                    #(filterv (fn [c] (not= (:id c) captured-id)) %))
                              (emit! :component/add (assoc top-card :type :card :face-up? false
                                                                     :id (str (random-uuid))
                                                                     :x x :y y))
