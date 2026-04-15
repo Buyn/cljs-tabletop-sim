@@ -51,13 +51,14 @@ src/tabletop/
     table.cljs                   — viewport, pan/zoom, drag-select, space-pan
     hand.cljs                    — hand strip, hand-drop-zone?
     deck.cljs                    — deck component
-    card.cljs                    — card component
+    card.cljs                    — card component (text or image-based rendering)
     die.cljs                     — die component
     tile_piece.cljs              — tile piece component
     context_menu.cljs            — floating menu
-    component_panel.cljs         — sidebar main menu: decks, tile, dice, save/load, settings
-    deck_customizer.cljs         — custom deck modal
+    component_panel.cljs         — sidebar main menu: cards, tile, dice, save/load, settings
+    deck_customizer.cljs         — custom deck panel (suits, ranks, card count, suit colors)
     tile_panel.cljs              — tile image configuration panel
+    card_deck_panel.cljs         — card deck from images panel
     keybindings_panel.cljs       — keybindings editor panel
     general_settings_panel.cljs  — general settings panel
     properties_panel.cljs        — component properties editor panel
@@ -140,14 +141,6 @@ src/tabletop/
 - `:card/move-to-hand id`
 - `:card/move-to-table id x y`
 - `:component/move-to-hand id` — generic alias for non-card components (tile-pieces, dice)
-- `:face-src nil | str`
-- `:back-src nil | str`
-- `:grid-cols number`
-- `:grid-rows number`
-- `:tile-index number`
-- `:outer-crop {...}`
-- `:inner-crop {...}`
-- `:corner-radius number`
 
 ### Deck
 - `:deck/shuffle id`
@@ -252,7 +245,11 @@ These wrappers call `emit!` — they are not direct `swap!` calls.
 {:id uuid-str, :type :card, :x number, :y number
  :suit str, :rank str
  :face-color hex-str, :back-color hex-str, :text-color hex-str, :suit-color hex-str
- :face-up? boolean, :rotation number, :scale number, :locked? boolean}
+ :face-up? boolean, :rotation number, :scale number, :locked? boolean
+ ;; Optional image-based rendering (replaces text rendering when present):
+ :face-src      nil | str   ; URL or data-URL for card face image
+ :back-src      nil | str   ; URL or data-URL for card back image
+ :corner-radius nil | number}
 
 ;; Die
 {:id uuid-str, :type :die, :x number, :y number
@@ -294,7 +291,7 @@ Example:
 {:label "Save Component" :action #(emit! :component/export ids)}
 ```
 
-All component context menus include: Lock/Unlock, Bring to Front, Send to Back, Copy, Save Component, Remove. Multi-selection adds a Group action.
+All component context menus include: Lock/Unlock, Bring to Front, Send to Back, Save Component. Copy and Remove may also be present. Multi-selection adds a Group action.
 
 ---
 
@@ -346,8 +343,8 @@ table-y = (screen-y - pan-y) / zoom
 
 ## Main Menu
 The main menu is a persistent UI element that groups all user actions into sections:
-- Cards
-- Tile
+- Cards (Add Standard Deck, Add Custom Deck, Add Deck from Images)
+- Tile (Add Tile Image)
 - Dice
 - Save/Load
 - Settings
@@ -355,6 +352,29 @@ The menu does not block interaction with the table.
 Each menu action triggers either:
 - an immediate event (e.g., add die), or
 - opening a non-modal panel.
+## Deck Customizer Panel
+
+Non-modal, draggable panel. Fields:
+- 4 suit inputs (max 20 chars each), each with an inline color swatch selector (palette of 9 colors). The chosen color is stored as `:suit-color` on each generated card and used when rendering that suit.
+- "Cards per suit" number input (min 1, max 52). Total cards = 4 × count.
+- Rank inputs: shows exactly `count` fields. Fields left blank are auto-filled with incremental numeric values (e.g. "14", "15", …) by `auto-fill-ranks`.
+- 3 color pickers: face background, face-down back, text color.
+- "Confirm" validates (no empty labels, unique suits, unique ranks) and places a shuffled deck.
+- "Cancel" closes without creating a deck.
+
+## Card Deck from Images Panel
+
+Non-modal, draggable panel (`card_deck_panel.cljs`). Fields:
+- Face image: URL text input or local file picker.
+- Columns / Rows: grid dimensions.
+- Card Count: total cards to generate (tiles repeat if count > cols×rows).
+- Global Crop (px): top/bottom/left/right outer margins applied before slicing.
+- Per-Card Inner Borders (px): top/bottom/left/right removed from each tile after slicing.
+- Corner Radius (px): applied to card face/back images.
+- Card Back Image: optional URL or local file; if blank, default back rendering is used.
+
+On confirm: loads the face image, slices it via canvas into data-URLs, assembles cards with `:face-src`, `:back-src`, `:corner-radius`, and places a Deck at `placement-pos`.
+
 ## Hand Area
 
 Fixed strip at the bottom. Collapses when not hovered. Cards centered; overlap when space is limited. Hovered card scales 3× (transform-origin: bottom center); neighbors shift outward. `hand-drop-zone? [cx cy]` checks if client coords fall within the hand element.

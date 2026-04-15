@@ -112,8 +112,8 @@
             {:class    "absolute top-0 left-0 w-48 bg-gray-800 text-white flex flex-col overflow-y-auto shadow-xl"
              :style    {:padding "0.5rem" :padding-top "2.5rem" :min-height "100vh"}}
 
-            ;; Decks section
-            [section-header "Decks" :decks]
+            ;; Cards section
+            [section-header "Cards" :decks]
             (when (= menu-section :decks)
               [:div {:class "mb-2"}
                [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
@@ -121,18 +121,18 @@
                 "Add Standard Deck"]
                [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
                 {:on-click on-open-customizer}
-                "Add Custom Deck"]])
+                "Add Custom Deck"]
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click on-open-card-deck-panel}
+                "Add Deck from Images"]])
 
             ;; Tile Images section
-            [section-header "Tile Images" :tiles]
+            [section-header "Tile" :tiles]
             (when (= menu-section :tiles)
               [:div {:class "mb-2"}
                [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
                 {:on-click on-open-tile-panel}
-                "Add Tile Image"]
-               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
-                {:on-click on-open-card-deck-panel}
-                "Add Card Deck from Images"]])
+                "Add Tile Image"]])
 
             ;; Dice section
             [section-header "Dice" :dice]

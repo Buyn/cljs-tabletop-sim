@@ -24,7 +24,6 @@
                   face-src back-src corner-radius]} card
           face-up?  (boolean face-up?)
           selected? (contains? (:selection @app-state) id)
-          iact      (:interaction @app-state)
           transform (str (when rotation (str "rotate(" rotation "deg) "))
                          (when (and scale (not= scale 1.0)) (str "scale(" scale ")")))]
       [:div
@@ -68,11 +67,9 @@
               (let [[tx ty] (->table (.-clientX e) (.-clientY e))
                     mode    (:mode iact)]
                 (if (= mode :pending)
-                  ;; Click
                   (if (.-shiftKey e)
                     (add-to-selection! id)
                     (clear-selection!))
-                  ;; Drag ended — check deck drop
                   (when-let [deck (find-deck-at tx ty id)]
                     (let [sel        (:selection @app-state)
                           ids        (if (contains? sel id) sel #{id})
@@ -105,8 +102,9 @@
 
        (cond
          (and face-up? face-src)
-         [:img {:src face-src :style {:width "100%" :height "100%" :object-fit "cover"
-                                      :border-radius (when corner-radius (str corner-radius "px"))}}]
+         [:img {:src face-src
+                :style {:width "100%" :height "100%" :object-fit "cover"
+                        :border-radius (when corner-radius (str corner-radius "px"))}}]
 
          face-up?
          [:div {:class "flex flex-col items-center justify-center w-full h-full"}
@@ -115,11 +113,12 @@
                   :style {:color (or suit-color text-color "#111111")}} suit]]
 
          back-src
-         [:img {:src back-src :style {:width "100%" :height "100%" :object-fit "cover"
-                                      :border-radius (when corner-radius (str corner-radius "px"))}}]
+         [:img {:src back-src
+                :style {:width "100%" :height "100%" :object-fit "cover"
+                        :border-radius (when corner-radius (str corner-radius "px"))}}]
 
          :else
          [:div {:class "w-full h-full flex items-center justify-center"}
           [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40"
                  :style {:background (str "repeating-linear-gradient(45deg,"
-                                          "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])]))))
+                                          "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])])))
