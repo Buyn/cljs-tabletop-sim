@@ -5,7 +5,6 @@
 A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagent, and Tailwind CSS. A solo player can set up and play card and dice games on a 2D virtual table. No backend, no multiplayer, no physics, no custom asset uploads.
 
 ## Glossary
-
 - **Table** — the main 2D play area where components are placed and manipulated.
 - **Component** — any object on the table: a Deck, a Card, or a Die.
 - **Deck** — an ordered stack (LIFO) of Cards where the top card is the last inserted and the first drawn.
@@ -16,6 +15,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 - **Copy List** — a clipboard holding a snapshot of copied components.
 - **Game State** — the complete serializable snapshot of the table (components, hand, viewport).
 - **Save File** — a JSON file downloaded to the local filesystem containing a serialized Game State.
+- **Component File** — a JSON file containing one or more components for reuse or import.
 - **Tile Image** — an image split into a grid of tiles that can be placed on the table as individual components.
 - **Tile Piece** — a single rectangular fragment of a Tile Image.
 
@@ -28,7 +28,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 4. A valid Save File restores the Game State and transitions to the table view.
 5. An invalid file shows an inline error and stays on the start screen.
 
-### 2. Save Game
+### 2. JSON serialisation
+#### Save Game
 
 1. "Save Game" serializes the current Game State to JSON and downloads it as `tabletop-save.json`.
 2. The serialization includes:
@@ -46,6 +47,67 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
      - shape,
      - corner radius.
 3. Saving does not mutate state or interrupt the session.
+
+#### Component Export (Save Component / Group)
+
+1. Any component or selected group of components must support a context menu action:
+   - "Save Component"
+
+2. When triggered:
+   - The selected component(s) are serialized into a JSON file.
+   - The file format must be identical to Save File format, but may contain only:
+     - components
+     - (optionally) hand if relevant
+
+3. The exported file:
+   - Must be downloadable by the browser.
+   - Must not modify current session state.
+
+4. If multiple components are selected:
+   - They are saved together as a single component set.
+   - Relative positions between components must be preserved.
+
+5. The exported file must be compatible with:
+   - "Import Component"
+   - Full "Load Game" (as partial state)
+
+#### Component Import
+
+1. The main menu must include a action:
+   - "Import Component"
+
+2. When triggered:
+   - The user selects a JSON file.
+
+3. The file may contain:
+   - A full Save File, OR
+   - A partial component export
+
+4. On successful load:
+   - Components are added to the current session (no reset).
+   - Existing state is preserved.
+
+5. Placement rules:
+   - Components are placed relative to:
+     - The last middle-click position, if available
+     - Otherwise center of viewport
+
+6. Relative positioning:
+   - Imported components must preserve their internal layout.
+
+7. Invalid or malformed data:
+   - Must be ignored safely.
+   - Valid components in the file should still be imported.
+
+8. Hand data (if present):
+   - Cards are added to the current hand.
+
+9. No UI blocking:
+   - Import must not interrupt the session.
+
+10. Importing a full Save File:
+   - Treated as a component set
+   - Does NOT replace current state
 
 ### 3. Add Components
 
@@ -172,7 +234,14 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 11. The chosen suit color is used when rendering that suit on cards.
 
 ### 5. Components Behavior
-#### 5.1 Card Manipulation
+#### All component Manipulation
+1. All component context menus must include:
+   - "Lock / Unlock"
+   - "Bring to Front"
+   - "Send to Back"
+   - "Save Component"
+
+#### Card Manipulation
 1. Dragging a Card moves it in real time.
 2. Double-clicking a Card toggles face-up / face-down.
 3. Dragging a Card into the Hand area moves it from the table to the hand; while dragging over the hand the card visually shrinks to hand scale (scale 0.33 from top-left).
@@ -189,12 +258,8 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 13. "C" while dragging a card copies it to the copy list.
 14. "X" while dragging a card copies it and removes it from the table.
 15. Selecting multiple components and right-clicking shows a "Group" action that merges multiple Cards and/or Decks into a deck (or into an existing selected single deck).
-16. All component context menus must include:
-   - "Lock / Unlock"
-   - "Bring to Front"
-   - "Send to Back"
 
-#### 5.2 Deck Interaction (Advanced Behavior)
+#### Deck Interaction (Advanced Behavior)
 1. Dragging a Card over any part of a Deck and releasing it places the card on top of that deck.
 1. Dragging a Deck over any part Card of a and releasing it places the card on bottom of that deck.
 2. Any overlap between a Card and a Deck during drop is sufficient to trigger insertion into the deck.
@@ -226,7 +291,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - The card becomes a table component immediately.
    - the card appears to the right of the deck.
 
-#### 5.3 Grouping Layout Behavior for not Cards and/or not Decks components
+#### Grouping Layout Behavior for not Cards and/or not Decks components
 1. When grouping not Cards and/or not Decks components:
    - components do not stack
    - All resulting components must be repositioned around a computed group center.
@@ -243,7 +308,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
      - Stable and predictable positioning.
 4. The resulting grouped structure must feel like a physically stacked or neatly arranged set.
 
-#### 5.4 Deck Drag Behavior
+#### Deck Drag Behavior
 1. Immediate drag (no hold delay):
    - Instantly draws the top card from the deck.
    - The top card is removed from the deck.
@@ -254,7 +319,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 3. This behavior prioritizes card interaction and eliminates delay when drawing cards.
 
-#### 5.5 Hand Behavior
+#### Hand Behavior
 1. The hand strip is fixed at the bottom of the viewport.
    - When neither the strip nor any card in it is hovered, the hand body slides down by ~90%, leaving only a thin edge visible.
    - Cards remain visible above the hand and are not clipped; approximately half of each card’s height remains visible.
@@ -384,6 +449,11 @@ Example for d6:
 7. "C" while dragging copies the dragged component to the copy list.
 8. "X" while dragging copies and removes the dragged component.
 9. "V" pastes the copy list: into the hand if the cursor is over the hand, otherwise onto the table at the cursor position.
+10. Exporting:
+   - "Save Component" applies to:
+     - Selected components,
+     - Dragged component,
+     - Component under cursor.
 
 ## Input & Controls System
 ### 1 General Principles
@@ -408,7 +478,6 @@ Example for d6:
    - Loading from file.
 
 3. A new main menu section **"Settings"** must exist with:
-
    - "Configure Keybindings"
    - "Save Settings"
    - "Load Settings"
@@ -436,8 +505,7 @@ Dice behavior:
 - `A` — flip component (card or deck)
 
 #### Hand ↔ Table
-
-- `1–0` — move card from hand to table at cursor
+- `1–0` — move component from hand to table at cursor
 - `Q` — move component from table to hand
 
 ---

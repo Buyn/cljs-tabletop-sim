@@ -123,6 +123,7 @@
 ;; ---------------------------------------------------------------------------
 
 (defmethod handle-event :card/move-to-hand  [state _ id]     (move-card-to-hand state id))
+(defmethod handle-event :component/move-to-hand [state _ id] (move-card-to-hand state id))
 (defmethod handle-event :card/move-to-table [state _ id x y] (move-card-to-table state id x y))
 
 (defn move-card-to-hand!  [id]     (emit! :card/move-to-hand id))

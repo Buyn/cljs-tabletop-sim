@@ -1,6 +1,7 @@
 (ns tabletop.components.die
   (:require [tabletop.state :refer [app-state add-to-selection! clear-selection!
                                     emit! component-actions]]
+            [tabletop.components.hand :refer [hand-drop-zone?]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (def die-colors
@@ -42,12 +43,11 @@
           (let [iact (:interaction @app-state)]
             (when (and iact (= (:id iact) id))
               (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
-                (if (tabletop.components.hand/hand-drop-zone? [(.-clientX e) (.-clientY e)])
+                (when (hand-drop-zone? [(.-clientX e) (.-clientY e)])
                   (let [sel (:selection @app-state)
                         ids (if (contains? sel id) sel #{id})]
-                    (doseq [sid ids] (emit! :card/move-to-hand sid))
-                    (emit! :interaction/end))
-                  (emit! :interaction/update-pointer tx ty (.now js/Date)))))))
+                    (doseq [sid ids] (emit! :card/move-to-hand sid))))
+                (emit! :interaction/update-pointer tx ty (.now js/Date))))))
 
         :on-pointer-up
         (fn [e]

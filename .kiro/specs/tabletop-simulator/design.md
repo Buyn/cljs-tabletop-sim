@@ -45,7 +45,7 @@ Reagent re-render
 ```
 src/tabletop/
   core.cljs                      — entry point, mounts app
-  state.cljs                     — atom, pure helpers, emit!, handle-event, component-actions
+  state.cljs                     — atom, pure helpers, emit!, handle-event, component-actions, placement-pos
   components/
     app.cljs                     — top-level router
     start_screen.cljs            — new/load game
@@ -67,7 +67,7 @@ src/tabletop/
     shuffle.cljs                 — Fisher-Yates, make-standard-deck, make-custom-deck
     dice.cljs                    — make-die, roll-die
     tile.cljs                    — tile slicing, crop, shape logic
-    serialization.cljs           — serialize-state, deserialize-state
+    serialization.cljs           — serialize-state, deserialize-state, serialize-components, deserialize-components
     validation.cljs              — validate-deck-config, validate-save-file
     keybindings.cljs             — keybinding config, key-for lookup
     input.cljs                   — keyboard input handler, emits events only
@@ -112,7 +112,6 @@ src/tabletop/
 ---
 
 ## Registered Events
-
 ### Selection
 - `:selection/set ids` — replace selection
 - `:selection/add id` — add to selection
@@ -165,6 +164,9 @@ src/tabletop/
 
 ---
 
+### Import / Export
+- `:component/export ids`
+- `:component/import data`
 ## Selection-Aware Events
 
 ```clojure
@@ -281,6 +283,8 @@ These wrappers call `emit!` — they are not direct `swap!` calls.
 Example:
 ```clojure
 {:label "Flip" :action #(emit! :selection/apply :card/flip id)}
+{:label "Save Component"
+ :action #(emit! :component/export ids)}
 ```
 
 ---

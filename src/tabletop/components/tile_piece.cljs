@@ -106,7 +106,7 @@
                     (add-to-selection! id)
                     (clear-selection!))
                   (when (hand-drop-zone? [(.-clientX e) (.-clientY e)])
-                    (emit! :card/move-to-hand id))))
+                    (emit! :component/move-to-hand id))))
               (emit! :interaction/end))))
 
         :on-pointer-cancel

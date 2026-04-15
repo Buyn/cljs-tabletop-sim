@@ -1,6 +1,7 @@
 (ns tabletop.components.card
   (:require [tabletop.state :refer [app-state add-to-selection! clear-selection!
                                     emit! component-actions]]
+            [tabletop.components.hand :refer [hand-drop-zone?]]
             [tabletop.components.context-menu :refer [open-context-menu!]]))
 
 (defn- ->table [sx sy]
@@ -54,13 +55,11 @@
           (let [iact (:interaction @app-state)]
             (when (and iact (= (:id iact) id))
               (let [[tx ty] (->table (.-clientX e) (.-clientY e))]
-                ;; Hand drop check — move to hand if over hand zone
-                (if (tabletop.components.hand/hand-drop-zone? [(.-clientX e) (.-clientY e)])
+                (when (hand-drop-zone? [(.-clientX e) (.-clientY e)])
                   (let [sel (:selection @app-state)
                         ids (if (contains? sel id) sel #{id})]
-                    (doseq [sid ids] (emit! :card/move-to-hand sid))
-                    (emit! :interaction/end))
-                  (emit! :interaction/update-pointer tx ty (.now js/Date)))))))
+                    (doseq [sid ids] (emit! :card/move-to-hand sid))))
+                (emit! :interaction/update-pointer tx ty (.now js/Date))))))
 
         :on-pointer-up
         (fn [e]
@@ -76,10 +75,11 @@
                     (clear-selection!))
                   ;; Drag ended — check deck drop
                   (when-let [deck (find-deck-at tx ty id)]
-                    (let [sel  (:selection @app-state)
-                          ids  (if (contains? sel id) sel #{id})]
+                    (let [sel        (:selection @app-state)
+                          ids        (if (contains? sel id) sel #{id})
+                          comp-by-id (into {} (map (juxt :id identity) (:components @app-state)))]
                       (doseq [cid ids]
-                        (when (= :card (:type (some #(when (= (:id %) cid) %) (:components @app-state))))
+                        (when (= :card (:type (comp-by-id cid)))
                           (emit! :card/drop-on-deck cid (:id deck)))))))
                 (when on-drag-end (on-drag-end [tx ty]))
                 (emit! :interaction/end)))))
