@@ -56,7 +56,7 @@
       (update-in [:table :pan-y] + dy)))
 
 (defn zoom-table [state delta]
-  (update-in state [:table :zoom] (fn [z] (max 0.5 (min 2.0 (+ z delta))))))
+  (update-in state [:table :zoom] (fn [z] (max 0.1 (min 10.0 (+ z delta))))))
 
 ;; ---------------------------------------------------------------------------
 ;; Event system
@@ -164,6 +164,57 @@
 (defn copy-single-to-list!  [id]      (emit! :clipboard/copy-single id))
 (defn paste-from-list!      [cx cy]   (emit! :clipboard/paste cx cy))
 (defn paste-to-hand!        []        (emit! :clipboard/paste-to-hand))
+
+;; ---------------------------------------------------------------------------
+;; Import / Export
+;; ---------------------------------------------------------------------------
+
+(defmethod handle-event :component/export [state _ ids]
+  (let [id-set (set ids)
+        comps  (filter #(id-set (:id %)) (:components state))
+        payload {"version" 1 "components" comps "hand" []}
+        json   (js/JSON.stringify (clj->js payload))
+        blob   (js/Blob. #js [json] #js {:type "application/json"})
+        url    (js/URL.createObjectURL blob)
+        a      (.createElement js/document "a")]
+    (set! (.-href a) url)
+    (set! (.-download a) "tabletop-component.json")
+    (.appendChild (.-body js/document) a)
+    (.click a)
+    (.removeChild (.-body js/document) a)
+    (js/URL.revokeObjectURL url)
+    state))
+
+(defmethod handle-event :component/import [state _ data]
+  ;; data is already a parsed clj map (keywordized)
+  (let [comps (mapv (fn [c]
+                      (try
+                        (cond-> c
+                          (string? (:type c)) (update :type keyword)
+                          true (assoc :id (str (random-uuid))))
+                        (catch :default _ nil)))
+                    (get data :components []))
+        valid  (filterv some? comps)
+        ;; Place relative to last-middle-click or viewport center
+        [px py] (or (:last-middle-click state)
+                    (let [{:keys [pan-x pan-y zoom]} (:table state)
+                          vw (.-innerWidth js/window)
+                          vh (.-innerHeight js/window)]
+                      [(/ (- (/ vw 2) pan-x) zoom)
+                       (/ (- (/ vh 2) pan-y) zoom)]))
+        base-x  (:x (first valid) 0)
+        base-y  (:y (first valid) 0)
+        placed  (mapv #(assoc % :x (+ px (- (:x % 0) base-x))
+                                :y (+ py (- (:y % 0) base-y))) valid)
+        hand-in (mapv (fn [c]
+                        (try (cond-> c
+                               (string? (:type c)) (update :type keyword)
+                               true (assoc :id (str (random-uuid))))
+                             (catch :default _ nil)))
+                      (get data :hand []))]
+    (-> state
+        (update :components into placed)
+        (update :hand into (filterv some? hand-in)))))
 
 ;; ---------------------------------------------------------------------------
 ;; Placement helper
@@ -571,6 +622,8 @@
               :action #(doseq [i ids] (emit! :component/send-to-back i))}
              {:label "Copy"
               :action #(emit! :clipboard/copy ids)}
+             {:label "Save Component"
+              :action #(emit! :component/export ids)}
              {:label "Remove"
               :action #(doseq [i ids] (emit! :component/remove i))}]
       (> (count sel) 1)

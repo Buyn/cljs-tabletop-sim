@@ -1,5 +1,4 @@
 # Requirements
-
 ## Introduction
 
 A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagent, and Tailwind CSS. A solo player can set up and play card and dice games on a 2D virtual table. No backend, no multiplayer, no physics, no custom asset uploads.
@@ -9,6 +8,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 - **Component** — any object on the table: a Deck, a Card, or a Die.
 - **Deck** — an ordered stack (LIFO) of Cards where the top card is the last inserted and the first drawn.
 - **Card** — a single playing card. Has a face-up and face-down state.
+  - May optionally use image-based rendering for face and/or back.
 - **Die** — a single die with a fixed face count (d4, d6, d8, d10, d12, d20, d100).
 - **Hand** — a private strip at the bottom of the viewport holding Cards face-up.
 - **Selection** — a set of component IDs that are acted on together.
@@ -110,13 +110,14 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Does NOT replace current state
 
 ### 3. Add Components
-
 1. "Add Standard Deck" places a new shuffled 52-card deck on the table.
 2. "Add Custom Deck" opens the Deck Customizer.
 3. Selecting a die type places a new die of that type on the table with a random initial roll result.
 4. Multiple decks and dice of the same type may be added in one session.
 
-### 3A. Tile Images
+### 3A. Image-Based Components
+#### 3A.1 Tile Images
+##### Tile Images
 
 1. The main menu includes a new section: "Add Tile Image".
 
@@ -126,7 +127,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - A close ("×") button in the title bar closes the panel, cancel creation.
 
 
-#### Tile Source
+##### Tile Source
 
 3. The panel allows selecting an image source:
    - A URL to an online image, or
@@ -134,7 +135,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Global Image Cropping
+##### Global Image Cropping
 
 4. The player may define outer margins for the source image:
    - Top, Bottom, Left, Right.
@@ -143,7 +144,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Tile Grid
+##### Tile Grid
 
 5. The player defines grid size:
    - Number of tiles horizontally.
@@ -153,7 +154,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Per-Tile Cropping (Inner Borders)
+##### Per-Tile Cropping (Inner Borders)
 
 7. The player may define inner borders applied to every tile:
    - Top, Bottom, Left, Right.
@@ -162,7 +163,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Tile Selection
+##### Tile Selection
 
 8. The player may optionally specify a list of tile indices:
    - If empty, all tiles are added.
@@ -179,7 +180,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Tile Shape
+##### Tile Shape
 
 10. Tile shape is configurable and defined relative to the tile center:
 
@@ -194,7 +195,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Corner Rounding
+##### Corner Rounding
 
 12. Optional corner rounding:
    - Applies only to rectangular tiles.
@@ -203,7 +204,7 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ---
 
-#### Placement
+##### Placement
 
 13. On confirmation:
    - Selected tiles are added to the table.
@@ -211,6 +212,97 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 14. A 1×1 grid is valid:
    - The full image becomes a single tile.
+
+#### 3A.2 Card Deck from Images
+##### Card Deck from Images
+1. The main menu includes a new section:
+   - "Add Card Deck from Images"
+2. Selecting it opens a panel following global panel rules:
+   - Non-modal
+   - Draggable
+   - Closable via "×"
+   - Does not block table interaction
+
+##### Card Face Source
+3. The player selects a source image:
+   - URL or local file
+4. The player defines:
+   - Number of columns
+   - Number of rows
+5. The image is split into a grid, identical to Tile Images.
+
+##### Global Cropping
+6. The player may define outer margins:
+   - Top, Bottom, Left, Right
+7. Cropping is applied before slicing.
+
+##### Per-Card Cropping
+8. The player may define inner borders:
+   - Top, Bottom, Left, Right
+9. These are applied to each card after slicing.
+
+##### Card Count
+10. The player specifies total number of cards to generate.
+11. Cards are taken in row-major order.
+12. If count exceeds available tiles:
+   - Tiles repeat from the beginning.
+13. If count is less:
+   - Only first N cards are used.
+14. A 1×1 grid is valid:
+   - Produces a single card.
+
+##### Card Shape
+15. Cards support shape configuration:
+   - Rectangle (default)
+   - Rounded rectangle (via corner radius)
+16. Corner radius is configurable.
+
+##### Card Back (Important)
+17. The player may optionally specify a separate image for card back:
+   - URL or local file
+18. If provided:
+   - All cards in the deck use this back image.
+19. If not provided:
+   - Default card back rendering is used.
+
+##### Deck Creation
+20. On confirmation:
+   - All generated cards are immediately assembled into a Deck.
+21. The Deck:
+   - Behaves exactly like a standard Deck
+   - Supports all deck interactions
+22. Cards:
+   - Behave exactly like standard cards
+   - Fully compatible with:
+     - hand
+     - grouping
+     - serialization
+     - copy/paste
+
+##### Deck Back Behavior
+23. If any card in a Deck has a custom back image:
+   - The Deck uses that back image for rendering.
+24. This applies even if:
+   - Cards from other decks are merged into it.
+25. If multiple back images exist:
+   - The Deck uses the back of the top card.
+
+##### Placement
+26. The created Deck is placed:
+   - At last middle-click position
+   - Otherwise at viewport center
+
+##### Serialization
+27. Each card stores:
+   - Source image
+   - Grid configuration
+   - Tile index
+   - Crop parameters
+   - Back image (if any)
+   - Corner radius
+28. Deck serialization must preserve:
+   - Card order
+   - Visual properties
 
 ### 4. Deck Customization
 1. The Deck Customizer opens as a non-modal draggable panel.
@@ -351,7 +443,6 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 
 ### 6. Components Appearance
 #### 6.1 Card Appearance
-
 1. A face-up card shows its rank and suit centered on a colored background.
 2. A face-down card shows a blue hatched pattern on a dark background.
 3. A selected card is highlighted with a cyan ring.
@@ -363,11 +454,13 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 11. In a standard deck:
     - Spades (♠) and Clubs (♣) render in black,
     - Hearts (♥) and Diamonds (♦) render in red.
+12. A card may use an image for its face:
+    - If defined, it replaces text-based rendering.
+13. A card may use an image for its back:
+    - If defined, it replaces default back rendering.
 
 #### 6.2 Tile Piece Appearance
-
 1. A Tile Piece renders as a fragment of its source image.
-
 2. Each Tile Piece stores:
    - Source image reference (URL or local),
    - Grid configuration,
@@ -376,25 +469,22 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Inner crop (per-tile borders),
    - Shape type,
    - Corner radius (if applicable).
-
 3. Tile Pieces:
    - Do not have face-up / face-down states.
    - Respect their shape via masking (clip-path or equivalent).
-
 4. Shape rules:
    - Rectangle → full bounds.
    - Ellipse → inscribed oval.
    - Hexagon → centered symmetric hex.
-
 5. Visual continuity:
    - Adjacent tiles from the same source align seamlessly (after cropping).
-
 6. Tile Pieces support:
    - Dragging,
    - Selection,
    - Grouping,
    - Copy / paste,
    - Hand interaction.
+
 ### 7. Dice
 1. Clicking a Die rolls it: generates a uniform random integer in [1, N] and displays it immediately.
 1A. Increment / decrement behavior:

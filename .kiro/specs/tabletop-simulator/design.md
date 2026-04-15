@@ -1,5 +1,4 @@
 # Design
-
 ## Overview
 
 A browser-based 2D tabletop simulator. All state lives in a single Reagent atom. No backend — persistence is local JSON download/upload.
@@ -140,6 +139,15 @@ src/tabletop/
 - `:card/drop-on-deck card-id deck-id`
 - `:card/move-to-hand id`
 - `:card/move-to-table id x y`
+- `:component/move-to-hand id` — generic alias for non-card components (tile-pieces, dice)
+- `:face-src nil | str`
+- `:back-src nil | str`
+- `:grid-cols number`
+- `:grid-rows number`
+- `:tile-index number`
+- `:outer-crop {...}`
+- `:inner-crop {...}`
+- `:corner-radius number`
 
 ### Deck
 - `:deck/shuffle id`
@@ -165,8 +173,8 @@ src/tabletop/
 ---
 
 ### Import / Export
-- `:component/export ids`
-- `:component/import data`
+- `:component/export ids` — serialize selected components to JSON file download (does not mutate state)
+- `:component/import data` — add components from parsed save/component file into current session
 ## Selection-Aware Events
 
 ```clojure
@@ -214,7 +222,7 @@ These wrappers call `emit!` — they are not direct `swap!` calls.
 
  :table        {:pan-x  number    ; viewport offset x (px)
                 :pan-y  number    ; viewport offset y (px)
-                :zoom   number}   ; scale factor, clamped [0.5, 2.0]
+                :zoom   number}   ; scale factor, clamped [0.1, 10.0]
 
  :components   [component ...]   ; all table components, render order = z-order
 
@@ -283,28 +291,32 @@ These wrappers call `emit!` — they are not direct `swap!` calls.
 Example:
 ```clojure
 {:label "Flip" :action #(emit! :selection/apply :card/flip id)}
-{:label "Save Component"
- :action #(emit! :component/export ids)}
+{:label "Save Component" :action #(emit! :component/export ids)}
 ```
+
+All component context menus include: Lock/Unlock, Bring to Front, Send to Back, Copy, Save Component, Remove. Multi-selection adds a Group action.
 
 ---
 
 ## Drag Interaction
 
+All drag logic lives in `state.cljs` via the interaction state machine. UI components emit raw pointer events only — no local gesture atoms.
+
 ### Cards, Dice, Tile Pieces
 
-1. `pointerdown` — record cursor offset in table-space, set pointer capture.
-2. `pointermove` — if moved > threshold, `move-component!` (→ `emit! :component/move`). Group drag: delta applied to all selected. If over hand zone: `move-card-to-hand!`.
-3. `pointerup` — release capture. If not moved: shift → add to selection, plain → clear selection (+ roll for die).
+1. `pointerdown` → `emit! :interaction/start-component-press id tx ty now`
+2. `pointermove` → `emit! :interaction/update-pointer tx ty now` (state resolves pending → drag on `dist > 6px`; group drag if selected)
+3. `pointerup` — if `:pending`: shift → add to selection, plain → clear selection (+ roll for die). Then `emit! :interaction/end`.
+4. `pointercancel` → `emit! :interaction/end`
+
+Hand drop: on `pointermove`, if `hand-drop-zone?` is true, emit `:card/move-to-hand` (or `:component/move-to-hand` for tile-pieces) for all relevant ids. Interaction ends on `pointerup`.
 
 ### Deck
 
-1. `pointerdown` (not locked, not empty) — `emit! :deck/draw-card-silent`, add drawn card to `:components` at deck position, capture pointer.
-2. `pointermove` — `move-component!` on drawn card id.
-3. `pointerup` — release capture. Card is already in state at correct position.
-4. `pointercancel` — remove drawn card, return it to deck.
-
-No ghost rendering. The drawn card is a real component from the moment of `pointerdown`.
+1. `pointerdown` → `emit! :interaction/start-deck-press deck-id tx ty now`
+2. `pointermove` → `emit! :interaction/update-pointer tx ty now` (state resolves: `dist > 6px` → draw top card + `:card-drag`; `dt > 1000ms` → `:deck-drag`)
+3. `pointerup` — if `:pending`: `emit! :deck/draw-to-table`. Then `emit! :interaction/end`.
+4. `pointercancel` → `emit! :interaction/end`
 
 ### Coordinate System
 
@@ -326,8 +338,8 @@ table-y = (screen-y - pan-y) / zoom
 
 - **Left-click drag on empty area** → rubber-band selection.
 - **Middle-click drag** → pan.
-- **Scroll** → zoom, clamped [0.5, 2.0], cursor-anchored.
-- **Space held** → fast pan (3×) via global `mousemove` listener.
+- **Scroll** → zoom, clamped [0.1, 10.0], cursor-anchored.
+- **Space held** → fast pan (5×, inverted) via global `mousemove` listener.
 - **Right-click on empty area** → context menu with "Paste".
 
 ---
@@ -446,5 +458,5 @@ Future capabilities enabled by the event log:
 | Invalid save file | Set `:error`; stay on start screen |
 | Draw from empty deck | No-op (guarded by `(not empty?)`) |
 | Deck customizer empty label | Inline error; confirm disabled |
-| Zoom at boundary | Silently clamped |
+| Zoom at boundary | Silently clamped to [0.1, 10.0] |
 | Component dragged off-screen | Stays at position; player pans to retrieve |

@@ -3,7 +3,7 @@
             [tabletop.logic.dice :refer [make-die]]
             [tabletop.logic.serialization :refer [serialize-state deserialize-state]]
             [tabletop.logic.keybindings :as kb]
-            [tabletop.state :refer [app-state general-settings add-component! placement-pos]]))
+            [tabletop.state :refer [app-state general-settings add-component! placement-pos emit!]]))
 
 (defn add-standard-deck! []
   (let [[x y] (placement-pos)]
@@ -66,6 +66,17 @@
     (.removeChild (.-body js/document) anchor)
     (js/URL.revokeObjectURL url)))
 
+(defn- import-component! [file]
+  (when file
+    (let [reader (js/FileReader.)]
+      (set! (.-onload reader)
+            (fn [ev]
+              (try
+                (let [data (js->clj (js/JSON.parse (-> ev .-target .-result)) :keywordize-keys true)]
+                  (emit! :component/import data))
+                (catch :default _))))
+      (.readAsText reader file))))
+
 (defn- load-game! [file]
   (when file
     (let [reader (js/FileReader.)]
@@ -80,8 +91,9 @@
       (.readAsText reader file))))
 
 (defn component-panel [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-general-settings]}]
-  (let [file-input    (atom nil)
-        settings-file (atom nil)]
+  (let [file-input      (atom nil)
+        import-input    (atom nil)
+        settings-file   (atom nil)]
     (fn [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-general-settings]}]
       (let [{:keys [menu-open menu-section]} @app-state]
         [:div
@@ -145,7 +157,16 @@
                         :class     "hidden"
                         :ref       #(reset! file-input %)
                         :on-change (fn [e]
-                                     (load-game! (-> e .-target .-files (aget 0))))}]])
+                                     (load-game! (-> e .-target .-files (aget 0))))}]
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click #(when @import-input (.click @import-input))}
+                "Import Component"]
+               [:input {:type      "file"
+                        :accept    ".json"
+                        :class     "hidden"
+                        :ref       #(reset! import-input %)
+                        :on-change (fn [e]
+                                     (import-component! (-> e .-target .-files (aget 0))))}]])
 
             ;; Settings section
             [section-header "Settings" :settings]
