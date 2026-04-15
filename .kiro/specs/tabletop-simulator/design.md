@@ -55,7 +55,7 @@ src/tabletop/
     die.cljs                     — die component
     tile_piece.cljs              — tile piece component
     context_menu.cljs            — floating menu
-    component_panel.cljs         — sidebar: add decks/dice/tiles, save/load
+    component_panel.cljs         — sidebar main menu: decks, tile, dice, save/load, settings
     deck_customizer.cljs         — custom deck modal
     tile_panel.cljs              — tile image configuration panel
     keybindings_panel.cljs       — keybindings editor panel
@@ -344,6 +344,17 @@ table-y = (screen-y - pan-y) / zoom
 
 ---
 
+## Main Menu
+The main menu is a persistent UI element that groups all user actions into sections:
+- Cards
+- Tile
+- Dice
+- Save/Load
+- Settings
+The menu does not block interaction with the table.
+Each menu action triggers either:
+- an immediate event (e.g., add die), or
+- opening a non-modal panel.
 ## Hand Area
 
 Fixed strip at the bottom. Collapses when not hovered. Cards centered; overlap when space is limited. Hovered card scales 3× (transform-origin: bottom center); neighbors shift outward. `hand-drop-zone? [cx cy]` checks if client coords fall within the hand element.

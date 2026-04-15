@@ -20,8 +20,57 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 - **Tile Piece** — a single rectangular fragment of a Tile Image.
 
 ## Requirements
-### 1. Session Start
+### Main Menu Structure
+#### Structure Notes
+The application provides a persistent main menu that exposes all core actions.
+The menu is logically grouped into sections.
+All menu actions must be accessible without blocking interaction with the table.
+Multiple components of the same type may be added in one session.
+#### Cards
+- Add Standard Deck
+- Add Custom Deck
+- Add Deck from Images
+Notes:
+- "Add Standard Deck" places a shuffled 52-card deck.
+- "Add Custom Deck" opens the Deck Customizer.
+- "Add Deck from Images" opens the image deck panel.
+- All actions result in a Deck being placed on the table.
 
+#### Tile
+- Add Tile Image
+Notes:
+- "Add Tile Image" opens the tile configuration panel.
+- Produces Tile Pieces placed on the table.
+
+#### Dice
+- d2
+- d4
+- d6
+- d10
+- d12
+- d20
+- d100
+Notes:
+- Selecting any die immediately places it on the table with a random value.
+
+#### Save / Load
+- Save Game
+- Load Game
+- Import Components
+Notes:
+- "Save Game" exports full Game State.
+- "Load Game" replaces current session.
+- "Import Components" merges into current session.
+
+#### Settings
+- Configure Keybindings
+- General Settings
+- Save Settings
+- Load Settings
+Notes:
+- All settings panels must follow global panel rules (non-modal, draggable, closable).
+
+### 1. Session Start
 1. On load the app shows a start screen with "New Game" and "Load Game".
 2. "New Game" initializes an empty table and transitions to the table view.
 3. "Load Game" prompts for a local JSON file.
@@ -109,14 +158,13 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Treated as a component set
    - Does NOT replace current state
 
-### 3. Add Components
-1. "Add Standard Deck" places a new shuffled 52-card deck on the table.
-2. "Add Custom Deck" opens the Deck Customizer.
-3. Selecting a die type places a new die of that type on the table with a random initial roll result.
-4. Multiple decks and dice of the same type may be added in one session.
+1. All component creation actions are triggered from the Main Menu (see Main Menu Structure).
+2. Cards:
+3. Dice:
+4. Tile Images:
 
-### 3A. Image-Based Components
-#### 3A.1 Tile Images
+### 3. Image-Based Components
+#### 3.1 Tile Images
 ##### Tile Images
 
 1. The main menu includes a new section: "Add Tile Image".
@@ -213,10 +261,9 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
 14. A 1×1 grid is valid:
    - The full image becomes a single tile.
 
-#### 3A.2 Card Deck from Images
+#### 3.2 Card Deck from Images
 ##### Card Deck from Images
-1. The main menu includes a new section:
-   - "Add Card Deck from Images"
+1. The action "Add Deck from Images" is located under the "Cards" section of the Main Menu.
 2. Selecting it opens a panel following global panel rules:
    - Non-modal
    - Draggable
@@ -484,7 +531,6 @@ A browser-based tabletop simulator built with ClojureScript, shadow-cljs, Reagen
    - Grouping,
    - Copy / paste,
    - Hand interaction.
-
 ### 7. Dice
 1. Clicking a Die rolls it: generates a uniform random integer in [1, N] and displays it immediately.
 1A. Increment / decrement behavior:
@@ -518,7 +564,7 @@ Example for d6:
    - the last middle-click position, if available,
    - otherwise at the center of the viewport.
 
-### 8B. Camera Zoom Consistency
+### 9. Camera Zoom Consistency
 1. Both zoom-in and zoom-out operations must:
    - Preserve cursor-relative positioning,
    - Adjust camera pan dynamically.
@@ -529,7 +575,7 @@ Example for d6:
    - The cursor is "anchored" to the world,
    - And the world scales around that anchor point.
 
-### 9. Selection and Clipboard
+### 10. Selection and Clipboard
 1. Shift-clicking a component adds it to the selection; plain click clears the selection.
 2. Selected components are highlighted with a cyan ring.
 3. The highlight persists when a context menu is opened via right-click.
