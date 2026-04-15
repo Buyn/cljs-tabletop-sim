@@ -5,11 +5,14 @@
 (defn- num-input [label value on-change & [{:keys [min max] :or {min 0 max 9999}}]]
   [:div {:style {:display "flex" :flex-direction "column" :gap "2px"}}
    [:label {:style {:font-size "11px" :color "#9ca3af"}} label]
-   [:input {:type "number" :min min :max max :value value
+   [:input {:type "number" :min min :max max :default-value value
             :style {:width "60px" :padding "3px 6px" :border-radius "4px"
                     :background "#374151" :color "white" :border "1px solid #4b5563"
                     :box-sizing "border-box"}
-            :on-change #(on-change (max min (js/parseInt (.. % -target -value) 10)))}]])
+            :on-change (fn [e]
+                         (let [v (js/parseInt (.. e -target -value) 10)]
+                           (when-not (js/isNaN v)
+                             (on-change (cljs.core/max min (cljs.core/min max v))))))}]])
 
 (defn- crop-row [label crop on-change]
   [:div {:style {:display "flex" :gap "6px" :align-items "flex-end"}}
@@ -17,11 +20,13 @@
    (for [[k lbl] [[:top "Top"] [:bottom "Bottom"] [:left "Left"] [:right "Right"]]]
      [:div {:key k :style {:display "flex" :flex-direction "column" :gap "2px"}}
       [:label {:style {:font-size "11px" :color "#9ca3af"}} lbl]
-      [:input {:type "number" :min 0 :value (get crop k 0)
+      [:input {:type "number" :min 0 :default-value (get crop k 0)
                :style {:width "52px" :padding "3px 6px" :border-radius "4px"
                        :background "#374151" :color "white" :border "1px solid #4b5563"
                        :box-sizing "border-box"}
-               :on-change #(on-change (assoc crop k (js/parseFloat (.. % -target -value))))}]])])
+               :on-change #(let [v (js/parseFloat (.. % -target -value))]
+                             (when-not (js/isNaN v)
+                               (on-change (assoc crop k v))))}]])])
 
 (defn- src-input [label value on-change]
   [:div {:style {:display "flex" :flex-direction "column" :gap "4px"}}
@@ -38,47 +43,38 @@
                            (on-change (js/URL.createObjectURL f))))}]])
 
 (defn- make-image-cards
-  "Generate card maps from a loaded image and config."
-  [{:keys [src img cols rows count outer-crop inner-crop corner-radius back-src]}]
-  (let [iw   (.-naturalWidth img)
-        ih   (.-naturalHeight img)
-        oc   outer-crop
-        cw   (- iw (:left oc 0) (:right oc 0))
-        ch   (- ih (:top oc 0) (:bottom oc 0))
-        tw   (/ cw cols)
-        th   (/ ch rows)
-        total (* cols rows)]
-    (vec (for [i (range count)]
-           (let [tile-idx (mod i total)
-                 col      (mod tile-idx cols)
-                 row      (quot tile-idx cols)
-                 ;; Build a data-URL crop via canvas
-                 canvas   (js/document.createElement "canvas")
-                 ic       inner-crop
-                 draw-x   (+ (:left oc 0) (* col tw) (:left ic 0))
-                 draw-y   (+ (:top oc 0) (* row th) (:top ic 0))
-                 draw-w   (- tw (:left ic 0) (:right ic 0))
-                 draw-h   (- th (:top ic 0) (:bottom ic 0))]
-             (set! (.-width canvas) draw-w)
-             (set! (.-height canvas) draw-h)
-             (let [ctx (.getContext canvas "2d")]
-               (.drawImage ctx img draw-x draw-y draw-w draw-h 0 0 draw-w draw-h))
-             {:id            (str (random-uuid))
-              :suit          ""
-              :rank          ""
-              :face-color    "#ffffff"
-              :back-color    "#1e3a5f"
-              :text-color    "#111111"
-              :face-up?      false
-              :face-src      (.toDataURL canvas)
-              :back-src      back-src
-              :corner-radius corner-radius})))))
+  "Generate card maps using CSS background-position to avoid canvas/CORS issues."
+  [{:keys [src cols rows outer-crop inner-crop corner-radius back-src]}]
+  (let [oc   outer-crop
+        ic   inner-crop
+        ;; tile size as percentage of the cropped area
+        tw%  (/ 100.0 cols)
+        th%  (/ 100.0 rows)]
+    (vec (for [row (range rows)
+               col (range cols)]
+           {:id            (str (random-uuid))
+            :suit          ""
+            :rank          ""
+            :face-color    "#ffffff"
+            :back-color    "#1e3a5f"
+            :text-color    "#111111"
+            :face-up?      false
+            ;; Store rendering params; card.cljs uses these when face-src is nil
+            ;; but :face-bg-src is set — rendered via CSS background
+            :face-bg-src   src
+            :face-bg-cols  cols
+            :face-bg-rows  rows
+            :face-bg-col   col
+            :face-bg-row   row
+            :outer-crop    oc
+            :inner-crop    ic
+            :back-src      back-src
+            :corner-radius corner-radius}))))
 
 (defn card-deck-panel [{:keys [on-close]}]
   (let [form    (r/atom {:src           ""
                          :cols          1
                          :rows          1
-                         :count         1
                          :outer-crop    {:top 0 :bottom 0 :left 0 :right 0}
                          :inner-crop    {:top 0 :bottom 0 :left 0 :right 0}
                          :corner-radius 0
@@ -90,7 +86,7 @@
         drag-ox  (r/atom 0)
         drag-oy  (r/atom 0)]
     (fn [{:keys [on-close]}]
-      (let [{:keys [src cols rows count outer-crop inner-crop corner-radius back-src]} @form]
+      (let [{:keys [src cols rows outer-crop inner-crop corner-radius back-src]} @form]
         [:div
          {:style    {:position "fixed" :left (str @panel-x "px") :top (str @panel-y "px")
                      :z-index 50 :width "380px" :background "#1f2937" :color "white"
@@ -101,7 +97,6 @@
           :on-pointer-up    #(reset! dragging false)
           :on-pointer-leave #(reset! dragging false)}
 
-         ;; Title bar
          [:div {:style {:padding "8px 12px" :cursor "grab" :background "#374151"
                         :border-radius "8px 8px 0 0"
                         :display "flex" :justify-content "space-between" :align-items "center"
@@ -116,7 +111,6 @@
                     :style {:background "none" :border "none" :color "white"
                             :cursor "pointer" :font-size "16px"}} "×"]]
 
-         ;; Body
          [:div {:style {:padding "12px" :display "flex" :flex-direction "column" :gap "10px"
                         :max-height "80vh" :overflow-y "auto"}}
 
@@ -124,8 +118,7 @@
 
           [:div {:style {:display "flex" :gap "8px"}}
            [num-input "Columns" cols #(swap! form assoc :cols %) {:min 1}]
-           [num-input "Rows"    rows #(swap! form assoc :rows %) {:min 1}]
-           [num-input "Card Count" count #(swap! form assoc :count %) {:min 1 :max 999}]]
+           [num-input "Rows"    rows #(swap! form assoc :rows %) {:min 1}]]
 
           [:div {:style {:display "flex" :flex-direction "column" :gap "4px"}}
            [:span {:style {:font-size "12px" :color "#9ca3af" :font-weight "600"}} "Global Crop (px)"]
@@ -135,8 +128,7 @@
            [:span {:style {:font-size "12px" :color "#9ca3af" :font-weight "600"}} "Per-Card Inner Borders (px)"]
            [crop-row "Borders" inner-crop #(swap! form assoc :inner-crop %)]]
 
-          [:div {:style {:display "flex" :gap "8px" :align-items "flex-end"}}
-           [num-input "Corner Radius (px)" corner-radius #(swap! form assoc :corner-radius (max 0 %)) {:min 0}]]
+          [num-input "Corner Radius (px)" corner-radius #(swap! form assoc :corner-radius (max 0 %)) {:min 0}]
 
           [src-input "Card Back Image (optional)" back-src #(swap! form assoc :back-src %)]
 
@@ -152,28 +144,20 @@
               (reset! error nil)
               (if (clojure.string/blank? src)
                 (reset! error "Face image source is required.")
-                (let [img (js/Image.)]
-                  (set! (.-crossOrigin img) "anonymous")
-                  (set! (.-onload img)
-                        (fn []
-                          (let [cards    (make-image-cards
-                                          {:src           src
-                                           :img           img
-                                           :cols          cols
-                                           :rows          rows
-                                           :count         count
-                                           :outer-crop    outer-crop
-                                           :inner-crop    inner-crop
-                                           :corner-radius corner-radius
-                                           :back-src      (when-not (clojure.string/blank? back-src) back-src)})
-                                [px py] (placement-pos)]
-                            (add-component! {:id      (str (random-uuid))
-                                             :type    :deck
-                                             :x       px
-                                             :y       py
-                                             :cards   cards
-                                             :custom? false})
-                            (on-close))))
-                  (set! (.-onerror img) #(reset! error "Failed to load image."))
-                  (set! (.-src img) src))))}
+                (let [cards    (make-image-cards
+                                {:src           src
+                                 :cols          cols
+                                 :rows          rows
+                                 :outer-crop    outer-crop
+                                 :inner-crop    inner-crop
+                                 :corner-radius corner-radius
+                                 :back-src      (when-not (clojure.string/blank? back-src) back-src)})
+                      [px py] (placement-pos)]
+                  (add-component! {:id      (str (random-uuid))
+                                   :type    :deck
+                                   :x       px
+                                   :y       py
+                                   :cards   cards
+                                   :custom? false})
+                  (on-close))))}
            "Create Deck"]]]))))

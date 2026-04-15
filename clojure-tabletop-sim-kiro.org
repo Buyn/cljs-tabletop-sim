@@ -3684,6 +3684,24 @@ Deck должен:
 ***** conteiners
 *** DONE добавить исключение
 
+** 
+I removed it, remove it
+##### Card Count
+10. The player specifies total number of cards to generate.
+11. Cards are taken in row-major order.
+12. If count exceeds available tiles:
+   - Tiles repeat from the beginning.
+13. If count is less:
+   - Only first N cards are used.
+14. A 1×1 grid is valid:
+   - Produces a single card.
+Fix it: images are not loading
+
+** 
+в "Add Deck from Images" не работае управление поля импутов.
+
+In "Add Deck from Images" the control of the input field does not WORK.
+
 ** довай исправим
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.

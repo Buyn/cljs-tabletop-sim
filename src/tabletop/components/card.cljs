@@ -106,6 +106,29 @@
                 :style {:width "100%" :height "100%" :object-fit "cover"
                         :border-radius (when corner-radius (str corner-radius "px"))}}]
 
+         (and face-up? (:face-bg-src card))
+         (let [{:keys [face-bg-src face-bg-cols face-bg-rows face-bg-col face-bg-row
+                        outer-crop inner-crop]} card
+               oc      (or outer-crop {:top 0 :bottom 0 :left 0 :right 0})
+               ic      (or inner-crop {:top 0 :bottom 0 :left 0 :right 0})
+               ;; CSS background-size: scale image so one tile fills the card
+               ;; background-position: offset to the correct tile
+               bg-size (str (* face-bg-cols 100) "% " (* face-bg-rows 100) "%")
+               ;; position as percentage: col/cols * 100 / (cols-1), same for row
+               ;; For a single tile (1×1) position is 0% 0%
+               bg-x    (if (> face-bg-cols 1)
+                         (str (/ (* face-bg-col 100.0) (dec face-bg-cols)) "%")
+                         "0%")
+               bg-y    (if (> face-bg-rows 1)
+                         (str (/ (* face-bg-row 100.0) (dec face-bg-rows)) "%")
+                         "0%")]
+           [:div {:style {:width "100%" :height "100%"
+                          :background-image    (str "url('" face-bg-src "')")
+                          :background-size     bg-size
+                          :background-position (str bg-x " " bg-y)
+                          :background-repeat   "no-repeat"
+                          :border-radius       (when corner-radius (str corner-radius "px"))}}])
+
          face-up?
          [:div {:class "flex flex-col items-center justify-center w-full h-full"}
           [:span {:class "text-lg leading-none"} rank]

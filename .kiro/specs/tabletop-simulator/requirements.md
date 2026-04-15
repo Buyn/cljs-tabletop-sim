@@ -288,16 +288,6 @@ Notes:
    - Top, Bottom, Left, Right
 9. These are applied to each card after slicing.
 
-##### Card Count
-10. The player specifies total number of cards to generate.
-11. Cards are taken in row-major order.
-12. If count exceeds available tiles:
-   - Tiles repeat from the beginning.
-13. If count is less:
-   - Only first N cards are used.
-14. A 1×1 grid is valid:
-   - Produces a single card.
-
 ##### Card Shape
 15. Cards support shape configuration:
    - Rectangle (default)

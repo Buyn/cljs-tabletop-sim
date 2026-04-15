@@ -58,7 +58,7 @@ src/tabletop/
     component_panel.cljs         — sidebar main menu: cards, tile, dice, save/load, settings
     deck_customizer.cljs         — custom deck panel (suits, ranks, card count, suit colors)
     tile_panel.cljs              — tile image configuration panel
-    card_deck_panel.cljs         — card deck from images panel
+    card_deck_panel.cljs         — card deck from images panel (CSS background rendering, no canvas)
     keybindings_panel.cljs       — keybindings editor panel
     general_settings_panel.cljs  — general settings panel
     properties_panel.cljs        — component properties editor panel
@@ -247,9 +247,17 @@ These wrappers call `emit!` — they are not direct `swap!` calls.
  :face-color hex-str, :back-color hex-str, :text-color hex-str, :suit-color hex-str
  :face-up? boolean, :rotation number, :scale number, :locked? boolean
  ;; Optional image-based rendering (replaces text rendering when present):
- :face-src      nil | str   ; URL or data-URL for card face image
+ :face-src      nil | str   ; URL or data-URL for card face image (direct)
  :back-src      nil | str   ; URL or data-URL for card back image
- :corner-radius nil | number}
+ :corner-radius nil | number
+ ;; CSS background-based tile rendering (set by card-deck-panel):
+ :face-bg-src   nil | str   ; source image URL
+ :face-bg-cols  nil | number
+ :face-bg-rows  nil | number
+ :face-bg-col   nil | number
+ :face-bg-row   nil | number
+ :outer-crop    nil | {:top :bottom :left :right}
+ :inner-crop    nil | {:top :bottom :left :right}}
 
 ;; Die
 {:id uuid-str, :type :die, :x number, :y number
@@ -366,14 +374,13 @@ Non-modal, draggable panel. Fields:
 
 Non-modal, draggable panel (`card_deck_panel.cljs`). Fields:
 - Face image: URL text input or local file picker.
-- Columns / Rows: grid dimensions.
-- Card Count: total cards to generate (tiles repeat if count > cols×rows).
+- Columns / Rows: grid dimensions. Produces cols×rows cards.
 - Global Crop (px): top/bottom/left/right outer margins applied before slicing.
 - Per-Card Inner Borders (px): top/bottom/left/right removed from each tile after slicing.
 - Corner Radius (px): applied to card face/back images.
 - Card Back Image: optional URL or local file; if blank, default back rendering is used.
 
-On confirm: loads the face image, slices it via canvas into data-URLs, assembles cards with `:face-src`, `:back-src`, `:corner-radius`, and places a Deck at `placement-pos`.
+On confirm: assembles cols×rows cards using CSS `background-position` to render each tile (no canvas, no CORS issues). Cards store `:face-bg-src`, `:face-bg-cols`, `:face-bg-rows`, `:face-bg-col`, `:face-bg-row`, `:outer-crop`, `:inner-crop`, `:corner-radius`. Places a Deck at `placement-pos`.
 
 ## Hand Area
 
