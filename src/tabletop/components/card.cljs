@@ -20,12 +20,11 @@
 (defn card [{:keys [card on-drag-end]}]
   (fn [{:keys [card on-drag-end]}]
     (let [{:keys [id face-color back-color text-color suit-color
-                  suit rank face-up? x y rotation scale locked?]} card
+                  suit rank face-up? x y rotation scale locked?
+                  face-src back-src corner-radius]} card
           face-up?  (boolean face-up?)
           selected? (contains? (:selection @app-state) id)
           iact      (:interaction @app-state)
-          over-hand? (and iact (= (:id iact) id)
-                          (= :hand-hover (:mode iact)))
           transform (str (when rotation (str "rotate(" rotation "deg) "))
                          (when (and scale (not= scale 1.0)) (str "scale(" scale ")")))]
       [:div
@@ -39,7 +38,7 @@
                 :background-color (if face-up? (or face-color "#ffffff") (or back-color "#1e3a5f"))
                 :border-color     (if face-up? "#d1d5db" "#4b5563")
                 :color            (if face-up? (or text-color "#111111") "transparent")
-                :transform        (str (when over-hand? "scale(0.33) ") transform)
+                :transform        transform
                 :transform-origin "center center"}
 
         :on-pointer-down
@@ -104,12 +103,23 @@
             (add-to-selection! id))
           (open-context-menu! (.-clientX e) (.-clientY e) (component-actions card)))}
 
-       (if face-up?
+       (cond
+         (and face-up? face-src)
+         [:img {:src face-src :style {:width "100%" :height "100%" :object-fit "cover"
+                                      :border-radius (when corner-radius (str corner-radius "px"))}}]
+
+         face-up?
          [:div {:class "flex flex-col items-center justify-center w-full h-full"}
           [:span {:class "text-lg leading-none"} rank]
           [:span {:class "text-xl leading-none"
                   :style {:color (or suit-color text-color "#111111")}} suit]]
+
+         back-src
+         [:img {:src back-src :style {:width "100%" :height "100%" :object-fit "cover"
+                                      :border-radius (when corner-radius (str corner-radius "px"))}}]
+
+         :else
          [:div {:class "w-full h-full flex items-center justify-center"}
           [:div {:class "w-[54px] h-[84px] rounded border-2 border-blue-300 opacity-40"
                  :style {:background (str "repeating-linear-gradient(45deg,"
-                                          "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])])))
+                                          "#2563eb,#2563eb 2px,transparent 2px,transparent 8px)")}}]])]))))

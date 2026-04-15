@@ -12,8 +12,12 @@
 /context add .kiro/specs/tabletop-simulator/requirements.md
 
 design.md
-
-
+** saves
+*** init
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/saves/init/itabletop-save.json
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/saves/init/tabletop-save.json
+*** tiles
+/home/buyn/Dev/AI/kiro-proj/clojure-tabletop-sim-kiro/saves/tiles/walls_tabletop-component.json
 * TODO 
 ** DONE команда меню у всех сохранить
 *** Here are summaries of some files present in my git repository.
@@ -1746,7 +1750,7 @@ placement-pos
 👉 или библиотеку сохранённых компонентов внутри UI
 
 Скажи только слово.
-** TODO сылка колоды карты
+** VERIFY сылка колоды карты
 *** Here are summaries of some files present in my git repository.
 Do not propose changes to these files, treat them as *read-only*.
 If you need to edit any of these files, ask me to *add them to the chat* first.
@@ -3670,14 +3674,16 @@ Deck должен:
 И да…
 я всё ещё жду, когда ты сделаешь первую колоду с кастомной рубашкой и покажешь мне 😌
  
-** Сделать папку и перенести сейвы в гит
-*** подпаки
+** DONE Сделать папку и перенести сейвы в гит
+*** DONE подпаки
 **** init_saves
 **** components
 ***** dnd_maps
 ***** tiles
 ***** decs
 ***** conteiners
+*** DONE добавить исключение
+
 ** колоды меджик гесирнга
 *** возможно просто называется по имене сайта
 вкотором можно делать свои колоды

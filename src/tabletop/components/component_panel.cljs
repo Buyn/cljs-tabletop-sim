@@ -90,11 +90,11 @@
                     (swap! app-state assoc :error (str "Failed to load: " (.-message ex))))))))
       (.readAsText reader file))))
 
-(defn component-panel [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-general-settings]}]
+(defn component-panel [{:keys [on-open-customizer on-open-tile-panel on-open-card-deck-panel on-open-keybindings on-open-general-settings]}]
   (let [file-input      (atom nil)
         import-input    (atom nil)
         settings-file   (atom nil)]
-    (fn [{:keys [on-open-customizer on-open-tile-panel on-open-keybindings on-open-general-settings]}]
+    (fn [{:keys [on-open-customizer on-open-tile-panel on-open-card-deck-panel on-open-keybindings on-open-general-settings]}]
       (let [{:keys [menu-open menu-section]} @app-state]
         [:div
          {:class "fixed left-0 top-0 z-20 menu-panel"
@@ -129,7 +129,10 @@
               [:div {:class "mb-2"}
                [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
                 {:on-click on-open-tile-panel}
-                "Add Tile Image"]])
+                "Add Tile Image"]
+               [:button.w-full.text-left.px-3.py-2.rounded.bg-gray-700.hover:bg-gray-600.mb-1.text-sm
+                {:on-click on-open-card-deck-panel}
+                "Add Card Deck from Images"]])
 
             ;; Dice section
             [section-header "Dice" :dice]
